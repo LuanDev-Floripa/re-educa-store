@@ -164,7 +164,7 @@ jobs:
   build:
     needs: [test-backend, test-frontend, security-scan]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && always()
 
     steps:
     - uses: actions/checkout@v4
