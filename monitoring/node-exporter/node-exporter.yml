@@ -1,0 +1,64 @@
+# Configuração do Node Exporter para Re-Educa
+# Este arquivo configura quais métricas do sistema devem ser coletadas
+
+# Configurações básicas
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Configurações de coleta
+collectors:
+  # Métricas do sistema
+  cpu: true
+  diskstats: true
+  filesystem: true
+  loadavg: true
+  meminfo: true
+  netdev: true
+  netstat: true
+  uname: true
+  vmstat: true
+  
+  # Métricas de processos
+  procstat: true
+  stat: true
+  
+  # Métricas de rede
+  netclass: true
+  netdev: true
+  netstat: true
+  
+  # Métricas de arquivos
+  filefd: true
+  filesystem: true
+  
+  # Métricas de tempo
+  time: true
+  
+  # Métricas de hardware
+  hwmon: true
+  infiniband: true
+  
+  # Métricas de Docker (se disponível)
+  docker: false
+  
+  # Métricas de Kubernetes (se disponível)
+  kubernetes: false
+
+# Configurações de filtros
+collectors_enabled:
+  - cpu
+  - diskstats
+  - filesystem
+  - loadavg
+  - meminfo
+  - netdev
+  - netstat
+  - uname
+  - vmstat
+  - procstat
+  - stat
+  - netclass
+  - filefd
+  - time
+  - hwmon

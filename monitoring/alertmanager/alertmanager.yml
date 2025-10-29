@@ -1,0 +1,193 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alertmanager@re-educa.com.br'
+  smtp_auth_username: 'alertmanager@re-educa.com.br'
+  smtp_auth_password: 'your-app-password'
+  
+  # Configuração do Slack
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  
+  # Configuração do Telegram
+  telegram_api_url: 'https://api.telegram.org'
+  telegram_bot_token: 'your-bot-token'
+  telegram_chat_id: 'your-chat-id'
+
+# Configuração de templates para mensagens
+templates:
+  - '/etc/alertmanager/template/*.tmpl'
+
+# Configuração de rotas para diferentes tipos de alertas
+route:
+  group_by: ['alertname', 'service', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'team-re-educa'
+  
+  # Rotas específicas por severidade
+  routes:
+    # Alertas críticos - notificação imediata
+    - match:
+        severity: critical
+      receiver: 'team-re-educa-urgent'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      
+    # Alertas de segurança - notificação imediata
+    - match:
+        service: security
+      receiver: 'team-re-educa-urgent'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      
+    # Alertas de pagamentos - notificação imediata
+    - match:
+        service: payment
+      receiver: 'team-re-educa-urgent'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      
+    # Alertas de infraestrutura - notificação em 5 minutos
+    - match:
+        service: infrastructure
+      receiver: 'team-re-educa'
+      group_wait: 5m
+      group_interval: 5m
+      repeat_interval: 2h
+      
+    # Alertas de performance - notificação em 10 minutos
+    - match:
+        service: performance
+      receiver: 'team-re-educa'
+      group_wait: 10m
+      group_interval: 10m
+      repeat_interval: 2h
+
+# Configuração dos receptores
+receivers:
+  # Equipe principal - notificações padrão
+  - name: 'team-re-educa'
+    email_configs:
+      - to: 'devops@re-educa.com.br'
+        send_resolved: true
+        headers:
+          subject: '{{ template "email.subject" . }}'
+        html: '{{ template "email.html" . }}'
+        
+    slack_configs:
+      - channel: '#monitoring'
+        send_resolved: true
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        actions:
+          - type: button
+            text: 'Ver no Grafana'
+            url: '{{ template "slack.grafana" . }}'
+            
+    webhook_configs:
+      - url: 'https://api.re-educa.com.br/webhooks/alertmanager'
+        send_resolved: true
+        
+    telegram_configs:
+      - chat_id: 'your-chat-id'
+        parse_mode: 'HTML'
+        text: '{{ template "telegram.text" . }}'
+        
+  # Equipe de urgência - notificações críticas
+  - name: 'team-re-educa-urgent'
+    email_configs:
+      - to: 'devops@re-educa.com.br,cto@re-educa.com.br'
+        send_resolved: true
+        headers:
+          subject: '🚨 URGENTE: {{ template "email.subject" . }}'
+        html: '{{ template "email.urgent.html" . }}'
+        
+    slack_configs:
+      - channel: '#alerts-urgent'
+        send_resolved: true
+        title: '🚨 URGENTE: {{ template "slack.title" . }}'
+        text: '{{ template "slack.urgent.text" . }}'
+        actions:
+          - type: button
+            text: 'Ver no Grafana'
+            url: '{{ template "slack.grafana" . }}'
+            style: 'danger'
+            
+    webhook_configs:
+      - url: 'https://api.re-educa.com.br/webhooks/alertmanager-urgent'
+        send_resolved: true
+        
+    telegram_configs:
+      - chat_id: 'your-chat-id'
+        parse_mode: 'HTML'
+        text: '🚨 URGENTE: {{ template "telegram.urgent.text" . }}'
+        
+    # PagerDuty para alertas críticos
+    pagerduty_configs:
+      - routing_key: 'your-pagerduty-key'
+        description: '{{ template "pagerduty.description" . }}'
+        severity: '{{ if eq .GroupLabels.severity "critical" }}critical{{ else }}warning{{ end }}'
+        client: 'AlertManager'
+        client_url: '{{ template "pagerduty.clientURL" . }}'
+
+# Configuração de inibição para evitar spam de alertas
+inhibit_rules:
+  # Se o servidor estiver fora do ar, não alertar sobre serviços específicos
+  - source_match:
+      alertname: 'ServerDown'
+    target_match:
+      service: 'backend'
+    equal: ['instance']
+    
+  # Se o banco estiver fora do ar, não alertar sobre consultas lentas
+  - source_match:
+      alertname: 'PostgreSQLDown'
+    target_match:
+      alertname: 'PostgreSQLSlowQueries'
+    equal: ['instance']
+    
+  # Se o Redis estiver fora do ar, não alertar sobre cache miss
+  - source_match:
+      alertname: 'RedisDown'
+    target_match:
+      alertname: 'HighCacheMissRate'
+    equal: ['instance']
+
+# Configuração de timeouts
+time_intervals:
+  - name: workdays
+    time_intervals:
+      - weekdays: ['monday:friday']
+        times:
+          - start_time: 09:00
+            end_time: 18:00
+        location: 'America/Sao_Paulo'
+        
+  - name: weekends
+    time_intervals:
+      - weekdays: ['saturday', 'sunday']
+        
+  - name: holidays
+    time_intervals:
+      - months: ['january']
+        days_of_month: ['1']
+      - months: ['april']
+        days_of_month: ['21']
+      - months: ['may']
+        days_of_month: ['1']
+      - months: ['september']
+        days_of_month: ['7']
+      - months: ['october']
+        days_of_month: ['12']
+      - months: ['november']
+        days_of_month: ['2', '15']
+      - months: ['december']
+        days_of_month: ['25']
+
+# Configuração de templates personalizados
+templates:
+  - '/etc/alertmanager/template/*.tmpl'
