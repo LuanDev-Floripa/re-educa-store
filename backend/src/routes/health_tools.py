@@ -13,36 +13,47 @@ health_tools_bp = Blueprint('health_tools', __name__)
 health_service = HealthService()
 
 @health_tools_bp.route('/imc/calculate', methods=['POST'])
-@token_required
 @rate_limit("20 per hour")
-@log_activity('imc_calculation')
 def calculate_imc_route():
-    """Calcula IMC do usuário"""
+    """Calcula IMC (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
-        # Valida dados
-        if not health_data_validator.validate_imc_data(data):
+        # Normaliza altura: frontend envia em cm, backend precisa em metros
+        weight = float(data.get('weight', 0))
+        height_cm = float(data.get('height', 0))
+        
+        if weight <= 0 or height_cm <= 0:
             return jsonify({
-                'error': 'Dados inválidos',
-                'details': health_data_validator.get_errors()
+                'error': 'Peso e altura devem ser maiores que zero'
             }), 400
         
+        if height_cm > 3:  # Provavelmente está em cm, converte para metros
+            height_m = height_cm / 100
+        else:
+            height_m = height_cm  # Já está em metros
+        
         # Calcula IMC
-        result = calculate_imc(data['weight'], data['height'])
+        result = calculate_imc(weight, height_m)
         
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
         
-        # Salva cálculo no banco
-        health_service.save_imc_calculation(user_id, result)
-        
-        log_user_activity(user_id, 'imc_calculated', {
-            'weight': data['weight'],
-            'height': data['height'],
-            'imc': result['imc']
-        })
+        # Salva cálculo no banco apenas se usuário estiver autenticado
+        if user_id:
+            health_service.save_imc_calculation(user_id, result)
+            log_user_activity(user_id, 'imc_calculated', {
+                'weight': data['weight'],
+                'height': data['height'],
+                'imc': result['imc']
+            })
         
         return jsonify({
             'imc': result['imc'],
@@ -275,65 +286,84 @@ def create_health_goal():
 # Novas rotas para as calculadoras
 
 @health_tools_bp.route('/calories/calculate', methods=['POST'])
-@token_required
 @rate_limit("10 per hour")
-@log_activity('calories_calculation')
 def calculate_calories_route():
-    """Calcula necessidade calórica e salva no banco"""
+    """Calcula necessidade calórica (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
         required_fields = ['age', 'weight', 'height', 'gender', 'activity_level']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({'error': f'Campo {field} é obrigatório'}), 400
         
-        # Calcula calorias
+        # Normaliza altura: frontend envia em cm, backend precisa em metros
+        age = int(data['age'])
+        weight = float(data['weight'])
+        height_cm = float(data['height'])
+        gender = data['gender']
+        activity_level = data['activity_level']
+        
+        # Converte altura de cm para metros se necessário
+        if height_cm > 3:  # Provavelmente está em cm
+            height_m = height_cm / 100
+        else:
+            height_m = height_cm  # Já está em metros
+        
+        # Calcula calorias (a função espera altura em metros)
         result = calculate_calories(
-            data['age'],
-            data['weight'],
-            data['height'],
-            data['gender'],
-            data['activity_level']
+            age,
+            weight,
+            height_m,
+            gender,
+            activity_level
         )
         
         # Calcula macronutrientes
         macros = calculate_macros(result['daily_calories'])
         
-        # Salva cálculo no banco
-        calculation_data = {
-            'age': data['age'],
-            'gender': data['gender'],
-            'weight': data['weight'],
-            'height': data['height'],
-            'activity_level': data['activity_level'],
-            'goal': data.get('goal', 'maintain'),
-            'bmr': result['bmr'],
-            'tdee': result['daily_calories'],
-            'target_calories': result['daily_calories'],
-            'deficit': 500 if data.get('goal') == 'lose_weight' else 0,
-            'surplus': 300 if data.get('goal') == 'gain_weight' else 0
-        }
-        
-        save_result = health_service.save_calorie_calculation(user_id, calculation_data)
-        
-        if not save_result.get('success'):
-            return jsonify({'error': 'Erro ao salvar cálculo'}), 500
-        
-        log_user_activity(user_id, 'calories_calculated', {
-            'age': data['age'],
-            'weight': data['weight'],
-            'height': data['height'],
-            'daily_calories': result['daily_calories']
-        })
+        # Salva cálculo no banco apenas se usuário estiver autenticado
+        saved = False
+        if user_id:
+            calculation_data = {
+                'age': age,
+                'gender': gender,
+                'weight': weight,
+                'height': height_m,  # Salva em metros
+                'height_cm': height_cm,  # Também salva em cm para referência
+                'activity_level': activity_level,
+                'goal': data.get('goal', 'maintain'),
+                'bmr': result['bmr'],
+                'tdee': result['daily_calories'],
+                'target_calories': result['daily_calories'],
+                'deficit': 500 if data.get('goal') == 'lose_weight' else 0,
+                'surplus': 300 if data.get('goal') == 'gain_weight' else 0
+            }
+            
+            save_result = health_service.save_calorie_calculation(user_id, calculation_data)
+            saved = save_result.get('success', False)
+            
+            if saved:
+                log_user_activity(user_id, 'calories_calculated', {
+                    'age': data['age'],
+                    'weight': data['weight'],
+                    'height': data['height'],
+                    'daily_calories': result['daily_calories']
+                })
         
         return jsonify({
             'bmr': result['bmr'],
             'daily_calories': result['daily_calories'],
             'activity_multiplier': result['activity_multiplier'],
             'macros': macros,
-            'saved': True
+            'saved': saved
         }), 200
         
     except Exception as e:
@@ -415,14 +445,18 @@ def calculate_biological_age_route():
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @health_tools_bp.route('/hydration/calculate', methods=['POST'])
-@token_required
 @rate_limit("10 per hour")
-@log_activity('hydration_calculation')
 def calculate_hydration_route():
-    """Calcula necessidades de hidratação e salva no banco"""
+    """Calcula necessidades de hidratação (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
         required_fields = ['weight', 'age', 'gender', 'activity_level', 'climate']
         for field in required_fields:
@@ -431,16 +465,19 @@ def calculate_hydration_route():
         
         # Cálculo base: 35ml por kg de peso corporal
         weight = float(data['weight'])
+        age = int(data['age'])
+        gender = data['gender']
+        activity_level = data['activity_level']
+        climate = data['climate']
         base_water_intake = weight * 35
         
         # Ajustes por idade, gênero, atividade e clima
-        age = int(data['age'])
         if age > 65:
             base_water_intake *= 0.9
         elif age < 18:
             base_water_intake *= 1.1
         
-        if data['gender'] == 'male':
+        if gender == 'male':
             base_water_intake *= 1.1
         
         # Fatores de atividade e clima (simplificado)
@@ -460,8 +497,8 @@ def calculate_hydration_route():
             'dry': 1.2
         }
         
-        base_water_intake *= activity_factors.get(data['activity_level'], 1.0)
-        base_water_intake *= climate_factors.get(data['climate'], 1.0)
+        base_water_intake *= activity_factors.get(activity_level, 1.0)
+        base_water_intake *= climate_factors.get(climate, 1.0)
         
         # Ajuste por exercício
         exercise_duration = float(data.get('exercise_duration', 0))
@@ -481,11 +518,11 @@ def calculate_hydration_route():
         other_fluids = round(total_intake * 0.3)
         
         calculation_data = {
-            'weight': data['weight'],
-            'age': data['age'],
-            'gender': data['gender'],
-            'activity_level': data['activity_level'],
-            'climate': data['climate'],
+            'weight': weight,
+            'age': age,
+            'gender': gender,
+            'activity_level': activity_level,
+            'climate': climate,
             'exercise_duration': exercise_duration,
             'exercise_intensity': data.get('exercise_intensity'),
             'health_conditions': data.get('health_conditions', []),
@@ -494,22 +531,23 @@ def calculate_hydration_route():
             'other_fluids': other_fluids
         }
         
-        save_result = health_service.save_hydration_calculation(user_id, calculation_data)
-        
-        if not save_result.get('success'):
-            return jsonify({'error': 'Erro ao salvar cálculo'}), 500
-        
-        log_user_activity(user_id, 'hydration_calculated', {
-            'weight': data['weight'],
-            'total_intake': total_intake
-        })
+        saved = False
+        if user_id:
+            save_result = health_service.save_hydration_calculation(user_id, calculation_data)
+            saved = save_result.get('success', False)
+            
+            if saved:
+                log_user_activity(user_id, 'hydration_calculated', {
+                    'weight': data['weight'],
+                    'total_intake': total_intake
+                })
         
         return jsonify({
             'total_intake': total_intake,
             'water_intake': water_intake,
             'other_fluids': other_fluids,
             'hourly_intake': round(total_intake / 16),
-            'saved': True
+            'saved': saved
         }), 200
         
     except Exception as e:
