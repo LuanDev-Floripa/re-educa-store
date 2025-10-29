@@ -85,13 +85,17 @@ def calculate_imc(weight: float, height: float) -> Dict[str, Any]:
     }
 
 def calculate_calories(age: int, weight: float, height: float, gender: str, activity_level: str) -> Dict[str, Any]:
-    """Calcula necessidade calórica diária"""
+    """Calcula necessidade calórica diária
+    height deve estar em metros
+    """
     
-    # Fórmula de Harris-Benedict
+    # Fórmula de Harris-Benedict (altura em cm para a fórmula)
+    height_cm = height * 100  # Converte metros para cm
+    
     if gender.lower() == 'male':
-        bmr = 88.362 + (13.397 * weight) + (4.799 * height * 100) - (5.677 * age)
+        bmr = 88.362 + (13.397 * weight) + (4.799 * height_cm) - (5.677 * age)
     else:
-        bmr = 447.593 + (9.247 * weight) + (3.098 * height * 100) - (4.330 * age)
+        bmr = 447.593 + (9.247 * weight) + (3.098 * height_cm) - (4.330 * age)
     
     # Multiplicadores de atividade
     activity_multipliers = {
