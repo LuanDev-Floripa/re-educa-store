@@ -6,7 +6,7 @@ import { Input } from '@/components/Ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
 import { WorkoutPlanCard } from '../../components/workouts/WorkoutPlanCard';
-import apiClient from '@/services/apiClient';
+import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
 import { toast } from 'sonner';
 import { 
   Search, 
@@ -27,50 +27,26 @@ import {
 } from 'lucide-react';
 
 const WorkoutPlansPage = () => {
-  const [plans, setPlans] = useState([]);
+  const { plans, loading, pagination, fetchPlans } = useWorkoutPlans();
   const [filteredPlans, setFilteredPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedGoal, setSelectedGoal] = useState('all');
   const [selectedDuration, setSelectedDuration] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
   const [favoritePlans, setFavoritePlans] = useState([]);
-  const [userPlans, setUserPlans] = useState([]);
 
   // Carregar planos de treino da API
   useEffect(() => {
-    const loadWorkoutPlans = async () => {
-      try {
-        setLoading(true);
-        // Tentar buscar da API (se endpoint existir)
-        try {
-          const response = await apiClient.request('/api/exercises/workout-plans');
-          if (response.plans || response.data || Array.isArray(response)) {
-            const plansList = response.plans || response.data || response;
-            setPlans(plansList);
-            setFilteredPlans(plansList);
-          } else {
-            setPlans([]);
-            setFilteredPlans([]);
-          }
-        } catch (apiError) {
-          console.log('Endpoint de workout plans não disponível, usando array vazio');
-          setPlans([]);
-          setFilteredPlans([]);
-        }
-      } catch (err) {
-        console.error('Erro ao carregar planos de treino:', err);
-        toast.error('Erro ao carregar planos de treino');
-        setPlans([]);
-        setFilteredPlans([]);
-      } finally {
-        setLoading(false);
-      }
+    const loadPlans = async () => {
+      const filters = {
+        isActive: activeTab === 'my_plans' ? true : undefined,
+        isPublic: activeTab === 'all' || activeTab === 'popular' ? true : undefined
+      };
+      await fetchPlans(filters);
     };
-
-    loadWorkoutPlans();
-  }, []);
+    loadPlans();
+  }, [activeTab, fetchPlans]);
 
   // Dados de exemplo removidos - usar API real ou array vazio
   const workoutPlansDataFallback = [

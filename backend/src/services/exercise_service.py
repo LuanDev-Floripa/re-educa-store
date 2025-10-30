@@ -1,29 +1,102 @@
 """
 Serviço de Exercícios RE-EDUCA Store - Supabase
+Gerencia exercícios, planos de treino e sessões semanais
 """
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.database import supabase_client
 
 logger = logging.getLogger(__name__)
 
+# ============================================================
+# CONSTANTES
+# ============================================================
+
+DAYS_OF_WEEK = {
+    1: 'Segunda-feira',
+    2: 'Terça-feira',
+    3: 'Quarta-feira',
+    4: 'Quinta-feira',
+    5: 'Sexta-feira',
+    6: 'Sábado',
+    7: 'Domingo'
+}
+
+WORKOUT_STATUS = {
+    'scheduled': 'Agendado',
+    'in_progress': 'Em Progresso',
+    'completed': 'Completo',
+    'skipped': 'Pulado'
+}
+
+WORKOUT_GOALS = {
+    'weight_loss': 'Perda de Peso',
+    'muscle_gain': 'Ganho de Massa',
+    'endurance': 'Resistência',
+    'strength': 'Força',
+    'general_fitness': 'Condicionamento Geral',
+    'flexibility': 'Flexibilidade'
+}
+
+DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced']
+
+EXERCISE_CATEGORIES = ['strength', 'cardio', 'flexibility', 'core', 'balance', 'hiit', 'yoga', 'pilates']
+
+MIN_DAY_OF_WEEK = 1
+MAX_DAY_OF_WEEK = 7
+
 class ExerciseService:
+    """
+    Service para gerenciar exercícios, planos de treino e sessões semanais
+    
+    Fornece métodos para:
+    - Buscar e gerenciar exercícios
+    - Criar e gerenciar planos de treino
+    - Criar e acompanhar sessões de treino semanais
+    """
+    
     def __init__(self):
+        """Inicializa o service com cliente Supabase"""
         self.supabase = supabase_client
+    
+    # ============================================================
+    # MÉTODOS PARA EXERCÍCIOS
+    # ============================================================
     
     def get_exercises(self, category: str = None, difficulty: str = None, 
                      equipment: str = None, muscle_group: str = None,
                      page: int = 1, limit: int = 20) -> Dict[str, Any]:
-        """Busca exercícios com filtros do Supabase"""
+        """
+        Busca exercícios com filtros do Supabase
+        
+        Args:
+            category (str, optional): Categoria do exercício
+            difficulty (str, optional): Nível de dificuldade
+            equipment (str, optional): Equipamento necessário
+            muscle_group (str, optional): Grupo muscular trabalhado
+            page (int): Número da página (padrão: 1)
+            limit (int): Limite de itens por página (padrão: 20, máximo: 100)
+            
+        Returns:
+            Dict[str, Any]: Dicionário com lista de exercícios e paginação
+                - exercises: Lista de exercícios formatados
+                - pagination: Informações de paginação
+        """
         try:
+            # Valida parâmetros
+            if page < 1:
+                page = 1
+            if limit < 1 or limit > 100:
+                limit = 20
+            
             # Buscar exercícios do Supabase
             query = self.supabase.table('exercises').select('*', count='exact')
             
             # Aplicar filtros
-            if category:
+            if category and category in EXERCISE_CATEGORIES:
                 query = query.eq('category', category)
-            if difficulty:
+            if difficulty and difficulty in DIFFICULTY_LEVELS:
                 query = query.eq('difficulty', difficulty)
             if equipment:
                 query = query.contains('equipment', [equipment])
@@ -53,6 +126,7 @@ class ExerciseService:
                     'duration_minutes': exercise.get('duration_minutes'),
                     'sets': exercise.get('sets'),
                     'reps': exercise.get('reps'),
+                    'rest_seconds': exercise.get('rest_seconds', 60),
                     'image_url': exercise.get('image_url'),
                     'video_url': exercise.get('video_url')
                 })
@@ -69,7 +143,6 @@ class ExerciseService:
             
         except Exception as e:
             logger.error(f"Erro ao buscar exercícios do Supabase: {e}")
-            # Fallback: retornar array vazio em vez de dados mockados
             return {
                 'exercises': [],
                 'pagination': {
@@ -82,8 +155,20 @@ class ExerciseService:
             }
     
     def get_exercise_by_id(self, exercise_id: str) -> Optional[Dict[str, Any]]:
-        """Busca exercício por ID do Supabase"""
+        """
+        Busca exercício por ID do Supabase
+        
+        Args:
+            exercise_id (str): ID único do exercício
+            
+        Returns:
+            Optional[Dict[str, Any]]: Dados do exercício ou None se não encontrado
+        """
         try:
+            if not exercise_id:
+                logger.warning("Tentativa de buscar exercício com ID vazio")
+                return None
+                
             result = self.supabase.table('exercises').select('*').eq('id', exercise_id).execute()
             
             if result.data and len(result.data) > 0:
@@ -102,6 +187,7 @@ class ExerciseService:
                     'duration_minutes': exercise.get('duration_minutes'),
                     'sets': exercise.get('sets'),
                     'reps': exercise.get('reps'),
+                    'rest_seconds': exercise.get('rest_seconds', 60),
                     'image_url': exercise.get('image_url'),
                     'video_url': exercise.get('video_url')
                 }
@@ -111,8 +197,25 @@ class ExerciseService:
             return None
     
     def create_exercise_log(self, user_id: str, exercise_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria log de exercício"""
+        """
+        Cria log de exercício realizado pelo usuário
+        
+        Args:
+            user_id (str): ID do usuário
+            exercise_data (Dict[str, Any]): Dados do exercício realizado
+                - exercise_name (str): Nome do exercício
+                - duration_minutes (int): Duração em minutos
+                - calories_burned (float, optional): Calorias queimadas
+                
+        Returns:
+            Dict[str, Any]: Resultado da operação
+                - success (bool): True se criado com sucesso
+                - log: Dados do log criado ou error: Mensagem de erro
+        """
         try:
+            if not user_id:
+                return {'success': False, 'error': 'ID do usuário é obrigatório'}
+            
             log_data = {
                 'user_id': user_id,
                 'exercise_name': exercise_data.get('exercise_name', 'Exercício'),
@@ -120,10 +223,14 @@ class ExerciseService:
                 'calories_burned': exercise_data.get('calories_burned', 0)
             }
             
-            result = self.supabase.create_exercise_log(log_data)
+            # Valida dados mínimos
+            if log_data['duration_minutes'] <= 0:
+                return {'success': False, 'error': 'Duração deve ser maior que zero'}
             
-            if result and 'error' not in result:
-                return {'success': True, 'log': result}
+            result = self.supabase.table('workout_sessions').insert(log_data).execute()
+            
+            if result.data and len(result.data) > 0:
+                return {'success': True, 'log': result.data[0]}
             else:
                 return {'success': False, 'error': 'Erro ao criar log de exercício'}
                 
@@ -132,40 +239,76 @@ class ExerciseService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def get_exercise_logs(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
-        """Busca logs de exercícios do usuário"""
+        """
+        Busca logs de exercícios do usuário
+        
+        Args:
+            user_id (str): ID do usuário
+            limit (int): Limite de resultados (padrão: 50)
+            
+        Returns:
+            List[Dict[str, Any]]: Lista de logs de exercícios
+        """
         try:
-            logs = self.supabase.get_exercise_logs(user_id)
-            return logs[:limit] if logs else []
+            if not user_id:
+                return []
+            
+            if limit < 1 or limit > 100:
+                limit = 50
+            
+            result = self.supabase.table('workout_sessions')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('completed_at', desc=True)\
+                .limit(limit)\
+                .execute()
+            
+            return result.data if result.data else []
         except Exception as e:
             logger.error(f"Erro ao buscar logs de exercícios: {e}")
             return []
     
     def get_exercise_categories(self) -> List[str]:
-        """Retorna categorias de exercícios do banco"""
+        """
+        Retorna categorias de exercícios do banco
+        
+        Returns:
+            List[str]: Lista de categorias únicas
+        """
         try:
             result = self.supabase.table('exercises').select('category').execute()
             if result.data:
                 categories = list(set(ex.get('category') for ex in result.data if ex.get('category')))
-                return sorted(categories) if categories else ['strength', 'cardio', 'flexibility', 'core', 'balance']
-            return ['strength', 'cardio', 'flexibility', 'core', 'balance']
+                return sorted(categories) if categories else EXERCISE_CATEGORIES
+            return EXERCISE_CATEGORIES
         except Exception as e:
             logger.error(f"Erro ao buscar categorias: {e}")
-            return ['strength', 'cardio', 'flexibility', 'core', 'balance']
+            return EXERCISE_CATEGORIES
     
     def get_difficulty_levels(self) -> List[str]:
-        """Retorna níveis de dificuldade do banco"""
+        """
+        Retorna níveis de dificuldade do banco
+        
+        Returns:
+            List[str]: Lista de níveis de dificuldade únicos
+        """
         try:
             result = self.supabase.table('exercises').select('difficulty').execute()
             if result.data:
                 levels = list(set(ex.get('difficulty') for ex in result.data if ex.get('difficulty')))
-                return sorted(levels) if levels else ['beginner', 'intermediate', 'advanced']
-            return ['beginner', 'intermediate', 'advanced']
+                return sorted(levels) if levels else DIFFICULTY_LEVELS
+            return DIFFICULTY_LEVELS
         except Exception as e:
             logger.error(f"Erro ao buscar níveis de dificuldade: {e}")
-            return ['beginner', 'intermediate', 'advanced']
+            return DIFFICULTY_LEVELS
     
     def get_muscle_groups(self) -> List[str]:
-        """Retorna grupos musculares do banco"""
+        """
+        Retorna grupos musculares do banco
+        
+        Returns:
+            List[str]: Lista de grupos musculares únicos
+        """
         try:
             result = self.supabase.table('exercises').select('muscle_groups').execute()
             if result.data:
@@ -173,7 +316,8 @@ class ExerciseService:
                 for ex in result.data:
                     if ex.get('muscle_groups') and isinstance(ex.get('muscle_groups'), list):
                         all_groups.extend(ex.get('muscle_groups'))
-                return sorted(list(set(all_groups))) if all_groups else ['peitoral', 'costas', 'ombros', 'bíceps', 'tríceps', 'quadríceps', 'posterior', 'glúteos', 'panturrilhas', 'core']
+                return sorted(list(set(all_groups))) if all_groups else \
+                    ['peitoral', 'costas', 'ombros', 'bíceps', 'tríceps', 'quadríceps', 'posterior', 'glúteos', 'panturrilhas', 'core']
             return ['peitoral', 'costas', 'ombros', 'bíceps', 'tríceps', 'quadríceps', 'posterior', 'glúteos', 'panturrilhas', 'core']
         except Exception as e:
             logger.error(f"Erro ao buscar grupos musculares: {e}")
@@ -184,16 +328,51 @@ class ExerciseService:
     # ============================================================
     
     def create_workout_plan(self, user_id: str, plan_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria um novo plano de treino"""
+        """
+        Cria um novo plano de treino
+        
+        Args:
+            user_id (str): ID do usuário criador
+            plan_data (Dict[str, Any]): Dados do plano
+                - name (str): Nome do plano (obrigatório)
+                - description (str, optional): Descrição
+                - goal (str): Objetivo (weight_loss, muscle_gain, etc.)
+                - difficulty (str): Dificuldade (beginner, intermediate, advanced) (obrigatório)
+                - duration_weeks (int): Duração em semanas (padrão: 4)
+                - workouts_per_week (int): Treinos por semana (padrão: 3)
+                - is_active (bool): Se está ativo (padrão: True)
+                - is_public (bool): Se é público (padrão: False)
+                - exercises (List[Dict], optional): Lista de exercícios do plano
+                
+        Returns:
+            Dict[str, Any]: Resultado da operação
+                - success (bool): True se criado com sucesso
+                - plan: Dados do plano criado ou error: Mensagem de erro
+        """
         try:
+            if not user_id:
+                return {'success': False, 'error': 'ID do usuário é obrigatório'}
+            
+            # Valida campos obrigatórios
+            if not plan_data.get('name'):
+                return {'success': False, 'error': 'Nome do plano é obrigatório'}
+            
+            if not plan_data.get('difficulty') or plan_data['difficulty'] not in DIFFICULTY_LEVELS:
+                return {'success': False, 'error': 'Dificuldade inválida'}
+            
+            # Valida objetivo
+            goal = plan_data.get('goal', 'general_fitness')
+            if goal not in WORKOUT_GOALS:
+                goal = 'general_fitness'
+            
             plan_record = {
                 'user_id': user_id,
-                'name': plan_data['name'],
-                'description': plan_data.get('description'),
-                'goal': plan_data.get('goal', 'general_fitness'),
+                'name': plan_data['name'].strip(),
+                'description': plan_data.get('description', '').strip(),
+                'goal': goal,
                 'difficulty': plan_data['difficulty'],
-                'duration_weeks': plan_data.get('duration_weeks', 4),
-                'workouts_per_week': plan_data.get('workouts_per_week', 3),
+                'duration_weeks': max(1, min(plan_data.get('duration_weeks', 4), 52)),  # Entre 1 e 52 semanas
+                'workouts_per_week': max(1, min(plan_data.get('workouts_per_week', 3), 7)),  # Entre 1 e 7
                 'is_active': plan_data.get('is_active', True),
                 'is_public': plan_data.get('is_public', False)
             }
@@ -216,20 +395,44 @@ class ExerciseService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def _add_exercises_to_plan(self, plan_id: str, exercises: List[Dict[str, Any]]) -> None:
-        """Adiciona exercícios a um plano"""
+        """
+        Adiciona exercícios a um plano (método privado)
+        
+        Args:
+            plan_id (str): ID do plano
+            exercises (List[Dict[str, Any]]): Lista de exercícios
+                Cada exercício deve conter:
+                - exercise_id (str): ID do exercício
+                - day_of_week (int, optional): Dia da semana (1-7)
+                - order_in_workout (int, optional): Ordem no treino
+                - sets (int, optional): Número de séries
+                - reps (str, optional): Repetições
+                - rest_seconds (int, optional): Descanso em segundos
+                - duration_minutes (int, optional): Duração em minutos
+                - notes (str, optional): Notas
+        """
         try:
             plan_exercises = []
-            for ex in exercises:
+            for idx, ex in enumerate(exercises):
+                if not ex.get('exercise_id'):
+                    logger.warning(f"Exercício {idx} sem exercise_id, ignorando")
+                    continue
+                
+                day_of_week = ex.get('day_of_week')
+                if day_of_week and not (MIN_DAY_OF_WEEK <= day_of_week <= MAX_DAY_OF_WEEK):
+                    logger.warning(f"Dia da semana inválido: {day_of_week}, ignorando")
+                    day_of_week = None
+                
                 plan_exercises.append({
                     'plan_id': plan_id,
                     'exercise_id': ex['exercise_id'],
-                    'day_of_week': ex.get('day_of_week'),
-                    'order_in_workout': ex.get('order_in_workout', 1),
+                    'day_of_week': day_of_week,
+                    'order_in_workout': max(1, ex.get('order_in_workout', idx + 1)),
                     'sets': ex.get('sets'),
                     'reps': ex.get('reps'),
                     'rest_seconds': ex.get('rest_seconds'),
                     'duration_minutes': ex.get('duration_minutes'),
-                    'notes': ex.get('notes')
+                    'notes': ex.get('notes', '').strip()
                 })
             
             if plan_exercises:
@@ -239,8 +442,26 @@ class ExerciseService:
     
     def get_workout_plans(self, user_id: str = None, is_active: bool = None, 
                          is_public: bool = None, page: int = 1, limit: int = 20) -> Dict[str, Any]:
-        """Lista planos de treino"""
+        """
+        Lista planos de treino com filtros
+        
+        Args:
+            user_id (str, optional): ID do usuário para filtrar planos próprios
+            is_active (bool, optional): Filtrar por status ativo
+            is_public (bool, optional): Filtrar por visibilidade pública
+            page (int): Número da página (padrão: 1)
+            limit (int): Limite por página (padrão: 20)
+            
+        Returns:
+            Dict[str, Any]: Dicionário com lista de planos e paginação
+        """
         try:
+            # Valida parâmetros
+            if page < 1:
+                page = 1
+            if limit < 1 or limit > 100:
+                limit = 20
+            
             query = self.supabase.table('workout_plans').select('*', count='exact')
             
             if user_id:
@@ -273,20 +494,42 @@ class ExerciseService:
             return {'plans': [], 'pagination': {'page': page, 'limit': limit, 'total': 0, 'pages': 0}}
     
     def _get_plan_exercises(self, plan_id: str) -> List[Dict[str, Any]]:
-        """Busca exercícios de um plano"""
-        try:
-            result = self.supabase.table('workout_plan_exercises').select('*, exercises(*)').eq('plan_id', plan_id).order('day_of_week').order('order_in_workout').execute()
+        """
+        Busca exercícios de um plano (método privado)
+        
+        Args:
+            plan_id (str): ID do plano
             
-            if result.data:
-                return result.data
-            return []
+        Returns:
+            List[Dict[str, Any]]: Lista de exercícios do plano
+        """
+        try:
+            result = self.supabase.table('workout_plan_exercises')\
+                .select('*, exercises(*)')\
+                .eq('plan_id', plan_id)\
+                .order('day_of_week')\
+                .order('order_in_workout')\
+                .execute()
+            
+            return result.data if result.data else []
         except Exception as e:
             logger.error(f"Erro ao buscar exercícios do plano: {e}")
             return []
     
     def get_workout_plan_by_id(self, plan_id: str) -> Optional[Dict[str, Any]]:
-        """Busca plano de treino por ID"""
+        """
+        Busca plano de treino por ID
+        
+        Args:
+            plan_id (str): ID do plano
+            
+        Returns:
+            Optional[Dict[str, Any]]: Dados do plano ou None se não encontrado
+        """
         try:
+            if not plan_id:
+                return None
+                
             result = self.supabase.table('workout_plans').select('*').eq('id', plan_id).execute()
             
             if result.data and len(result.data) > 0:
@@ -299,7 +542,17 @@ class ExerciseService:
             return None
     
     def update_workout_plan(self, plan_id: str, user_id: str, plan_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Atualiza um plano de treino"""
+        """
+        Atualiza um plano de treino
+        
+        Args:
+            plan_id (str): ID do plano
+            user_id (str): ID do usuário (para verificação de permissão)
+            plan_data (Dict[str, Any]): Campos a atualizar
+            
+        Returns:
+            Dict[str, Any]: Resultado da operação
+        """
         try:
             # Verifica se o plano pertence ao usuário
             plan = self.get_workout_plan_by_id(plan_id)
@@ -312,7 +565,18 @@ class ExerciseService:
             
             for field in allowed_fields:
                 if field in plan_data:
-                    update_data[field] = plan_data[field]
+                    value = plan_data[field]
+                    # Validações específicas
+                    if field == 'difficulty' and value not in DIFFICULTY_LEVELS:
+                        continue
+                    if field == 'goal' and value not in WORKOUT_GOALS:
+                        continue
+                    if field == 'duration_weeks':
+                        value = max(1, min(value, 52))
+                    if field == 'workouts_per_week':
+                        value = max(1, min(value, 7))
+                    
+                    update_data[field] = value
             
             if update_data:
                 update_data['updated_at'] = datetime.now().isoformat()
@@ -335,7 +599,16 @@ class ExerciseService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def delete_workout_plan(self, plan_id: str, user_id: str) -> Dict[str, Any]:
-        """Deleta um plano de treino"""
+        """
+        Deleta um plano de treino
+        
+        Args:
+            plan_id (str): ID do plano
+            user_id (str): ID do usuário (para verificação de permissão)
+            
+        Returns:
+            Dict[str, Any]: Resultado da operação
+        """
         try:
             plan = self.get_workout_plan_by_id(plan_id)
             if not plan or plan.get('user_id') != user_id:
@@ -353,8 +626,22 @@ class ExerciseService:
     
     def create_weekly_sessions(self, user_id: str, plan_id: str, start_date: str, 
                               week_number: int = 1) -> Dict[str, Any]:
-        """Cria sessões de treino para uma semana"""
+        """
+        Cria sessões de treino para uma semana baseado em um plano
+        
+        Args:
+            user_id (str): ID do usuário
+            plan_id (str): ID do plano de treino
+            start_date (str): Data de início (ISO format)
+            week_number (int): Número da semana (padrão: 1)
+            
+        Returns:
+            Dict[str, Any]: Resultado com lista de sessões criadas
+        """
         try:
+            if not user_id or not plan_id or not start_date:
+                return {'success': False, 'error': 'Parâmetros obrigatórios: user_id, plan_id, start_date'}
+            
             plan = self.get_workout_plan_by_id(plan_id)
             if not plan:
                 return {'success': False, 'error': 'Plano de treino não encontrado'}
@@ -363,20 +650,23 @@ class ExerciseService:
             exercises_by_day = {}
             for ex in plan.get('exercises', []):
                 day = ex.get('day_of_week')
-                if day:
+                if day and MIN_DAY_OF_WEEK <= day <= MAX_DAY_OF_WEEK:
                     if day not in exercises_by_day:
                         exercises_by_day[day] = []
                     exercises_by_day[day].append(ex)
             
+            if not exercises_by_day:
+                return {'success': False, 'error': 'Plano não possui exercícios agendados por dia da semana'}
+            
             # Cria sessões para cada dia com exercícios
-            from datetime import datetime, timedelta
-            start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except:
+                start = datetime.fromisoformat(start_date)
             
             sessions = []
             for day_of_week, exercises in exercises_by_day.items():
                 # Calcula data do dia da semana (1=Segunda=0, 7=Domingo=6 no Python weekday)
-                # Python weekday: 0=Segunda, 6=Domingo
-                # Nosso sistema: 1=Segunda, 7=Domingo
                 python_weekday = day_of_week - 1
                 current_weekday = start.weekday()
                 days_to_add = python_weekday - current_weekday
@@ -387,7 +677,7 @@ class ExerciseService:
                 session_data = {
                     'user_id': user_id,
                     'plan_id': plan_id,
-                    'week_number': week_number,
+                    'week_number': max(1, week_number),
                     'day_of_week': day_of_week,
                     'scheduled_date': session_date.date().isoformat(),
                     'status': 'scheduled',
@@ -405,8 +695,23 @@ class ExerciseService:
     
     def get_weekly_sessions(self, user_id: str, plan_id: str = None, week_number: int = None,
                            start_date: str = None, end_date: str = None) -> List[Dict[str, Any]]:
-        """Busca sessões de treino"""
+        """
+        Busca sessões de treino do usuário
+        
+        Args:
+            user_id (str): ID do usuário
+            plan_id (str, optional): Filtrar por plano
+            week_number (int, optional): Filtrar por semana
+            start_date (str, optional): Data inicial (ISO format)
+            end_date (str, optional): Data final (ISO format)
+            
+        Returns:
+            List[Dict[str, Any]]: Lista de sessões com exercícios e progresso
+        """
         try:
+            if not user_id:
+                return []
+            
             query = self.supabase.table('weekly_workout_sessions').select('*').eq('user_id', user_id)
             
             if plan_id:
@@ -433,14 +738,30 @@ class ExerciseService:
             return []
     
     def _get_session_exercises(self, session_id: str, plan_id: str = None) -> List[Dict[str, Any]]:
-        """Busca exercícios de uma sessão"""
+        """
+        Busca exercícios de uma sessão (método privado)
+        
+        Args:
+            session_id (str): ID da sessão
+            plan_id (str, optional): ID do plano
+            
+        Returns:
+            List[Dict[str, Any]]: Lista de exercícios da sessão
+        """
         try:
             if plan_id:
-                # Busca exercícios do plano para o dia da semana da sessão
-                session = self.supabase.table('weekly_workout_sessions').select('day_of_week').eq('id', session_id).execute()
+                session = self.supabase.table('weekly_workout_sessions')\
+                    .select('day_of_week')\
+                    .eq('id', session_id)\
+                    .execute()
                 if session.data:
                     day_of_week = session.data[0].get('day_of_week')
-                    result = self.supabase.table('workout_plan_exercises').select('*, exercises(*)').eq('plan_id', plan_id).eq('day_of_week', day_of_week).order('order_in_workout').execute()
+                    result = self.supabase.table('workout_plan_exercises')\
+                        .select('*, exercises(*)')\
+                        .eq('plan_id', plan_id)\
+                        .eq('day_of_week', day_of_week)\
+                        .order('order_in_workout')\
+                        .execute()
                     if result.data:
                         return result.data
             return []
@@ -449,9 +770,20 @@ class ExerciseService:
             return []
     
     def _get_session_progress(self, session_id: str) -> List[Dict[str, Any]]:
-        """Busca progresso de uma sessão"""
+        """
+        Busca progresso de uma sessão (método privado)
+        
+        Args:
+            session_id (str): ID da sessão
+            
+        Returns:
+            List[Dict[str, Any]]: Lista de progresso dos exercícios
+        """
         try:
-            result = self.supabase.table('session_exercise_progress').select('*, exercises(*)').eq('session_id', session_id).execute()
+            result = self.supabase.table('session_exercise_progress')\
+                .select('*, exercises(*)')\
+                .eq('session_id', session_id)\
+                .execute()
             return result.data if result.data else []
         except Exception as e:
             logger.error(f"Erro ao buscar progresso: {e}")
@@ -459,8 +791,22 @@ class ExerciseService:
     
     def update_session_status(self, session_id: str, user_id: str, status: str, 
                              duration_minutes: int = None) -> Dict[str, Any]:
-        """Atualiza status de uma sessão"""
+        """
+        Atualiza status de uma sessão
+        
+        Args:
+            session_id (str): ID da sessão
+            user_id (str): ID do usuário (para verificação)
+            status (str): Novo status (scheduled, in_progress, completed, skipped)
+            duration_minutes (int, optional): Duração em minutos (para status completed)
+            
+        Returns:
+            Dict[str, Any]: Resultado da operação
+        """
         try:
+            if status not in WORKOUT_STATUS:
+                return {'success': False, 'error': 'Status inválido'}
+            
             update_data = {
                 'status': status,
                 'updated_at': datetime.now().isoformat()
@@ -471,9 +817,13 @@ class ExerciseService:
             elif status == 'completed':
                 update_data['completed_at'] = datetime.now().isoformat()
                 if duration_minutes:
-                    update_data['duration_minutes'] = duration_minutes
+                    update_data['duration_minutes'] = max(0, duration_minutes)
             
-            result = self.supabase.table('weekly_workout_sessions').update(update_data).eq('id', session_id).eq('user_id', user_id).execute()
+            result = self.supabase.table('weekly_workout_sessions')\
+                .update(update_data)\
+                .eq('id', session_id)\
+                .eq('user_id', user_id)\
+                .execute()
             
             if result.data:
                 return {'success': True, 'session': result.data[0]}
@@ -483,18 +833,38 @@ class ExerciseService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def save_exercise_progress(self, session_id: str, exercise_id: str, progress_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Salva progresso de um exercício em uma sessão"""
+        """
+        Salva progresso de um exercício em uma sessão
+        
+        Args:
+            session_id (str): ID da sessão
+            exercise_id (str): ID do exercício
+            progress_data (Dict[str, Any]): Dados do progresso
+                - sets_completed (int): Séries completadas
+                - reps_completed (str): Repetições completadas
+                - weight_kg (float, optional): Peso em kg
+                - duration_minutes (int, optional): Duração em minutos
+                - rest_taken_seconds (int, optional): Descanso em segundos
+                - completed (bool): Se foi completado
+                - notes (str, optional): Notas
+                
+        Returns:
+            Dict[str, Any]: Resultado da operação
+        """
         try:
+            if not session_id or not exercise_id:
+                return {'success': False, 'error': 'session_id e exercise_id são obrigatórios'}
+            
             progress_record = {
                 'session_id': session_id,
                 'exercise_id': exercise_id,
-                'sets_completed': progress_data.get('sets_completed', 0),
-                'reps_completed': progress_data.get('reps_completed'),
-                'weight_kg': progress_data.get('weight_kg'),
-                'duration_minutes': progress_data.get('duration_minutes'),
-                'rest_taken_seconds': progress_data.get('rest_taken_seconds'),
+                'sets_completed': max(0, progress_data.get('sets_completed', 0)),
+                'reps_completed': progress_data.get('reps_completed', ''),
+                'weight_kg': max(0, progress_data.get('weight_kg', 0)) if progress_data.get('weight_kg') else None,
+                'duration_minutes': max(0, progress_data.get('duration_minutes', 0)) if progress_data.get('duration_minutes') else None,
+                'rest_taken_seconds': max(0, progress_data.get('rest_taken_seconds', 0)) if progress_data.get('rest_taken_seconds') else None,
                 'completed': progress_data.get('completed', False),
-                'notes': progress_data.get('notes')
+                'notes': progress_data.get('notes', '').strip()
             }
             
             result = self.supabase.table('session_exercise_progress').insert(progress_record).execute()
@@ -509,9 +879,18 @@ class ExerciseService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def _update_session_completion(self, session_id: str) -> None:
-        """Atualiza contador de exercícios completos na sessão"""
+        """
+        Atualiza contador de exercícios completos na sessão (método privado)
+        
+        Args:
+            session_id (str): ID da sessão
+        """
         try:
-            result = self.supabase.table('session_exercise_progress').select('id').eq('session_id', session_id).eq('completed', True).execute()
+            result = self.supabase.table('session_exercise_progress')\
+                .select('id')\
+                .eq('session_id', session_id)\
+                .eq('completed', True)\
+                .execute()
             completed_count = len(result.data) if result.data else 0
             
             self.supabase.table('weekly_workout_sessions').update({

@@ -14,26 +14,23 @@ import {
   Heart,
   Zap
 } from 'lucide-react';
+import { 
+  formatDifficulty, 
+  getDifficultyColor, 
+  formatGoal, 
+  formatWorkoutDuration,
+  countPlanExercises
+} from '@/utils/workoutHelpers';
 
+/**
+ * Componente de card para exibir plano de treino
+ * 
+ * @param {Object} plan - Plano de treino
+ * @param {Function} onStartPlan - Callback ao iniciar plano
+ * @param {Function} onViewDetails - Callback ao ver detalhes
+ * @param {Function} onAddToFavorites - Callback ao adicionar aos favoritos
+ */
 export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavorites }) => {
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
-  };
-
-  const getDifficultyLabel = (difficulty) => {
-    switch (difficulty) {
-      case 'beginner': return 'Iniciante';
-      case 'intermediate': return 'Intermediário';
-      case 'advanced': return 'Avançado';
-      default: return difficulty;
-    }
-  };
-
   const getGoalIcon = (goal) => {
     switch (goal) {
       case 'weight_loss': return <TrendingUp className="w-4 h-4" />;
@@ -44,15 +41,11 @@ export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavor
     }
   };
 
-  const getGoalLabel = (goal) => {
-    switch (goal) {
-      case 'weight_loss': return 'Perda de Peso';
-      case 'muscle_gain': return 'Ganho de Massa';
-      case 'endurance': return 'Resistência';
-      case 'strength': return 'Força';
-      default: return goal;
-    }
-  };
+  // Normaliza dados do plano
+  const planDuration = plan.duration_weeks || plan.duration || 0;
+  const workoutsPerWeek = plan.workouts_per_week || 0;
+  const exercisesCount = countPlanExercises(plan);
+  const planGoal = plan.goal ? [plan.goal] : (plan.goals || []);
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
@@ -78,10 +71,10 @@ export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavor
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           <Badge className={`${getDifficultyColor(plan.difficulty)} text-xs`}>
-            {getDifficultyLabel(plan.difficulty)}
+            {formatDifficulty(plan.difficulty)}
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            {plan.duration} semanas
+            {planDuration} semana{planDuration !== 1 ? 's' : ''}
           </Badge>
         </div>
 
@@ -121,10 +114,10 @@ export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavor
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Objetivos:</span>
           </div>
           <div className="flex flex-wrap gap-1">
-            {plan.goals.map((goal, index) => (
+            {planGoal.map((goal, index) => (
               <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">
                 {getGoalIcon(goal)}
-                {getGoalLabel(goal)}
+                {formatGoal(goal)}
               </Badge>
             ))}
           </div>
@@ -136,7 +129,7 @@ export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavor
             <Clock className="w-4 h-4 text-gray-500" />
             <div>
               <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {plan.workout_duration} min
+                {plan.workout_duration ? formatWorkoutDuration(plan.workout_duration) : 'N/A'}
               </div>
               <div className="text-xs text-gray-500">por treino</div>
             </div>
@@ -146,7 +139,7 @@ export const WorkoutPlanCard = ({ plan, onStartPlan, onViewDetails, onAddToFavor
             <Users className="w-4 h-4 text-gray-500" />
             <div>
               <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {plan.exercises_count}
+                {exercisesCount}
               </div>
               <div className="text-xs text-gray-500">exercícios</div>
             </div>
