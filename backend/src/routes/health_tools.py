@@ -774,22 +774,23 @@ def calculate_stress_route():
             ]
         }
         
-        save_result = health_service.save_stress_calculation(user_id, calculation_data)
-        
-        if not save_result.get('success'):
-            return jsonify({'error': 'Erro ao salvar cálculo'}), 500
-        
-        log_user_activity(user_id, 'stress_calculated', {
-            'stress_level': stress_level,
-            'stress_score': stress_score
-        })
+        saved = False
+        if user_id:
+            save_result = health_service.save_stress_calculation(user_id, calculation_data)
+            saved = save_result.get('success', False)
+            
+            if saved:
+                log_user_activity(user_id, 'stress_calculated', {
+                    'stress_level': stress_level,
+                    'stress_score': stress_score
+                })
         
         return jsonify({
             'stress_level': stress_level,
             'stress_score': stress_score,
             'coping_strategies': coping_strategies,
             'recommendations': calculation_data['recommendations'],
-            'saved': True
+            'saved': saved
         }), 200
         
     except Exception as e:
