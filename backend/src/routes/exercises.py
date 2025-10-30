@@ -131,3 +131,223 @@ def get_muscle_groups():
         return jsonify({'groups': groups}), 200
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# ============================================================
+# ROTAS PARA PLANOS DE TREINO
+# ============================================================
+
+@exercises_bp.route('/workout-plans', methods=['POST'])
+@token_required
+@rate_limit("10 per hour")
+@validate_json('name', 'difficulty')
+def create_workout_plan():
+    """Cria um novo plano de treino"""
+    try:
+        data = request.get_json()
+        user_id = request.current_user['id']
+        
+        result = exercise_service.create_workout_plan(user_id, data)
+        
+        if result.get('success'):
+            log_user_activity(user_id, 'workout_plan_created', {
+                'plan_id': result['plan']['id'],
+                'name': data['name']
+            })
+            return jsonify(result), 201
+        else:
+            return jsonify({'error': result['error']}), 400
+            
+    except Exception as e:
+        log_security_event('workout_plan_create_error', details={'error': str(e)})
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/workout-plans', methods=['GET'])
+@token_required
+@rate_limit("30 per minute")
+def get_workout_plans():
+    """Lista planos de treino"""
+    try:
+        user_id = request.args.get('user_id')
+        is_active = request.args.get('is_active')
+        is_public = request.args.get('is_public')
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        
+        # Se não especificar user_id, usa o usuário atual
+        if not user_id:
+            user_id = request.current_user['id']
+        
+        is_active_bool = None if is_active is None else is_active.lower() == 'true'
+        is_public_bool = None if is_public is None else is_public.lower() == 'true'
+        
+        result = exercise_service.get_workout_plans(
+            user_id=user_id,
+            is_active=is_active_bool,
+            is_public=is_public_bool,
+            page=page,
+            limit=limit
+        )
+        
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/workout-plans/<plan_id>', methods=['GET'])
+@token_required
+@rate_limit("30 per minute")
+def get_workout_plan(plan_id):
+    """Busca plano de treino por ID"""
+    try:
+        plan = exercise_service.get_workout_plan_by_id(plan_id)
+        
+        if plan:
+            return jsonify({'plan': plan}), 200
+        else:
+            return jsonify({'error': 'Plano não encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/workout-plans/<plan_id>', methods=['PUT'])
+@token_required
+@rate_limit("10 per hour")
+def update_workout_plan(plan_id):
+    """Atualiza um plano de treino"""
+    try:
+        data = request.get_json()
+        user_id = request.current_user['id']
+        
+        result = exercise_service.update_workout_plan(plan_id, user_id, data)
+        
+        if result.get('success'):
+            log_user_activity(user_id, 'workout_plan_updated', {'plan_id': plan_id})
+            return jsonify(result), 200
+        else:
+            return jsonify({'error': result['error']}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/workout-plans/<plan_id>', methods=['DELETE'])
+@token_required
+@rate_limit("10 per hour")
+def delete_workout_plan(plan_id):
+    """Deleta um plano de treino"""
+    try:
+        user_id = request.current_user['id']
+        
+        result = exercise_service.delete_workout_plan(plan_id, user_id)
+        
+        if result.get('success'):
+            log_user_activity(user_id, 'workout_plan_deleted', {'plan_id': plan_id})
+            return jsonify({'message': 'Plano deletado com sucesso'}), 200
+        else:
+            return jsonify({'error': result['error']}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# ============================================================
+# ROTAS PARA SESSÕES DE TREINO SEMANAL
+# ============================================================
+
+@exercises_bp.route('/weekly-sessions', methods=['POST'])
+@token_required
+@rate_limit("10 per hour")
+@validate_json('plan_id', 'start_date')
+def create_weekly_sessions():
+    """Cria sessões de treino para uma semana"""
+    try:
+        data = request.get_json()
+        user_id = request.current_user['id']
+        week_number = data.get('week_number', 1)
+        
+        result = exercise_service.create_weekly_sessions(
+            user_id,
+            data['plan_id'],
+            data['start_date'],
+            week_number
+        )
+        
+        if result.get('success'):
+            log_user_activity(user_id, 'weekly_sessions_created', {
+                'plan_id': data['plan_id'],
+                'week_number': week_number
+            })
+            return jsonify(result), 201
+        else:
+            return jsonify({'error': result['error']}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/weekly-sessions', methods=['GET'])
+@token_required
+@rate_limit("30 per minute")
+def get_weekly_sessions():
+    """Busca sessões de treino"""
+    try:
+        user_id = request.current_user['id']
+        plan_id = request.args.get('plan_id')
+        week_number = request.args.get('week_number', type=int)
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        sessions = exercise_service.get_weekly_sessions(
+            user_id,
+            plan_id=plan_id,
+            week_number=week_number,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return jsonify({'sessions': sessions}), 200
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/weekly-sessions/<session_id>/status', methods=['PUT'])
+@token_required
+@rate_limit("20 per hour")
+def update_session_status(session_id):
+    """Atualiza status de uma sessão"""
+    try:
+        data = request.get_json()
+        user_id = request.current_user['id']
+        status = data.get('status')
+        duration_minutes = data.get('duration_minutes')
+        
+        result = exercise_service.update_session_status(
+            session_id,
+            user_id,
+            status,
+            duration_minutes
+        )
+        
+        if result.get('success'):
+            log_user_activity(user_id, 'session_status_updated', {
+                'session_id': session_id,
+                'status': status
+            })
+            return jsonify(result), 200
+        else:
+            return jsonify({'error': result['error']}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@exercises_bp.route('/weekly-sessions/<session_id>/progress', methods=['POST'])
+@token_required
+@rate_limit("30 per hour")
+@validate_json('exercise_id')
+def save_exercise_progress(session_id):
+    """Salva progresso de um exercício"""
+    try:
+        data = request.get_json()
+        
+        result = exercise_service.save_exercise_progress(
+            session_id,
+            data['exercise_id'],
+            data.get('progress', {})
+        )
+        
+        if result.get('success'):
+            return jsonify(result), 201
+        else:
+            return jsonify({'error': result['error']}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
