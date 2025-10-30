@@ -386,14 +386,18 @@ def get_calorie_history():
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @health_tools_bp.route('/biological-age/calculate', methods=['POST'])
-@token_required
 @rate_limit("5 per hour")
-@log_activity('biological_age_calculation')
 def calculate_biological_age_route():
-    """Calcula idade biológica e salva no banco"""
+    """Calcula idade biológica (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
         # Aqui você implementaria a lógica de cálculo da idade biológica
         # Por enquanto, vamos simular um resultado
@@ -421,16 +425,17 @@ def calculate_biological_age_route():
             'recommendations': data.get('recommendations', [])
         }
         
-        save_result = health_service.save_biological_age_calculation(user_id, calculation_data)
-        
-        if not save_result.get('success'):
-            return jsonify({'error': 'Erro ao salvar cálculo'}), 500
-        
-        log_user_activity(user_id, 'biological_age_calculated', {
-            'chronological_age': chronological_age,
-            'biological_age': biological_age,
-            'age_difference': age_difference
-        })
+        saved = False
+        if user_id:
+            save_result = health_service.save_biological_age_calculation(user_id, calculation_data)
+            saved = save_result.get('success', False)
+            
+            if saved:
+                log_user_activity(user_id, 'biological_age_calculated', {
+                    'chronological_age': chronological_age,
+                    'biological_age': biological_age,
+                    'age_difference': age_difference
+                })
         
         return jsonify({
             'chronological_age': chronological_age,
@@ -438,7 +443,7 @@ def calculate_biological_age_route():
             'age_difference': age_difference,
             'classification': classification,
             'score': calculation_data['score'],
-            'saved': True
+            'saved': saved
         }), 200
         
     except Exception as e:
@@ -554,14 +559,18 @@ def calculate_hydration_route():
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @health_tools_bp.route('/metabolism/calculate', methods=['POST'])
-@token_required
 @rate_limit("10 per hour")
-@log_activity('metabolism_calculation')
 def calculate_metabolism_route():
-    """Calcula metabolismo e salva no banco"""
+    """Calcula metabolismo (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
         required_fields = ['age', 'weight', 'height', 'gender', 'activity_level']
         for field in required_fields:
@@ -571,12 +580,21 @@ def calculate_metabolism_route():
         # Calcula BMR usando Harris-Benedict
         age = int(data['age'])
         weight = float(data['weight'])
-        height = float(data['height'])
+        height_cm = float(data['height'])
+        
+        # Converte altura de cm para metros se necessário
+        if height_cm > 3:  # Provavelmente está em cm
+            height_m = height_cm / 100
+        else:
+            height_m = height_cm  # Já está em metros
+        
+        # Convertemos para cm novamente para a fórmula de Harris-Benedict
+        height_cm_for_formula = height_m * 100
         
         if data['gender'] == 'male':
-            bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age)
+            bmr = 88.362 + (13.397 * weight) + (4.799 * height_cm_for_formula) - (5.677 * age)
         else:
-            bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age)
+            bmr = 447.593 + (9.247 * weight) + (3.098 * height_cm_for_formula) - (4.330 * age)
         
         # Calcula TDEE
         activity_factors = {
@@ -600,7 +618,8 @@ def calculate_metabolism_route():
             'age': data['age'],
             'gender': data['gender'],
             'weight': data['weight'],
-            'height': data['height'],
+            'height': height_m,  # Salva em metros
+            'height_cm': height_cm,  # Também salva em cm para referência
             'activity_level': data['activity_level'],
             'bmr': round(bmr),
             'tdee': round(tdee),
@@ -608,22 +627,23 @@ def calculate_metabolism_route():
             'recommendations': data.get('recommendations', [])
         }
         
-        save_result = health_service.save_metabolism_calculation(user_id, calculation_data)
-        
-        if not save_result.get('success'):
-            return jsonify({'error': 'Erro ao salvar cálculo'}), 500
-        
-        log_user_activity(user_id, 'metabolism_calculated', {
-            'bmr': round(bmr),
-            'tdee': round(tdee),
-            'metabolism_type': metabolism_type
-        })
+        saved = False
+        if user_id:
+            save_result = health_service.save_metabolism_calculation(user_id, calculation_data)
+            saved = save_result.get('success', False)
+            
+            if saved:
+                log_user_activity(user_id, 'metabolism_calculated', {
+                    'bmr': round(bmr),
+                    'tdee': round(tdee),
+                    'metabolism_type': metabolism_type
+                })
         
         return jsonify({
             'bmr': round(bmr),
             'tdee': round(tdee),
             'metabolism_type': metabolism_type,
-            'saved': True
+            'saved': saved
         }), 200
         
     except Exception as e:
