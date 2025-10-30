@@ -710,14 +710,18 @@ def calculate_sleep_route():
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @health_tools_bp.route('/stress/calculate', methods=['POST'])
-@token_required
 @rate_limit("10 per hour")
-@log_activity('stress_calculation')
 def calculate_stress_route():
-    """Calcula nível de estresse e salva no banco"""
+    """Calcula nível de estresse (público - não requer autenticação)"""
     try:
         data = request.get_json()
-        user_id = request.current_user['id']
+        # Tenta obter user_id se autenticado, mas não requer
+        user_id = None
+        try:
+            if hasattr(request, 'current_user') and request.current_user:
+                user_id = request.current_user.get('id')
+        except:
+            pass
         
         required_fields = ['stress_factors']
         for field in required_fields:
