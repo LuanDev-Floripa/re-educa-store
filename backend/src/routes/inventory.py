@@ -1,5 +1,17 @@
 """
-Rotas de Estoque RE-EDUCA Store
+Rotas de Estoque RE-EDUCA Store.
+
+Gerencia controle de estoque de produtos incluindo:
+- Consulta de disponibilidade
+- Atualização de estoque (admin)
+- Reserva de produtos para pedidos
+- Liberação de reservas
+- Relatórios de movimentação
+
+SEGURANÇA:
+- Consultas: usuários autenticados
+- Atualizações: apenas administradores
+- Logs de todas as operações críticas
 """
 from flask import Blueprint, request, jsonify
 from services.inventory_service import InventoryService
@@ -13,7 +25,15 @@ inventory_service = InventoryService()
 @token_required
 @rate_limit("30 per minute")
 def get_product_stock(product_id):
-    """Obtém estoque de um produto"""
+    """
+    Obtém estoque de um produto.
+    
+    Args:
+        product_id (str): ID do produto.
+        
+    Returns:
+        JSON: Quantidade em estoque e disponibilidade.
+    """
     try:
         result = inventory_service.get_product_stock(product_id)
         

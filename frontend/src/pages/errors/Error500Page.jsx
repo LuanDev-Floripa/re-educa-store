@@ -1,7 +1,11 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, RefreshCw, Mail } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Home, RefreshCw, Mail } from "lucide-react";
 
+/**
+ * Error500Page
+ * Página de erro 500 com ações de recarregar e suporte.
+ */
 export default function Error500Page() {
   const handleReload = () => {
     window.location.reload();
@@ -16,7 +20,7 @@ export default function Error500Page() {
             500
           </div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="text-6xl animate-bounce">😵</div>
+            <div className="text-6xl animate-bounce" aria-hidden="true">😵</div>
           </div>
         </div>
 
@@ -24,9 +28,10 @@ export default function Error500Page() {
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
           Erro Interno do Servidor
         </h1>
-        
+
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
-          Desculpe! Algo deu errado no nosso lado. Nossa equipe já foi notificada e está trabalhando para resolver.
+          Desculpe! Algo deu errado no nosso lado. Nossa equipe já foi
+          notificada e está trabalhando para resolver.
         </p>
 
         {/* Ações */}
@@ -38,7 +43,7 @@ export default function Error500Page() {
             <RefreshCw size={20} />
             Tentar Novamente
           </button>
-          
+
           <Link
             to="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg font-semibold border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 dark:hover:border-red-500 hover:shadow-lg transition-all duration-200"
@@ -53,7 +58,7 @@ export default function Error500Page() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             O que aconteceu?
           </h2>
-          
+
           <div className="text-left space-y-3 text-gray-600 dark:text-gray-300">
             <p className="flex items-start gap-2">
               <span className="text-red-500">•</span>

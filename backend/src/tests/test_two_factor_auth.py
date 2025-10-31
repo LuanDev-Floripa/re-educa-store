@@ -1,5 +1,15 @@
 """
-Testes de Two-Factor Authentication (2FA) RE-EDUCA Store
+Testes de Two-Factor Authentication (2FA) RE-EDUCA Store.
+
+Cobre funcionalidades de autenticação de dois fatores incluindo:
+- Geração de chaves secretas
+- Geração de QR codes
+- Códigos de backup
+- Setup e habilitação de 2FA
+- Verificação de códigos TOTP
+- Verificação de códigos de backup
+- Desabilitação de 2FA
+- Regeneração de códigos de backup
 """
 import pytest
 import json
@@ -48,13 +58,42 @@ def mock_qrcode():
         yield mock
 
 class TestTwoFactorService:
-    """Testes do serviço de 2FA"""
+    """
+    Testes do serviço de 2FA RE-EDUCA Store.
+    
+    Suite completa de testes para TwoFactorService incluindo:
+    - Geração de chaves e códigos
+    - Setup e verificação
+    - Códigos de backup
+    - Regeneração
+    """
     
     def test_generate_secret_key(self, two_factor_service):
-        """Testa geração de chave secreta"""
+        """
+        Testa geração de chave secreta.
+        
+        Verifica:
+        - Chave tem tamanho correto (32 caracteres)
+        - Chave é alfanumérica
+        - Chave é única por usuário
+        
+        Args:
+            two_factor_service: Instância do TwoFactorService.
+        """
+        # Assert: Chave secreta deve ser gerada
         secret_key = two_factor_service.generate_secret_key('test@example.com')
-        assert len(secret_key) == 32
-        assert secret_key.isalnum()
+        assert secret_key is not None, "Chave secreta não pode ser None"
+        assert isinstance(secret_key, str), "Chave secreta deve ser string"
+        
+        # Assert: Chave deve ter tamanho correto (base32)
+        assert len(secret_key) == 32, f"Chave deve ter 32 caracteres, recebido {len(secret_key)}"
+        
+        # Assert: Chave deve ser alfanumérica (base32)
+        assert secret_key.isalnum(), "Chave secreta deve ser alfanumérica"
+        
+        # Assert: Chaves geradas devem ser diferentes
+        secret_key2 = two_factor_service.generate_secret_key('test2@example.com')
+        assert secret_key != secret_key2, "Chaves devem ser únicas por usuário"
     
     def test_generate_qr_code(self, two_factor_service, mock_pyotp, mock_qrcode):
         """Testa geração de QR code"""

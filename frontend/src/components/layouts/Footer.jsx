@@ -1,42 +1,56 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, Github, Twitter, Instagram, Mail } from 'lucide-react';
+/**
+ * Footer Component - RE-EDUCA Store
+ * 
+ * Rodapé do site com links e informações.
+ * 
+ * Funcionalidades:
+ * - Links de navegação organizados por categoria
+ * - Links de redes sociais
+ * - Informações de copyright
+ * - Links legais (Privacidade, Termos, LGPD)
+ * 
+ * @component
+ * @returns {JSX.Element} Rodapé completo do site
+ */
+import React from "react";
+import { Link } from "react-router-dom";
+import { Heart, Github, Twitter, Instagram, Mail } from "lucide-react";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     product: [
-      { name: 'Ferramentas', href: '/tools' },
-      { name: 'Loja', href: '/store' },
-      { name: 'Preços', href: '/pricing' },
-      { name: 'API', href: '/api' },
+      { name: "Ferramentas", href: "/tools" },
+      { name: "Loja", href: "/store" },
+      { name: "Preços", href: "/pricing" },
+      { name: "API", href: "/api" },
     ],
     company: [
-      { name: 'Sobre', href: '/about' },
-      { name: 'Blog', href: '/blog' },
-      { name: 'Carreiras', href: '/careers' },
-      { name: 'Contato', href: '/contact' },
+      { name: "Sobre", href: "/about" },
+      { name: "Blog", href: "/blog" },
+      { name: "Carreiras", href: "/careers" },
+      { name: "Contato", href: "/contact" },
     ],
     support: [
-      { name: 'Central de Ajuda', href: '/help' },
-      { name: 'Documentação', href: '/docs' },
-      { name: 'Status', href: '/status' },
-      { name: 'Comunidade', href: '/community' },
+      { name: "Central de Ajuda", href: "/help" },
+      { name: "Documentação", href: "/docs" },
+      { name: "Status", href: "/status" },
+      { name: "Comunidade", href: "/community" },
     ],
     legal: [
-      { name: 'Privacidade', href: '/privacy' },
-      { name: 'Termos', href: '/terms' },
-      { name: 'Cookies', href: '/cookies' },
-      { name: 'LGPD', href: '/lgpd' },
+      { name: "Privacidade", href: "/privacy" },
+      { name: "Termos", href: "/terms" },
+      { name: "Cookies", href: "/cookies" },
+      { name: "LGPD", href: "/lgpd" },
     ],
   };
 
   const socialLinks = [
-    { name: 'GitHub', href: 'https://github.com', icon: Github },
-    { name: 'Twitter', href: 'https://twitter.com', icon: Twitter },
-    { name: 'Instagram', href: 'https://instagram.com', icon: Instagram },
-    { name: 'Email', href: 'mailto:contato@re-educa.com', icon: Mail },
+    { name: "GitHub", href: "https://github.com", icon: Github },
+    { name: "Twitter", href: "https://twitter.com", icon: Twitter },
+    { name: "Instagram", href: "https://instagram.com", icon: Instagram },
+    { name: "Email", href: "mailto:contato@re-educa.com", icon: Mail },
   ];
 
   return (
@@ -52,8 +66,8 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
-              Transformando vidas através da educação em saúde. 
-              Ferramentas inovadoras para uma vida mais saudável.
+              Transformando vidas através da educação em saúde. Ferramentas
+              inovadoras para uma vida mais saudável.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (

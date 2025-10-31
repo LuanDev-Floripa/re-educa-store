@@ -1,35 +1,50 @@
-import React from 'react';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Card, CardContent } from '@/components/Ui/card';
-import { Badge } from '@/components/Ui/badge';
-import { useApi } from '../../lib/api';
-import { CheckCircle, XCircle, Tag, Percent, DollarSign } from 'lucide-react';
-import { toast } from 'sonner';
-import { formatCurrency } from '../../lib/utils';
+import React from "react";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Card, CardContent } from "@/components/Ui/card";
+import { Badge } from "@/components/Ui/badge";
+import { useApi } from "../../lib/api";
+import { CheckCircle, XCircle, Tag, Percent, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+import { formatCurrency } from "../../lib/utils";
 
-export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appliedCoupon }) => {
+/**
+ * Entrada e validação de cupons de desconto.
+ * - Valida cupom na API e aplica/remover na ordem
+ * - Exibe feedback com toasts e cartões de status
+ */
+export const CouponInput = ({
+  orderValue,
+  onCouponApplied,
+  onCouponRemoved,
+  appliedCoupon,
+}) => {
   const { request } = useApi();
-  const [couponCode, setCouponCode] = React.useState('');
+  const [couponCode, setCouponCode] = React.useState("");
   const [validating, setValidating] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState(null);
 
   const validateCoupon = async (code) => {
     if (!code.trim()) return;
+    const numericOrder = Number(orderValue);
+    if (!Number.isFinite(numericOrder) || numericOrder < 0) {
+      toast.error("Valor do pedido inválido");
+      return { success: false, error: "Valor do pedido inválido" };
+    }
 
     setValidating(true);
     try {
-      const response = await request(() => 
-        fetch('/api/promotions/coupons/validate', {
-          method: 'POST',
+      const response = await request(() =>
+        fetch("/api/promotions/coupons/validate", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             code: code.trim(),
-            order_value: orderValue
+            order_value: numericOrder,
           }),
-        })
+        }),
       );
 
       if (response.ok) {
@@ -42,9 +57,9 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
         return { success: false, error: error.error };
       }
     } catch (error) {
-      console.error('Erro ao validar cupom:', error);
-      setValidationResult({ success: false, error: 'Erro ao validar cupom' });
-      return { success: false, error: 'Erro ao validar cupom' };
+      console.error("Erro ao validar cupom:", error);
+      setValidationResult({ success: false, error: "Erro ao validar cupom" });
+      return { success: false, error: "Erro ao validar cupom" };
     } finally {
       setValidating(false);
     }
@@ -52,17 +67,17 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
-      toast.error('Digite um código de cupom');
+      toast.error("Digite um código de cupom");
       return;
     }
 
     const validation = await validateCoupon(couponCode);
-    
+
     if (validation.success) {
       onCouponApplied && onCouponApplied(validation);
-      setCouponCode('');
+      setCouponCode("");
       setValidationResult(null);
-      toast.success('Cupom aplicado com sucesso!');
+      toast.success("Cupom aplicado com sucesso!");
     } else {
       toast.error(validation.error);
     }
@@ -71,15 +86,19 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
   const removeCoupon = () => {
     onCouponRemoved && onCouponRemoved();
     setValidationResult(null);
-    toast.success('Cupom removido');
+    toast.success("Cupom removido");
   };
 
   const getDiscountIcon = (type) => {
-    return type === 'percentage' ? <Percent className="w-4 h-4" /> : <DollarSign className="w-4 h-4" />;
+    return type === "percentage" ? (
+      <Percent className="w-4 h-4" />
+    ) : (
+      <DollarSign className="w-4 h-4" />
+    );
   };
 
   const getDiscountText = (coupon) => {
-    if (coupon.type === 'percentage') {
+    if (coupon.type === "percentage") {
       return `${coupon.value}% de desconto`;
     } else {
       return `${formatCurrency(coupon.value)} de desconto`;
@@ -97,16 +116,21 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-800"
+                    >
                       <Tag className="w-3 h-3 mr-1" />
-                      {appliedCoupon.coupon.code}
+                      {appliedCoupon?.coupon?.code}
                     </Badge>
                     <span className="text-sm font-medium text-green-800">
-                      {appliedCoupon.coupon.name}
+                      {appliedCoupon?.coupon?.name}
                     </span>
                   </div>
                   <p className="text-sm text-green-600">
-                    {getDiscountText(appliedCoupon.coupon)} aplicado
+                    {appliedCoupon?.coupon
+                      ? `${getDiscountText(appliedCoupon.coupon)} aplicado`
+                      : "Cupom aplicado"}
                   </p>
                 </div>
               </div>
@@ -132,30 +156,34 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
                 placeholder="Digite o código do cupom"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
+                onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
                 className="uppercase"
+                aria-label="Código do cupom"
               />
             </div>
             <Button
               onClick={applyCoupon}
               disabled={validating || !couponCode.trim()}
               className="px-6"
+              aria-label="Aplicar cupom"
             >
               {validating ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
-                'Aplicar'
+                "Aplicar"
               )}
             </Button>
           </div>
 
           {/* Resultado da Validação */}
           {validationResult && (
-            <Card className={`border-2 ${
-              validationResult.success 
-                ? 'border-green-200 bg-green-50 dark:bg-green-900/20' 
-                : 'border-red-200 bg-red-50 dark:bg-red-900/20'
-            }`}>
+            <Card
+              className={`border-2 ${
+                validationResult.success
+                  ? "border-green-200 bg-green-50 dark:bg-green-900/20"
+                  : "border-red-200 bg-red-50 dark:bg-red-900/20"
+              }`}
+            >
               <CardContent className="p-3">
                 <div className="flex items-center space-x-2">
                   {validationResult.success ? (
@@ -166,8 +194,9 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
                           Cupom válido!
                         </p>
                         <p className="text-sm text-green-600">
-                          Desconto: {formatCurrency(validationResult.discount)} 
-                          (Valor final: {formatCurrency(validationResult.final_value)})
+                          Desconto: {formatCurrency(validationResult.discount)}
+                          (Valor final:{" "}
+                          {formatCurrency(validationResult.final_value)})
                         </p>
                       </div>
                     </>
@@ -196,17 +225,15 @@ export const CouponInput = ({ orderValue, onCouponApplied, onCouponRemoved, appl
               </h4>
               <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
                 <div className="flex items-center space-x-2">
-                  {getDiscountIcon(appliedCoupon.coupon.type)}
+                  {getDiscountIcon(appliedCoupon?.coupon?.type)}
                   <span>
-                    {getDiscountText(appliedCoupon.coupon)}
+                    {appliedCoupon?.coupon
+                      ? getDiscountText(appliedCoupon.coupon)
+                      : "Desconto aplicado"}
                   </span>
                 </div>
-                <div>
-                  Valor original: {formatCurrency(orderValue)}
-                </div>
-                <div>
-                  Desconto: -{formatCurrency(appliedCoupon.discount)}
-                </div>
+                <div>Valor original: {formatCurrency(orderValue)}</div>
+                <div>Desconto: -{formatCurrency(appliedCoupon.discount)}</div>
                 <div className="font-semibold text-lg">
                   Total: {formatCurrency(appliedCoupon.final_value)}
                 </div>

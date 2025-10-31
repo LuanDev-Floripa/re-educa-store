@@ -1,35 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { 
-  Plus, 
-  Play, 
-  Pause, 
-  ChevronLeft, 
-  ChevronRight, 
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Card, CardContent } from "../Ui/card";
+/**
+ * Seção de Stories (conteúdo efêmero).
+ * - Player com navegação, curtidas e respostas
+ * - Fallbacks para props opcionais e recursos do navegador
+ */
+import { Button } from "../Ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import {
+  Plus,
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
   X,
   Heart,
   MessageCircle,
   Share2,
   MoreHorizontal,
   Eye,
-  Clock
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Clock,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const StoriesSection = ({ 
-  stories, 
-  currentUser, 
-  onCreateStory, 
+const StoriesSection = ({
+  stories,
+  currentUser,
+  onCreateStory,
   onViewStory,
   onLikeStory,
-  onReplyStory 
+  onReplyStory,
 }) => {
+  const safeStories = Array.isArray(stories) ? stories : [];
   const [activeStory, setActiveStory] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -42,12 +49,12 @@ const StoriesSection = ({
   useEffect(() => {
     if (activeStory && isPlaying) {
       intervalRef.current = setInterval(() => {
-        setProgress(prev => {
+        setProgress((prev) => {
           if (prev >= 100) {
             handleNextStory();
             return 0;
           }
-          return prev + (100 / (storyDuration / 100));
+          return prev + 100 / (storyDuration / 100);
         });
       }, 100);
     } else {
@@ -61,20 +68,32 @@ const StoriesSection = ({
         clearInterval(intervalRef.current);
       }
     };
-  }, [activeStory, isPlaying]);
+  }, [activeStory, isPlaying, handleNextStory]);
 
-  const handleNextStory = () => {
+  const handleCloseStory = useCallback(() => {
+    setActiveStory(null);
+    setIsPlaying(true);
+    setProgress(0);
+  }, []);
+
+  const handleNextStory = useCallback(() => {
     if (activeStory) {
-      const currentUserStories = stories.filter(s => s.user_id === activeStory.user_id);
-      const currentIndex = currentUserStories.findIndex(s => s.id === activeStory.id);
-      
+      const currentUserStories = safeStories.filter(
+        (s) => s.user_id === activeStory.user_id,
+      );
+      const currentIndex = currentUserStories.findIndex(
+        (s) => s.id === activeStory.id,
+      );
+
       if (currentIndex < currentUserStories.length - 1) {
         setActiveStory(currentUserStories[currentIndex + 1]);
         setProgress(0);
       } else {
         // Próximo usuário
-        const currentUserIndex = stories.findIndex(s => s.user_id === activeStory.user_id);
-        const nextUserStories = stories.slice(currentUserIndex + 1);
+        const currentUserIndex = safeStories.findIndex(
+          (s) => s.user_id === activeStory.user_id,
+        );
+        const nextUserStories = safeStories.slice(currentUserIndex + 1);
         if (nextUserStories.length > 0) {
           setActiveStory(nextUserStories[0]);
           setProgress(0);
@@ -83,33 +102,35 @@ const StoriesSection = ({
         }
       }
     }
-  };
+  }, [activeStory, safeStories, handleCloseStory]);
 
-  const handlePrevStory = () => {
+  const handlePrevStory = useCallback(() => {
     if (activeStory) {
-      const currentUserStories = stories.filter(s => s.user_id === activeStory.user_id);
-      const currentIndex = currentUserStories.findIndex(s => s.id === activeStory.id);
-      
+      const currentUserStories = safeStories.filter(
+        (s) => s.user_id === activeStory.user_id,
+      );
+      const currentIndex = currentUserStories.findIndex(
+        (s) => s.id === activeStory.id,
+      );
+
       if (currentIndex > 0) {
         setActiveStory(currentUserStories[currentIndex - 1]);
         setProgress(0);
       } else {
         // Usuário anterior
-        const currentUserIndex = stories.findIndex(s => s.user_id === activeStory.user_id);
-        const prevUserStories = stories.slice(0, currentUserIndex).reverse();
+        const currentUserIndex = safeStories.findIndex(
+          (s) => s.user_id === activeStory.user_id,
+        );
+        const prevUserStories = safeStories
+          .slice(0, currentUserIndex)
+          .reverse();
         if (prevUserStories.length > 0) {
           setActiveStory(prevUserStories[0]);
           setProgress(0);
         }
       }
     }
-  };
-
-  const handleCloseStory = () => {
-    setActiveStory(null);
-    setIsPlaying(true);
-    setProgress(0);
-  };
+  }, [activeStory, safeStories]);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -117,27 +138,34 @@ const StoriesSection = ({
 
   const handleLikeStory = () => {
     if (activeStory) {
-      onLikeStory(activeStory.id);
-      toast.success('Story curtido!');
+      onLikeStory?.(activeStory.id);
+      toast.success("Story curtido!");
     }
   };
 
   const handleReplyStory = () => {
     if (activeStory) {
-      onReplyStory(activeStory.id);
+      onReplyStory?.(activeStory.id);
     }
   };
 
   const handleShareStory = () => {
     if (activeStory) {
-      navigator.share({
-        title: `Story de ${activeStory.user?.name}`,
-        text: activeStory.content,
-        url: window.location.href
-      }).catch(() => {
-        navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copiado!');
-      });
+      if (navigator?.share) {
+        navigator
+          .share({
+            title: `Story de ${activeStory.user?.name}`,
+            text: activeStory.content,
+            url: window.location.href,
+          })
+          .catch(() => {
+            navigator.clipboard?.writeText?.(window.location.href);
+            toast.success("Link copiado!");
+          });
+      } else {
+        navigator.clipboard?.writeText?.(window.location.href);
+        toast.success("Link copiado!");
+      }
     }
   };
 
@@ -145,10 +173,10 @@ const StoriesSection = ({
     setActiveStory(story);
     setProgress(0);
     setIsPlaying(true);
-    
+
     // Marcar como visualizado
-    setViewedStories(prev => new Set([...prev, story.id]));
-    onViewStory(story.id);
+    setViewedStories((prev) => new Set([...prev, story.id]));
+    onViewStory?.(story.id);
   };
 
   const getStoryProgress = (storyId) => {
@@ -161,12 +189,12 @@ const StoriesSection = ({
 
   const getStoriesByUser = () => {
     const userStories = {};
-    stories.forEach(story => {
+    stories.forEach((story) => {
       if (!userStories[story.user_id]) {
         userStories[story.user_id] = {
           user: story.user,
           stories: [],
-          hasUnviewed: false
+          hasUnviewed: false,
         };
       }
       userStories[story.user_id].stories.push(story);
@@ -202,13 +230,16 @@ const StoriesSection = ({
 
             {/* Stories dos usuários */}
             {Object.values(userStories).map((userStory) => (
-              <div key={userStory.user.id} className="flex-shrink-0 text-center">
+              <div
+                key={userStory.user.id}
+                className="flex-shrink-0 text-center"
+              >
                 <div className="relative">
-                  <div 
+                  <div
                     className={`w-16 h-16 rounded-full p-0.5 ${
-                      userStory.hasUnviewed 
-                        ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500' 
-                        : 'bg-gray-300'
+                      userStory.hasUnviewed
+                        ? "bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500"
+                        : "bg-gray-300"
                     }`}
                   >
                     <Button
@@ -220,7 +251,7 @@ const StoriesSection = ({
                       <Avatar className="w-full h-full">
                         <AvatarImage src={userStory.user.avatar_url} />
                         <AvatarFallback>
-                          {userStory.user.name?.charAt(0) || 'U'}
+                          {userStory.user.name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -251,7 +282,7 @@ const StoriesSection = ({
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={activeStory.user?.avatar_url} />
                     <AvatarFallback>
-                      {activeStory.user?.name?.charAt(0) || 'U'}
+                      {activeStory.user?.name?.charAt(0) || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -259,9 +290,9 @@ const StoriesSection = ({
                       {activeStory.user?.name}
                     </p>
                     <p className="text-white text-xs opacity-75">
-                      {formatDistanceToNow(new Date(activeStory.created_at), { 
-                        addSuffix: true, 
-                        locale: ptBR 
+                      {formatDistanceToNow(new Date(activeStory.created_at), {
+                        addSuffix: true,
+                        locale: ptBR,
                       })}
                     </p>
                   </div>
@@ -280,29 +311,38 @@ const StoriesSection = ({
             {/* Barra de Progresso */}
             <div className="absolute top-16 left-4 right-4 z-10">
               <div className="flex space-x-1">
-                {stories.filter(s => s.user_id === activeStory.user_id).map((story, index) => (
-                  <div key={story.id} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-white rounded-full transition-all duration-100"
-                      style={{ 
-                        width: story.id === activeStory.id ? `${progress}%` : 
-                               getStoryProgress(story.id) > 0 ? '100%' : '0%'
-                      }}
-                    />
-                  </div>
-                ))}
+                {safeStories
+                  .filter((s) => s.user_id === activeStory.user_id)
+                  .map((story) => (
+                    <div
+                      key={story.id}
+                      className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden"
+                    >
+                      <div
+                        className="h-full bg-white rounded-full transition-all duration-100"
+                        style={{
+                          width:
+                            story.id === activeStory.id
+                              ? `${progress}%`
+                              : getStoryProgress(story.id) > 0
+                                ? "100%"
+                                : "0%",
+                        }}
+                      />
+                    </div>
+                  ))}
               </div>
             </div>
 
             {/* Conteúdo do Story */}
             <div className="relative w-full h-full">
-              {activeStory.media_type === 'image' ? (
+              {activeStory.media_type === "image" ? (
                 <img
                   src={activeStory.media_url}
                   alt="Story"
                   className="w-full h-full object-cover"
                 />
-              ) : activeStory.media_type === 'video' ? (
+              ) : activeStory.media_type === "video" ? (
                 <video
                   ref={videoRef}
                   src={activeStory.media_url}
@@ -323,12 +363,12 @@ const StoriesSection = ({
               {/* Overlay de Controles */}
               <div className="absolute inset-0 flex">
                 {/* Área de navegação anterior */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer"
                   onClick={handlePrevStory}
                 />
                 {/* Área central para play/pause */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer flex items-center justify-center"
                   onClick={handlePlayPause}
                 >
@@ -343,7 +383,7 @@ const StoriesSection = ({
                   )}
                 </div>
                 {/* Área de navegação próxima */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer"
                   onClick={handleNextStory}
                 />

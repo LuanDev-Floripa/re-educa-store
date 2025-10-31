@@ -1,6 +1,12 @@
 """
-Serviço Híbrido de Configuração de IA
-Combina chaves mock (desenvolvimento) com chaves reais (produção)
+Serviço Híbrido de Configuração de IA RE-EDUCA Store.
+
+Gerencia configurações de IA com seleção automática:
+- Mock keys para desenvolvimento (seguro, sem custos)
+- Real keys para produção (criptografadas no DB)
+- Seleção dinâmica de providers
+- Fallback inteligente
+- Rotação de chaves
 """
 import os
 import logging
@@ -13,9 +19,15 @@ from utils.helpers import generate_uuid
 logger = logging.getLogger(__name__)
 
 class AIConfigServiceHybrid:
-    """Serviço híbrido que usa mock em desenvolvimento e real em produção"""
+    """
+    Serviço híbrido que usa mock em desenvolvimento e real em produção.
+    
+    Attributes:
+        is_production (bool): Flag indicando ambiente de produção.
+    """
     
     def __init__(self):
+        """Inicializa o serviço híbrido de IA."""
         self.logger = logger
         self.supabase = supabase_client
         self.encryption = encryption_service
@@ -28,7 +40,16 @@ class AIConfigServiceHybrid:
         }
     
     def get_ai_config(self, provider: str, service_name: str = None) -> Dict[str, Any]:
-        """Obtém configuração de IA (mock ou real baseado no ambiente)"""
+        """
+        Obtém configuração de IA (mock ou real baseado no ambiente).
+        
+        Args:
+            provider (str): Provider (gemini, perplexity, openai, claude).
+            service_name (str, optional): Nome específico do serviço.
+            
+        Returns:
+            Dict[str, Any]: Configuração com api_key descriptografada.
+        """
         try:
             if self.is_production:
                 return self._get_real_config(provider, service_name)

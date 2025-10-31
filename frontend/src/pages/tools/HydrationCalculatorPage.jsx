@@ -1,20 +1,17 @@
-import React from 'react';
-import { HydrationCalculator } from '../../components/calculators/HydrationCalculator';
-import AIAssistantPopup from '../../components/AIAssistantPopup';
+import React from "react";
+import { HydrationCalculator } from "../../components/calculators/HydrationCalculator";
+// import AIAssistantPopup - Substituído por UnifiedAIAssistant global
 
+/**
+ * HydrationCalculatorPage
+ * Wrapper para calculadora de hidrata??o com contexto de IA.
+ */
 const HydrationCalculatorPage = () => {
-  const [currentTool, setCurrentTool] = React.useState('hydration_calculator');
+  const [currentTool, setCurrentTool] = React.useState("hydration_calculator");
 
   return (
     <div>
       <HydrationCalculator />
-      <AIAssistantPopup 
-        currentTool={currentTool}
-        toolContext={{
-          tool: 'hydration_calculator',
-          userInputs: {}
-        }}
-      />
     </div>
   );
 };

@@ -1,63 +1,98 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
-import { useApi, apiService } from '../../lib/api';
-import { toast } from 'sonner';
-import { 
-  Calculator, 
-  Moon, 
-  Clock, 
-  Heart,
-  Brain,
-  Info
-} from 'lucide-react';
+/**
+ * SleepCalculator Component - RE-EDUCA Store
+ * 
+ * Calculadora de análise de sono e qualidade do descanso.
+ * 
+ * Funcionalidades:
+ * - Análise de qualidade do sono
+ * - Recomendações de horários ideais
+ * - Análise de ciclo circadiano
+ * - Dicas para melhorar o sono
+ * 
+ * @component
+ * @returns {JSX.Element} Calculadora de sono
+ */
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
+import { useApi, apiService } from "../../lib/api";
+import { toast } from "sonner";
+import { Calculator, Moon, Clock, Heart, Brain, Info } from "lucide-react";
 
 export const SleepCalculator = () => {
   const { request, loading } = useApi();
   const [formData, setFormData] = useState({
-    age: '',
-    sleep_duration: '',
-    sleep_quality: '',
-    bedtime: '',
-    wake_time: ''
+    age: "",
+    sleep_duration: "",
+    sleep_quality: "",
+    bedtime: "",
+    wake_time: "",
   });
 
   const [results, setResults] = useState(null);
 
   const sleepQualityLevels = [
-    { value: 'poor', label: 'Ruim', description: 'Acordo cansado, sono fragmentado' },
-    { value: 'fair', label: 'Regular', description: 'Sono ok, mas poderia ser melhor' },
-    { value: 'good', label: 'Bom', description: 'Durmo bem na maioria das noites' },
-    { value: 'excellent', label: 'Excelente', description: 'Sono profundo e reparador' }
+    {
+      value: "poor",
+      label: "Ruim",
+      description: "Acordo cansado, sono fragmentado",
+    },
+    {
+      value: "fair",
+      label: "Regular",
+      description: "Sono ok, mas poderia ser melhor",
+    },
+    {
+      value: "good",
+      label: "Bom",
+      description: "Durmo bem na maioria das noites",
+    },
+    {
+      value: "excellent",
+      label: "Excelente",
+      description: "Sono profundo e reparador",
+    },
   ];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const calculateSleep = async () => {
     const { age, sleep_duration, sleep_quality } = formData;
-    
+
     if (!age || !sleep_duration || !sleep_quality) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     try {
-      const response = await request(() => 
+      const response = await request(() =>
         apiService.health.calculateSleep({
           age: parseInt(age),
           sleep_duration: parseFloat(sleep_duration),
           sleep_quality,
           bedtime: formData.bedtime,
-          wake_time: formData.wake_time
-        })
+          wake_time: formData.wake_time,
+        }),
       );
 
       setResults({
@@ -65,13 +100,13 @@ export const SleepCalculator = () => {
         sleep_quality: response.sleep_quality,
         sleep_efficiency: response.sleep_efficiency,
         recommendations: response.recommendations,
-        saved: response.saved
+        saved: response.saved,
       });
 
-      toast.success('Cálculo realizado e salvo com sucesso!');
+      toast.success("Cálculo realizado e salvo com sucesso!");
     } catch (error) {
-      console.error('Erro ao calcular sono:', error);
-      toast.error('Erro ao calcular sono. Tente novamente.');
+      console.error("Erro ao calcular sono:", error);
+      toast.error("Erro ao calcular sono. Tente novamente.");
     }
   };
 
@@ -99,9 +134,7 @@ export const SleepCalculator = () => {
         <Card>
           <CardHeader>
             <CardTitle>Informações do Sono</CardTitle>
-            <CardDescription>
-              Dados sobre seus hábitos de sono
-            </CardDescription>
+            <CardDescription>Dados sobre seus hábitos de sono</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -111,7 +144,7 @@ export const SleepCalculator = () => {
                 type="number"
                 placeholder="25"
                 value={formData.age}
-                onChange={(e) => handleInputChange('age', e.target.value)}
+                onChange={(e) => handleInputChange("age", e.target.value)}
               />
             </div>
 
@@ -123,22 +156,31 @@ export const SleepCalculator = () => {
                 step="0.5"
                 placeholder="8.0"
                 value={formData.sleep_duration}
-                onChange={(e) => handleInputChange('sleep_duration', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("sleep_duration", e.target.value)
+                }
               />
             </div>
 
             <div>
               <Label htmlFor="sleep_quality">Qualidade do Sono *</Label>
-              <Select value={formData.sleep_quality} onValueChange={(value) => handleInputChange('sleep_quality', value)}>
+              <Select
+                value={formData.sleep_quality}
+                onValueChange={(value) =>
+                  handleInputChange("sleep_quality", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a qualidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sleepQualityLevels.map(level => (
+                  {sleepQualityLevels.map((level) => (
                     <SelectItem key={level.value} value={level.value}>
                       <div>
                         <div className="font-medium">{level.label}</div>
-                        <div className="text-sm text-gray-500">{level.description}</div>
+                        <div className="text-sm text-gray-500">
+                          {level.description}
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -153,7 +195,7 @@ export const SleepCalculator = () => {
                   id="bedtime"
                   type="time"
                   value={formData.bedtime}
-                  onChange={(e) => handleInputChange('bedtime', e.target.value)}
+                  onChange={(e) => handleInputChange("bedtime", e.target.value)}
                 />
               </div>
               <div>
@@ -162,12 +204,14 @@ export const SleepCalculator = () => {
                   id="wake_time"
                   type="time"
                   value={formData.wake_time}
-                  onChange={(e) => handleInputChange('wake_time', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("wake_time", e.target.value)
+                  }
                 />
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={calculateSleep}
               className="w-full bg-indigo-600 hover:bg-indigo-700"
               disabled={loading}
@@ -177,7 +221,7 @@ export const SleepCalculator = () => {
               ) : (
                 <Calculator className="w-4 h-4 mr-2" />
               )}
-              {loading ? 'Calculando...' : 'Analisar Sono'}
+              {loading ? "Calculando..." : "Analisar Sono"}
             </Button>
           </CardContent>
         </Card>
@@ -186,9 +230,7 @@ export const SleepCalculator = () => {
         <Card>
           <CardHeader>
             <CardTitle>Análise do Sono</CardTitle>
-            <CardDescription>
-              Sua qualidade de sono analisada
-            </CardDescription>
+            <CardDescription>Sua qualidade de sono analisada</CardDescription>
           </CardHeader>
           <CardContent>
             {results ? (

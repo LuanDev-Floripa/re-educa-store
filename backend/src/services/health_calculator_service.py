@@ -1,5 +1,12 @@
 """
-Serviço de Calculadoras de Saúde RE-EDUCA Store
+Serviço de Calculadoras de Saúde RE-EDUCA Store.
+
+Fornece cálculos de saúde incluindo:
+- IMC (Índice de Massa Corporal)
+- Necessidades calóricas diárias (TMB/TDEE)
+- Hidratação recomendada
+- Percentual de gordura corporal
+- Salvamento de histórico de cálculos
 """
 import logging
 from typing import Dict, Any, Optional
@@ -9,11 +16,23 @@ from config.database import supabase_client
 logger = logging.getLogger(__name__)
 
 class HealthCalculatorService:
+    """Service para cálculos de saúde e fitness."""
+    
     def __init__(self):
+        """Inicializa o serviço de calculadoras de saúde."""
         self.supabase = supabase_client
     
     def calculate_bmi(self, height_cm: float, weight_kg: float) -> Dict[str, Any]:
-        """Calcula o IMC (Índice de Massa Corporal)"""
+        """
+        Calcula o IMC (Índice de Massa Corporal) com classificação.
+        
+        Args:
+            height_cm (float): Altura em centímetros.
+            weight_kg (float): Peso em quilogramas.
+            
+        Returns:
+            Dict[str, Any]: IMC, categoria e recomendações.
+        """
         try:
             if height_cm <= 0 or weight_kg <= 0:
                 return {'error': 'Altura e peso devem ser maiores que zero'}

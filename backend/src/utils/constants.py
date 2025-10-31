@@ -1,5 +1,17 @@
 """
-Constantes do sistema RE-EDUCA Store
+Constantes do sistema RE-EDUCA Store.
+
+Define todas as constantes centralizadas do sistema incluindo:
+- Roles e tipos de usuário
+- Status de pedidos e produtos
+- Categorias e classificações
+- Limites de uso por plano
+- Mensagens de erro e sucesso padronizadas
+- Configurações de cache e rate limiting
+- Macronutrientes e micronutrientes
+- Classificações de IMC
+
+Centralizar constantes evita números mágicos e facilita manutenção.
 """
 
 # Tipos de usuário

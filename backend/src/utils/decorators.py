@@ -1,5 +1,13 @@
 """
-Decoradores utilitários para RE-EDUCA Store
+Decoradores utilitários para RE-EDUCA Store.
+
+Fornece decorators para:
+- Autenticação (token_required)
+- Autorização (admin_required, premium_required)
+- Rate limiting
+- Validação de JSON
+- Log de atividades
+- Tratamento de erros
 """
 import functools
 import logging
@@ -11,7 +19,17 @@ from config.database import supabase_client
 logger = logging.getLogger(__name__)
 
 def token_required(f: Callable) -> Callable:
-    """Decorator para rotas que requerem autenticação"""
+    """
+    Decorator para rotas que requerem autenticação.
+    
+    Valida token JWT e adiciona current_user ao request.
+    
+    Args:
+        f (Callable): Função a ser decorada.
+        
+    Returns:
+        Callable: Função decorada com validação de token.
+    """
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
@@ -50,7 +68,15 @@ def token_required(f: Callable) -> Callable:
     return decorated
 
 def admin_required(f: Callable) -> Callable:
-    """Decorator para rotas que requerem privilégios de administrador"""
+    """
+    Decorator para rotas que requerem privilégios de administrador.
+    
+    Args:
+        f (Callable): Função a ser decorada.
+        
+    Returns:
+        Callable: Função decorada com verificação de admin.
+    """
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         if not hasattr(request, 'current_user') or request.current_user.get('role') != 'admin':
@@ -60,7 +86,15 @@ def admin_required(f: Callable) -> Callable:
     return decorated
 
 def premium_required(f: Callable) -> Callable:
-    """Decorator para rotas que requerem plano premium"""
+    """
+    Decorator para rotas que requerem plano premium.
+    
+    Args:
+        f (Callable): Função a ser decorada.
+        
+    Returns:
+        Callable: Função decorada com verificação de plano.
+    """
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         if not hasattr(request, 'current_user'):

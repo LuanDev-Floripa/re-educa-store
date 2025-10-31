@@ -1,6 +1,20 @@
 """
-Serviço de Cache Redis para Performance
-Gerencia cache de dados, sessões e otimizações
+Serviço de Cache Redis para Performance RE-EDUCA Store.
+
+Gerencia cache distribuído com Redis incluindo:
+- Cache de dados (produtos, usuários, configurações)
+- TTLs configuráveis por tipo de dado
+- Invalidation patterns
+- Fallback quando Redis indisponível
+- Cache de sessões
+- Rate limiting counters
+
+Exemplos de uso:
+    cache_service.set('user:123', user_data, ttl=3600)
+    user = cache_service.get('user:123')
+    cache_service.delete_pattern('products:*')
+
+AVISO: Implementa fallback graceful se Redis offline.
 """
 
 import json
@@ -14,7 +28,10 @@ import hashlib
 logger = logging.getLogger(__name__)
 
 class CacheService:
+    """Service para gerenciamento de cache Redis."""
+    
     def __init__(self):
+        """Inicializa o serviço de cache."""
         self.redis_client = None
         self._init_redis()
         
@@ -41,7 +58,15 @@ class CacheService:
         return self.redis_client is not None
     
     def get(self, key: str) -> Optional[Any]:
-        """Obtém valor do cache"""
+        """
+        Obtém valor do cache.
+        
+        Args:
+            key (str): Chave do cache.
+            
+        Returns:
+            Optional[Any]: Valor deserializado ou None se não encontrado.
+        """
         try:
             if not self.is_available():
                 return None

@@ -1,5 +1,13 @@
 """
-Testes do Sistema de Cupons RE-EDUCA Store
+Testes do Sistema de Cupons RE-EDUCA Store.
+
+Cobre funcionalidades de cupons incluindo:
+- Criação e geração de códigos
+- Validação de cupons
+- Aplicação de descontos
+- Limites de uso (geral e por usuário)
+- Regras de desconto (percentual e fixo)
+- Analytics de cupons
 """
 import pytest
 import json

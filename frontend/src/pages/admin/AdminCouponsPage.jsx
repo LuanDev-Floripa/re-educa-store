@@ -1,20 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import apiClient from '@/services/apiClient';
-import { toast } from 'sonner';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Eye, 
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import apiClient from "@/services/apiClient";
+import { toast } from "sonner";
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Eye,
   Tag,
   Percent,
   DollarSign,
@@ -27,18 +39,23 @@ import {
   AlertCircle,
   MoreHorizontal,
   Download,
-  Upload
-} from 'lucide-react';
+  Upload,
+} from "lucide-react";
 
+/**
+ * AdminCouponsPage
+ * Gestão de cupons com filtros, normalização de dados e fallbacks de API.
+ * @returns {JSX.Element}
+ */
 const AdminCouponsPage = () => {
   const [coupons, setCoupons] = useState([]);
   const [filteredCoupons, setFilteredCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedSort, setSelectedSort] = useState('created');
-  const [activeTab, setActiveTab] = useState('list');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedSort, setSelectedSort] = useState("created");
+  const [activeTab, setActiveTab] = useState("list");
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -61,7 +78,7 @@ const AdminCouponsPage = () => {
       validUntil: "2024-12-31",
       active: true,
       createdAt: "2024-01-01",
-      updatedAt: "2024-01-15"
+      updatedAt: "2024-01-15",
     },
     {
       id: 2,
@@ -79,7 +96,7 @@ const AdminCouponsPage = () => {
       validUntil: "2024-06-30",
       active: true,
       createdAt: "2024-01-01",
-      updatedAt: "2024-01-10"
+      updatedAt: "2024-01-10",
     },
     {
       id: 3,
@@ -97,7 +114,7 @@ const AdminCouponsPage = () => {
       validUntil: "2024-11-30",
       active: false,
       createdAt: "2024-11-20",
-      updatedAt: "2024-12-01"
+      updatedAt: "2024-12-01",
     },
     {
       id: 4,
@@ -115,7 +132,7 @@ const AdminCouponsPage = () => {
       validUntil: "2024-12-31",
       active: true,
       createdAt: "2024-01-01",
-      updatedAt: "2024-01-20"
+      updatedAt: "2024-01-20",
     },
     {
       id: 5,
@@ -133,41 +150,65 @@ const AdminCouponsPage = () => {
       validUntil: "2024-12-31",
       active: true,
       createdAt: "2024-01-01",
-      updatedAt: "2024-01-18"
-    }
+      updatedAt: "2024-01-18",
+    },
   ];
 
   const types = [
-    { value: 'all', label: 'Todos os Tipos' },
-    { value: 'percentage', label: 'Percentual' },
-    { value: 'fixed', label: 'Valor Fixo' }
+    { value: "all", label: "Todos os Tipos" },
+    { value: "percentage", label: "Percentual" },
+    { value: "fixed", label: "Valor Fixo" },
   ];
 
   const statuses = [
-    { value: 'all', label: 'Todos os Status' },
-    { value: 'active', label: 'Ativo' },
-    { value: 'inactive', label: 'Inativo' },
-    { value: 'expired', label: 'Expirado' },
-    { value: 'exhausted', label: 'Esgotado' }
+    { value: "all", label: "Todos os Status" },
+    { value: "active", label: "Ativo" },
+    { value: "inactive", label: "Inativo" },
+    { value: "expired", label: "Expirado" },
+    { value: "exhausted", label: "Esgotado" },
   ];
 
   const sortOptions = [
-    { value: 'created', label: 'Data de Criação' },
-    { value: 'name', label: 'Nome' },
-    { value: 'code', label: 'Código' },
-    { value: 'usage', label: 'Uso' },
-    { value: 'value', label: 'Valor' },
-    { value: 'expires', label: 'Expiração' }
+    { value: "created", label: "Data de Criação" },
+    { value: "name", label: "Nome" },
+    { value: "code", label: "Código" },
+    { value: "usage", label: "Uso" },
+    { value: "value", label: "Valor" },
+    { value: "expires", label: "Expiração" },
   ];
 
   useEffect(() => {
     const loadCoupons = async () => {
       try {
         setLoading(true);
+        if (!apiClient?.getCoupons) {
+          throw new Error("Serviço de cupons indisponível");
+        }
         const response = await apiClient.getCoupons();
-        
-        if (response.coupons || response.data || Array.isArray(response)) {
-          const couponsList = response.coupons || response.data || response;
+
+        if (Array.isArray(response?.coupons) || Array.isArray(response?.data) || Array.isArray(response)) {
+          const couponsList = (Array.isArray(response?.coupons)
+            ? response.coupons
+            : Array.isArray(response?.data)
+              ? response.data
+              : Array.isArray(response)
+                ? response
+                : [])
+            .map((c) => ({
+              ...c,
+              name: c?.name || "Cupom",
+              code: c?.code || "",
+              description: c?.description || "",
+              type: c?.type === "percentage" || c?.type === "fixed" ? c.type : "percentage",
+              value: Number(c?.value) || 0,
+              minOrderValue: Number(c?.minOrderValue ?? 0) || 0,
+              maxDiscount: c?.maxDiscount == null ? null : Number(c.maxDiscount) || 0,
+              usageLimit: c?.usageLimit == null ? null : Number(c.usageLimit) || 0,
+              usageCount: Number(c?.usageCount) || 0,
+              active: Boolean(c?.active),
+              validUntil: c?.validUntil || c?.valid_until || new Date().toISOString(),
+              createdAt: c?.createdAt || c?.created_at || new Date().toISOString(),
+            }));
           setCoupons(couponsList);
           setFilteredCoupons(couponsList);
         } else {
@@ -175,8 +216,8 @@ const AdminCouponsPage = () => {
           setFilteredCoupons([]);
         }
       } catch (err) {
-        console.error('Erro ao carregar cupons:', err);
-        toast.error('Erro ao carregar cupons');
+        console.error("Erro ao carregar cupons:", err);
+        toast.error("Erro ao carregar cupons");
         setCoupons([]);
         setFilteredCoupons([]);
       } finally {
@@ -196,32 +237,40 @@ const AdminCouponsPage = () => {
 
     // Filtro por busca
     if (searchTerm) {
-      filtered = filtered.filter(coupon =>
-        coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        coupon.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        coupon.description.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (coupon) =>
+          (coupon.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (coupon.code || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (coupon.description || "").toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Filtro por tipo
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(coupon => coupon.type === selectedType);
+    if (selectedType !== "all") {
+      filtered = filtered.filter((coupon) => coupon.type === selectedType);
     }
 
     // Filtro por status
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(coupon => {
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter((coupon) => {
         const now = new Date();
         const validUntil = new Date(coupon.validUntil);
-        
-        if (selectedStatus === 'active') {
-          return coupon.active && validUntil > now && (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit);
-        } else if (selectedStatus === 'inactive') {
+
+        if (selectedStatus === "active") {
+          return (
+            coupon.active &&
+            validUntil > now &&
+            (coupon.usageLimit === null ||
+              coupon.usageCount < coupon.usageLimit)
+          );
+        } else if (selectedStatus === "inactive") {
           return !coupon.active;
-        } else if (selectedStatus === 'expired') {
+        } else if (selectedStatus === "expired") {
           return validUntil <= now;
-        } else if (selectedStatus === 'exhausted') {
-          return coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit;
+        } else if (selectedStatus === "exhausted") {
+          return (
+            coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit
+          );
         }
         return true;
       });
@@ -230,17 +279,17 @@ const AdminCouponsPage = () => {
     // Ordenação
     filtered.sort((a, b) => {
       switch (selectedSort) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'code':
-          return a.code.localeCompare(b.code);
-        case 'usage':
-          return b.usageCount - a.usageCount;
-        case 'value':
-          return b.value - a.value;
-        case 'expires':
+        case "name":
+          return (a.name || "").localeCompare(b.name || "");
+        case "code":
+          return (a.code || "").localeCompare(b.code || "");
+        case "usage":
+          return Number(b.usageCount) - Number(a.usageCount);
+        case "value":
+          return Number(b.value) - Number(a.value);
+        case "expires":
           return new Date(a.validUntil) - new Date(b.validUntil);
-        case 'created':
+        case "created":
         default:
           return new Date(b.createdAt) - new Date(a.createdAt);
       }
@@ -252,42 +301,51 @@ const AdminCouponsPage = () => {
   const getStatusColor = (coupon) => {
     const now = new Date();
     const validUntil = new Date(coupon.validUntil);
-    
+
     if (!coupon.active) {
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     } else if (validUntil <= now) {
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    } else if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    } else if (
+      coupon.usageLimit !== null &&
+      coupon.usageCount >= coupon.usageLimit
+    ) {
+      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
     } else {
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
   };
 
   const getStatusLabel = (coupon) => {
     const now = new Date();
     const validUntil = new Date(coupon.validUntil);
-    
+
     if (!coupon.active) {
-      return 'Inativo';
+      return "Inativo";
     } else if (validUntil <= now) {
-      return 'Expirado';
-    } else if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
-      return 'Esgotado';
+      return "Expirado";
+    } else if (
+      coupon.usageLimit !== null &&
+      coupon.usageCount >= coupon.usageLimit
+    ) {
+      return "Esgotado";
     } else {
-      return 'Ativo';
+      return "Ativo";
     }
   };
 
   const getStatusIcon = (coupon) => {
     const now = new Date();
     const validUntil = new Date(coupon.validUntil);
-    
+
     if (!coupon.active) {
       return <XCircle className="w-4 h-4" />;
     } else if (validUntil <= now) {
       return <AlertCircle className="w-4 h-4" />;
-    } else if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+    } else if (
+      coupon.usageLimit !== null &&
+      coupon.usageCount >= coupon.usageLimit
+    ) {
       return <AlertCircle className="w-4 h-4" />;
     } else {
       return <CheckCircle className="w-4 h-4" />;
@@ -300,31 +358,40 @@ const AdminCouponsPage = () => {
   };
 
   const handleDeleteCoupon = (couponId) => {
-    if (window.confirm('Tem certeza que deseja excluir este cupom?')) {
-      setCoupons(prev => prev.filter(c => c.id !== couponId));
+    if (window.confirm("Tem certeza que deseja excluir este cupom?")) {
+      setCoupons((prev) => prev.filter((c) => c.id !== couponId));
     }
   };
 
   const handleToggleStatus = (couponId) => {
-    setCoupons(prev => prev.map(c => 
-      c.id === couponId 
-        ? { ...c, active: !c.active }
-        : c
-    ));
+    setCoupons((prev) =>
+      prev.map((c) => (c.id === couponId ? { ...c, active: !c.active } : c)),
+    );
   };
 
-  const handleCopyCode = (code) => {
-    navigator.clipboard.writeText(code);
-    // Aqui você pode adicionar uma notificação de sucesso
+  const handleCopyCode = async (code) => {
+    try {
+      await navigator?.clipboard?.writeText(String(code || ""));
+      toast.success("Código copiado");
+    } catch {
+      toast.error("Falha ao copiar código");
+    }
   };
 
   const getStats = () => {
     const totalCoupons = coupons.length;
-    const activeCoupons = coupons.filter(c => c.active).length;
-    const expiredCoupons = coupons.filter(c => new Date(c.validUntil) <= new Date()).length;
-    const exhaustedCoupons = coupons.filter(c => c.usageLimit !== null && c.usageCount >= c.usageLimit).length;
+    const activeCoupons = coupons.filter((c) => c.active).length;
+    const expiredCoupons = coupons.filter(
+      (c) => new Date(c.validUntil) <= new Date(),
+    ).length;
+    const exhaustedCoupons = coupons.filter(
+      (c) => c.usageLimit !== null && c.usageCount >= c.usageLimit,
+    ).length;
     const totalUsage = coupons.reduce((sum, c) => sum + c.usageCount, 0);
-    const totalDiscount = coupons.reduce((sum, c) => sum + (c.usageCount * c.value), 0);
+    const totalDiscount = coupons.reduce(
+      (sum, c) => sum + c.usageCount * c.value,
+      0,
+    );
 
     return {
       total: totalCoupons,
@@ -332,7 +399,7 @@ const AdminCouponsPage = () => {
       expired: expiredCoupons,
       exhausted: exhaustedCoupons,
       totalUsage,
-      totalDiscount
+      totalDiscount,
     };
   };
 
@@ -375,7 +442,7 @@ const AdminCouponsPage = () => {
               </p>
             </div>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowAddModal(true)}
             className="bg-purple-600 hover:bg-purple-700"
           >
@@ -388,38 +455,62 @@ const AdminCouponsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">{stats.total}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {stats.total}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Total
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Ativos</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.active}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Ativos
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Expirados</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.expired}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Expirados
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600">{stats.exhausted}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Esgotados</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.exhausted}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Esgotados
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalUsage}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Usos</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.totalUsage}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Usos
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-emerald-600">R$ {stats.totalDiscount.toLocaleString()}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Desconto Total</div>
+              <div className="text-2xl font-bold text-emerald-600">
+                R$ {stats.totalDiscount.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Desconto Total
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -438,13 +529,13 @@ const AdminCouponsPage = () => {
                 className="pl-10"
               />
             </div>
-            
+
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                {types.map(type => (
+                {types.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -457,7 +548,7 @@ const AdminCouponsPage = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                {statuses.map(status => (
+                {statuses.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
                   </SelectItem>
@@ -470,7 +561,7 @@ const AdminCouponsPage = () => {
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                {sortOptions.map(option => (
+                {sortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -488,7 +579,10 @@ const AdminCouponsPage = () => {
             <Tag className="w-4 h-4" />
             <span>Lista de Cupons</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center space-x-2"
+          >
             <TrendingUp className="w-4 h-4" />
             <span>Analytics</span>
           </TabsTrigger>
@@ -497,7 +591,10 @@ const AdminCouponsPage = () => {
         <TabsContent value="list" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCoupons.map((coupon) => (
-              <Card key={coupon.id} className="group hover:shadow-lg transition-all duration-300">
+              <Card
+                key={coupon.id}
+                className="group hover:shadow-lg transition-all duration-300"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -532,35 +629,49 @@ const AdminCouponsPage = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Tipo:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Tipo:
+                      </span>
                       <div className="flex items-center space-x-1">
-                        {coupon.type === 'percentage' ? (
+                        {coupon.type === "percentage" ? (
                           <Percent className="w-4 h-4 text-blue-500" />
                         ) : (
                           <DollarSign className="w-4 h-4 text-green-500" />
                         )}
                         <span className="font-semibold">
-                          {coupon.type === 'percentage' ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2)}`}
+                          {coupon.type === "percentage"
+                            ? `${coupon.value}%`
+                            : `R$ ${coupon.value.toFixed(2)}`}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Valor Mínimo:</span>
-                      <span className="font-semibold">R$ {coupon.minOrderValue.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Uso:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Valor Mínimo:
+                      </span>
                       <span className="font-semibold">
-                        {coupon.usageCount}/{coupon.usageLimit || '∞'}
+                        R$ {coupon.minOrderValue.toFixed(2)}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Expira:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Uso:
+                      </span>
                       <span className="font-semibold">
-                        {new Date(coupon.validUntil).toLocaleDateString('pt-BR')}
+                        {coupon.usageCount}/{coupon.usageLimit || "∞"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Expira:
+                      </span>
+                      <span className="font-semibold">
+                        {new Date(coupon.validUntil).toLocaleDateString(
+                          "pt-BR",
+                        )}
                       </span>
                     </div>
                   </div>
@@ -575,12 +686,16 @@ const AdminCouponsPage = () => {
                       <Edit className="w-4 h-4 mr-1" />
                       Editar
                     </Button>
-                    
+
                     <Button
                       onClick={() => handleToggleStatus(coupon.id)}
                       variant="outline"
                       size="sm"
-                      className={coupon.active ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}
+                      className={
+                        coupon.active
+                          ? "text-red-600 hover:text-red-700"
+                          : "text-green-600 hover:text-green-700"
+                      }
                     >
                       {coupon.active ? (
                         <>
@@ -594,7 +709,7 @@ const AdminCouponsPage = () => {
                         </>
                       )}
                     </Button>
-                    
+
                     <Button
                       onClick={() => handleDeleteCoupon(coupon.id)}
                       variant="outline"
@@ -634,7 +749,10 @@ const AdminCouponsPage = () => {
                     .sort((a, b) => b.usageCount - a.usageCount)
                     .slice(0, 5)
                     .map((coupon, index) => (
-                      <div key={coupon.id} className="flex items-center justify-between">
+                      <div
+                        key={coupon.id}
+                        className="flex items-center justify-between"
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                             <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
@@ -649,9 +767,13 @@ const AdminCouponsPage = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold">{coupon.usageCount} usos</div>
+                          <div className="font-semibold">
+                            {coupon.usageCount} usos
+                          </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {coupon.type === 'percentage' ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2)}`}
+                            {coupon.type === "percentage"
+                              ? `${coupon.value}%`
+                              : `R$ ${coupon.value.toFixed(2)}`}
                           </div>
                         </div>
                       </div>
@@ -693,7 +815,7 @@ const AdminCouponsPage = () => {
                       <span>Inativos</span>
                     </div>
                     <span className="font-semibold">
-                      {coupons.filter(c => !c.active).length}
+                      {coupons.filter((c) => !c.active).length}
                     </span>
                   </div>
                 </div>

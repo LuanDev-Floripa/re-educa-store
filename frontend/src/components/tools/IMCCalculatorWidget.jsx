@@ -1,20 +1,36 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Badge } from '@/components/Ui/badge';
-import { Calculator, TrendingUp, TrendingDown, Target, Info } from 'lucide-react';
+import React, { useState } from "react";
+/**
+ * Widget de calculadora de IMC.
+ * - Valida entradas e classifica resultado com rótulos e dicas
+ */
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Calculator,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Info,
+} from "lucide-react";
 
 const IMCCalculatorWidget = () => {
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
   const [result, setResult] = useState(null);
   const [showResult, setShowResult] = useState(false);
 
   const calculateIMC = (weight, height) => {
     const weightNum = parseFloat(weight);
     const heightNum = parseFloat(height);
-    
+
     if (weightNum > 0 && heightNum > 0) {
       const heightInMeters = heightNum / 100;
       const imc = weightNum / (heightInMeters * heightInMeters);
@@ -26,31 +42,37 @@ const IMCCalculatorWidget = () => {
   const classifyIMC = (imc) => {
     if (imc < 18.5) {
       return {
-        category: 'Abaixo do peso',
-        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        category: "Abaixo do peso",
+        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
         icon: <TrendingDown className="w-4 h-4" />,
-        description: 'Consulte um profissional de saúde para orientações sobre ganho de peso saudável.'
+        description:
+          "Consulte um profissional de saúde para orientações sobre ganho de peso saudável.",
       };
     } else if (imc >= 18.5 && imc < 25) {
       return {
-        category: 'Peso normal',
-        color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        category: "Peso normal",
+        color:
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         icon: <Target className="w-4 h-4" />,
-        description: 'Parabéns! Você está dentro da faixa de peso considerada saudável.'
+        description:
+          "Parabéns! Você está dentro da faixa de peso considerada saudável.",
       };
     } else if (imc >= 25 && imc < 30) {
       return {
-        category: 'Sobrepeso',
-        color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        category: "Sobrepeso",
+        color:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         icon: <TrendingUp className="w-4 h-4" />,
-        description: 'Considere ajustar sua alimentação e aumentar a atividade física.'
+        description:
+          "Considere ajustar sua alimentação e aumentar a atividade física.",
       };
     } else {
       return {
-        category: 'Obesidade',
-        color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        category: "Obesidade",
+        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
         icon: <TrendingUp className="w-4 h-4" />,
-        description: 'Recomendamos consultar um profissional de saúde para orientações específicas.'
+        description:
+          "Recomendamos consultar um profissional de saúde para orientações específicas.",
       };
     }
   };
@@ -60,15 +82,17 @@ const IMCCalculatorWidget = () => {
     if (imc) {
       setResult({
         imc: imc.toFixed(1),
-        classification: classifyIMC(imc)
+        classification: classifyIMC(imc),
       });
       setShowResult(true);
+    } else {
+      setShowResult(false);
     }
   };
 
   const handleReset = () => {
-    setWeight('');
-    setHeight('');
+    setWeight("");
+    setHeight("");
     setResult(null);
     setShowResult(false);
   };
@@ -86,7 +110,7 @@ const IMCCalculatorWidget = () => {
           Calcule seu Índice de Massa Corporal de forma rápida e gratuita
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Input Fields */}
         <div className="space-y-4">
@@ -104,7 +128,7 @@ const IMCCalculatorWidget = () => {
               max="300"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Altura (cm)
@@ -126,18 +150,14 @@ const IMCCalculatorWidget = () => {
           <Button
             onClick={handleCalculate}
             disabled={!weight || !height}
-            className="flex-1 bg-gray-800 hover:bg-gray-700 text-white"
+            className="flex-1 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white"
           >
             <Calculator className="w-4 h-4 mr-2" />
             Calcular IMC
           </Button>
-          
+
           {showResult && (
-            <Button
-              onClick={handleReset}
-              variant="outline"
-              className="flex-1"
-            >
+            <Button onClick={handleReset} variant="outline" className="flex-1">
               Limpar
             </Button>
           )}
@@ -154,14 +174,16 @@ const IMCCalculatorWidget = () => {
                 Índice de Massa Corporal
               </div>
             </div>
-            
+
             <div className="text-center">
-              <Badge className={`inline-flex items-center gap-2 ${result.classification.color}`}>
+              <Badge
+                className={`inline-flex items-center gap-2 ${result.classification.color}`}
+              >
                 {result.classification.icon}
                 {result.classification.category}
               </Badge>
             </div>
-            
+
             <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
               {result.classification.description}
             </div>
@@ -172,7 +194,8 @@ const IMCCalculatorWidget = () => {
         <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>Importante:</strong> O IMC é uma ferramenta de triagem e não substitui a avaliação de um profissional de saúde.
+            <strong>Importante:</strong> O IMC é uma ferramenta de triagem e não
+            substitui a avaliação de um profissional de saúde.
           </div>
         </div>
       </CardContent>

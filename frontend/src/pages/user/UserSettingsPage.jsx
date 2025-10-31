@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { 
-  Settings, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Globe, 
-  Lock, 
-  Eye, 
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Settings,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
+  Lock,
+  Eye,
   EyeOff,
   Save,
   Moon,
   Sun,
-  Monitor
-} from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.jsx';
+  Monitor,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { toast } from "sonner";
 
+/**
+ * UserSettingsPage
+ * Configurações do usuário (notificações, privacidade, aparência e segurança).
+ */
 const UserSettingsPage = () => {
   const { user } = useAuth();
   const [settings, setSettings] = useState({
@@ -27,60 +38,62 @@ const UserSettingsPage = () => {
     pushNotifications: true,
     marketingEmails: false,
     weeklyReports: true,
-    
+
     // Privacy
-    profileVisibility: 'public',
+    profileVisibility: "public",
     showEmail: false,
     showPhone: false,
     allowMessages: true,
-    
+
     // Appearance
-    theme: 'system',
-    language: 'pt-BR',
-    fontSize: 'medium',
-    
+    theme: "system",
+    language: "pt-BR",
+    fontSize: "medium",
+
     // Security
     twoFactorAuth: false,
     loginAlerts: true,
-    sessionTimeout: 30
+    sessionTimeout: 30,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const handleSettingChange = (key, value) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
   const handlePasswordChange = (field, value) => {
-    setPasswordData(prev => ({
+    setPasswordData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const saveSettings = () => {
     // Implementar lógica de salvamento
+    toast.success("Configurações salvas");
   };
 
   const changePassword = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('As senhas não coincidem');
+      toast.error("As senhas não coincidem");
       return;
     }
     // Implementar lógica de mudança de senha
-    console.log('Mudando senha');
+    console.log("Mudando senha");
+    toast.success("Senha alterada");
     setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
   };
 
@@ -97,7 +110,7 @@ const UserSettingsPage = () => {
             Personalize sua experiência na plataforma
           </p>
         </div>
-        
+
         <Button onClick={saveSettings} className="flex items-center gap-2">
           <Save className="w-4 h-4" />
           Salvar Configurações
@@ -127,7 +140,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.emailNotifications}
-                onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("emailNotifications", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -142,7 +157,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.pushNotifications}
-                onChange={(e) => handleSettingChange('pushNotifications', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("pushNotifications", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -157,7 +174,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.marketingEmails}
-                onChange={(e) => handleSettingChange('marketingEmails', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("marketingEmails", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -172,7 +191,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.weeklyReports}
-                onChange={(e) => handleSettingChange('weeklyReports', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("weeklyReports", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -196,7 +217,9 @@ const UserSettingsPage = () => {
               <select
                 id="profileVisibility"
                 value={settings.profileVisibility}
-                onChange={(e) => handleSettingChange('profileVisibility', e.target.value)}
+                onChange={(e) =>
+                  handleSettingChange("profileVisibility", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="public">Público</option>
@@ -215,7 +238,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.showEmail}
-                onChange={(e) => handleSettingChange('showEmail', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("showEmail", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -230,7 +255,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.showPhone}
-                onChange={(e) => handleSettingChange('showPhone', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("showPhone", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -245,7 +272,9 @@ const UserSettingsPage = () => {
               <input
                 type="checkbox"
                 checked={settings.allowMessages}
-                onChange={(e) => handleSettingChange('allowMessages', e.target.checked)}
+                onChange={(e) =>
+                  handleSettingChange("allowMessages", e.target.checked)
+                }
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -268,27 +297,27 @@ const UserSettingsPage = () => {
               <Label>Tema</Label>
               <div className="flex gap-2">
                 <Button
-                  variant={settings.theme === 'light' ? 'default' : 'outline'}
+                  variant={settings.theme === "light" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleSettingChange('theme', 'light')}
+                  onClick={() => handleSettingChange("theme", "light")}
                   className="flex items-center gap-2"
                 >
                   <Sun className="w-4 h-4" />
                   Claro
                 </Button>
                 <Button
-                  variant={settings.theme === 'dark' ? 'default' : 'outline'}
+                  variant={settings.theme === "dark" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleSettingChange('theme', 'dark')}
+                  onClick={() => handleSettingChange("theme", "dark")}
                   className="flex items-center gap-2"
                 >
                   <Moon className="w-4 h-4" />
                   Escuro
                 </Button>
                 <Button
-                  variant={settings.theme === 'system' ? 'default' : 'outline'}
+                  variant={settings.theme === "system" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleSettingChange('theme', 'system')}
+                  onClick={() => handleSettingChange("theme", "system")}
                   className="flex items-center gap-2"
                 >
                   <Monitor className="w-4 h-4" />
@@ -302,7 +331,9 @@ const UserSettingsPage = () => {
               <select
                 id="language"
                 value={settings.language}
-                onChange={(e) => handleSettingChange('language', e.target.value)}
+                onChange={(e) =>
+                  handleSettingChange("language", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="pt-BR">Português (Brasil)</option>
@@ -316,7 +347,9 @@ const UserSettingsPage = () => {
               <select
                 id="fontSize"
                 value={settings.fontSize}
-                onChange={(e) => handleSettingChange('fontSize', e.target.value)}
+                onChange={(e) =>
+                  handleSettingChange("fontSize", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="small">Pequeno</option>
@@ -334,9 +367,7 @@ const UserSettingsPage = () => {
               <Lock className="w-5 h-5" />
               Segurança
             </CardTitle>
-            <CardDescription>
-              Gerencie a segurança da sua conta
-            </CardDescription>
+            <CardDescription>Gerencie a segurança da sua conta</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Change Password */}
@@ -348,9 +379,11 @@ const UserSettingsPage = () => {
                   <div className="relative">
                     <Input
                       id="currentPassword"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       value={passwordData.currentPassword}
-                      onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                      onChange={(e) =>
+                        handlePasswordChange("currentPassword", e.target.value)
+                      }
                       placeholder="Digite sua senha atual"
                     />
                     <Button
@@ -375,7 +408,9 @@ const UserSettingsPage = () => {
                     id="newPassword"
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    onChange={(e) =>
+                      handlePasswordChange("newPassword", e.target.value)
+                    }
                     placeholder="Digite sua nova senha"
                   />
                 </div>
@@ -386,7 +421,9 @@ const UserSettingsPage = () => {
                     id="confirmPassword"
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                    onChange={(e) =>
+                      handlePasswordChange("confirmPassword", e.target.value)
+                    }
                     placeholder="Confirme sua nova senha"
                   />
                 </div>
@@ -409,7 +446,9 @@ const UserSettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={settings.twoFactorAuth}
-                  onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
+                  onChange={(e) =>
+                    handleSettingChange("twoFactorAuth", e.target.checked)
+                  }
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                 />
               </div>
@@ -424,17 +463,26 @@ const UserSettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={settings.loginAlerts}
-                  onChange={(e) => handleSettingChange('loginAlerts', e.target.checked)}
+                  onChange={(e) =>
+                    handleSettingChange("loginAlerts", e.target.checked)
+                  }
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sessionTimeout">Timeout da Sessão (minutos)</Label>
+                <Label htmlFor="sessionTimeout">
+                  Timeout da Sessão (minutos)
+                </Label>
                 <select
                   id="sessionTimeout"
                   value={settings.sessionTimeout}
-                  onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleSettingChange(
+                      "sessionTimeout",
+                      parseInt(e.target.value),
+                    )
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={15}>15 minutos</option>

@@ -1,5 +1,12 @@
 """
-Rotas para Análise Preditiva RE-EDUCA Store
+Rotas para Análise Preditiva RE-EDUCA Store.
+
+Fornece análises preditivas usando machine learning incluindo:
+- Previsão de métricas de saúde
+- Predição de comportamento do usuário
+- Análise de risco de churn
+- Recomendações de intervenções
+- Tendências sazonais
 """
 import logging
 from flask import Blueprint, request, jsonify
@@ -17,7 +24,15 @@ predictive_service = PredictiveAnalysisService()
 @predictive_bp.route('/health-metrics', methods=['GET'])
 @token_required
 def predict_health_metrics():
-    """Prediz métricas de saúde futuras do usuário"""
+    """
+    Prediz métricas de saúde futuras do usuário.
+    
+    Query Parameters:
+        days_ahead (int): Dias para prever (padrão: 30, máx: 365).
+        
+    Returns:
+        JSON: Predições de métricas de saúde ou erro.
+    """
     try:
         user_id = request.current_user['id']
         days_ahead = int(request.args.get('days_ahead', 30))
@@ -41,7 +56,15 @@ def predict_health_metrics():
 @predictive_bp.route('/behavior', methods=['GET'])
 @token_required
 def predict_user_behavior():
-    """Prediz comportamento do usuário"""
+    """
+    Prediz comportamento do usuário.
+    
+    Query Parameters:
+        type (str): Tipo de comportamento (purchases, exercise, nutrition).
+        
+    Returns:
+        JSON: Predições de comportamento ou erro.
+    """
     try:
         user_id = request.current_user['id']
         behavior_type = request.args.get('type', 'purchases')
@@ -64,7 +87,12 @@ def predict_user_behavior():
 @predictive_bp.route('/churn-risk', methods=['GET'])
 @token_required
 def predict_churn_risk():
-    """Prediz risco de churn do usuário"""
+    """
+    Prediz risco de churn do usuário.
+    
+    Returns:
+        JSON: Análise de risco de churn com score e fatores.
+    """
     try:
         user_id = request.current_user['id']
         

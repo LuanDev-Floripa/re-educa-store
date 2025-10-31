@@ -1,5 +1,12 @@
 """
-Serviço de IA para Recomendações Personalizadas RE-EDUCA Store
+Serviço de IA para Recomendações Personalizadas RE-EDUCA Store.
+
+Utiliza machine learning para recomendações incluindo:
+- Perfil vetorizado do usuário
+- Similaridade de cosseno para produtos
+- Clustering de comportamento
+- Recomendações de exercícios e nutrição
+- Sistema de filtragem colaborativa
 """
 import logging
 import numpy as np
@@ -15,12 +22,23 @@ import json
 logger = logging.getLogger(__name__)
 
 class AIRecommendationService:
+    """Service para recomendações baseadas em ML."""
+    
     def __init__(self):
+        """Inicializa o serviço de recomendações com vetorizador TF-IDF."""
         self.supabase = supabase_client
         self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
         
     def get_user_profile_vector(self, user_id: str) -> Dict[str, Any]:
-        """Cria vetor de perfil do usuário baseado em suas atividades"""
+        """
+        Cria vetor de perfil do usuário baseado em suas atividades.
+        
+        Args:
+            user_id (str): ID do usuário.
+            
+        Returns:
+            Dict[str, Any]: Vetor de características do usuário.
+        """
         try:
             # Busca dados do usuário
             user_data = self._get_user_data(user_id)

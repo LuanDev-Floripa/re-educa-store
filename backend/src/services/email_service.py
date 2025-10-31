@@ -1,5 +1,13 @@
 """
-Serviço de Email RE-EDUCA Store
+Serviço de Email RE-EDUCA Store.
+
+Gerencia envio de emails incluindo:
+- Emails transacionais (confirmação, recuperação)
+- Emails de notificação
+- Templates HTML personalizados
+- Sistema de retentativas
+- Conexão SMTP segura
+- Fallback para indisponibilidade
 """
 import os
 import smtplib
@@ -16,7 +24,10 @@ import jwt
 logger = logging.getLogger(__name__)
 
 class EmailService:
+    """Service para envio de emails via SMTP."""
+    
     def __init__(self):
+        """Inicializa o serviço de email com configurações SMTP."""
         self.smtp_server = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
         self.smtp_port = int(os.environ.get('SMTP_PORT', '587'))
         self.smtp_username = os.environ.get('SMTP_USERNAME')
@@ -34,7 +45,12 @@ class EmailService:
         ])
         
     def _create_connection(self):
-        """Cria conexão SMTP segura"""
+        """
+        Cria conexão SMTP segura com TLS.
+        
+        Returns:
+            smtplib.SMTP: Conexão SMTP ou None se não configurado.
+        """
         if not self.is_configured:
             logger.warning("Configurações SMTP não encontradas. Email não será enviado.")
             return None

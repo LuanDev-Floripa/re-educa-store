@@ -1,6 +1,18 @@
 """
-Rotas Administrativas para Rotação de Chaves de IA
-Permite que administradores gerenciem rotação automática e manual de chaves
+Rotas Administrativas para Rotação de Chaves de IA RE-EDUCA Store.
+
+Gerencia rotação de API keys de IA incluindo:
+- Verificação de chaves que precisam rotação
+- Rotação manual de chaves específicas
+- Rotação automática em lote
+- Histórico de rotações
+- Configuração de políticas de rotação
+
+SEGURANÇA:
+- Apenas administradores têm acesso
+- Rate limiting rigoroso (10-50 req/hour)
+- Logs de todas as operações
+- Chaves criptografadas no banco
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime
@@ -19,7 +31,12 @@ admin_ai_rotation_bp = Blueprint('admin_ai_rotation', __name__, url_prefix='/api
 @rate_limit("50 per hour")
 @log_activity('admin_ai_rotation_check')
 def check_rotation_needed():
-    """Verifica se alguma chave precisa ser rotacionada"""
+    """
+    Verifica se alguma chave precisa ser rotacionada.
+    
+    Returns:
+        JSON: Lista de chaves que precisam rotação com idade e uso.
+    """
     try:
         result = ai_key_rotation_service.check_key_rotation_needed()
         

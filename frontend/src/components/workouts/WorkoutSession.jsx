@@ -1,23 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Progress } from '@/components/Ui/progress';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Clock, 
-  Target, 
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Progress } from "@/components/Ui/progress";
+import {
+  Play,
+  Pause,
+  Square,
+  Clock,
+  Target,
   CheckCircle,
   RotateCcw,
   Timer,
   Flame,
   TrendingUp,
   Heart,
-  Zap
-} from 'lucide-react';
+  Zap,
+} from "lucide-react";
 
+/**
+ * WorkoutSession
+ * Controla execução de um treino com sets, descanso e progresso.
+ * @param {{
+ *   workout: { name?: string, description?: string, exercises: Array<{id: string|number, name?: string, sets?: number, reps?: string, instructions?: string[], tips?: string[]}> }
+ *   onComplete?: (data: { totalTime: number, caloriesBurned: number, exercisesCompleted: number, setsCompleted: number }) => void,
+ *   onPause?: () => void,
+ *   onResume?: () => void,
+ * }} props
+ */
 export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
@@ -33,21 +49,28 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
     totalTime: 0,
     caloriesBurned: 0,
     exercisesCompleted: 0,
-    setsCompleted: 0
+    setsCompleted: 0,
   });
 
-  const currentExercise = workout.exercises[currentExerciseIndex];
-  const totalSets = currentExercise?.sets || 0;
-  const totalExercises = workout.exercises.length;
-  const totalSetsInWorkout = workout.exercises.reduce((sum, ex) => sum + ex.sets, 0);
-  const completedSetsCount = Object.values(completedSets).reduce((sum, sets) => sum + sets, 0);
+  const safeExercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
+  const currentExercise = safeExercises[currentExerciseIndex] || null;
+  const totalSets = Number(currentExercise?.sets) || 0;
+  const totalExercises = safeExercises.length;
+  const totalSetsInWorkout = safeExercises.reduce(
+    (sum, ex) => sum + (Number(ex?.sets) || 0),
+    0,
+  );
+  const completedSetsCount = Object.values(completedSets).reduce(
+    (sum, sets) => sum + sets,
+    0,
+  );
 
   // Timer para o treino
   useEffect(() => {
     let interval;
     if (isRunning && !isPaused) {
       interval = setInterval(() => {
-        setTimeElapsed(prev => prev + 1);
+        setTimeElapsed((prev) => prev + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -58,7 +81,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
     let interval;
     if (isResting && restTime > 0) {
       interval = setInterval(() => {
-        setRestTime(prev => {
+        setRestTime((prev) => {
           if (prev <= 1) {
             setIsResting(false);
             return 0;
@@ -71,16 +94,17 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
   }, [isResting, restTime]);
 
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const total = Number(seconds) || 0;
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const startWorkout = () => {
     setIsRunning(true);
-    setSessionData(prev => ({
+    setSessionData((prev) => ({
       ...prev,
-      startTime: new Date()
+      startTime: new Date(),
     }));
   };
 
@@ -98,12 +122,12 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
     const exerciseId = currentExercise.id;
     const newCompletedSets = {
       ...completedSets,
-      [exerciseId]: (completedSets[exerciseId] || 0) + 1
+      [exerciseId]: (completedSets[exerciseId] || 0) + 1,
     };
     setCompletedSets(newCompletedSets);
 
     if (currentSet < totalSets) {
-      setCurrentSet(prev => prev + 1);
+      setCurrentSet((prev) => prev + 1);
       startRest();
     } else {
       completeExercise();
@@ -112,7 +136,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
 
   const completeExercise = () => {
     if (currentExerciseIndex < totalExercises - 1) {
-      setCurrentExerciseIndex(prev => prev + 1);
+      setCurrentExerciseIndex((prev) => prev + 1);
       setCurrentSet(1);
       startRest();
     } else {
@@ -132,15 +156,18 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
 
   const completeWorkout = () => {
     setIsRunning(false);
-    setSessionData(prev => ({
-      ...prev,
+    const finalData = {
+      ...sessionData,
       endTime: new Date(),
-      totalTime: timeElapsed,
-      caloriesBurned: Math.round(timeElapsed * 0.1), // Estimativa simples
-      exercisesCompleted: totalExercises,
-      setsCompleted: completedSetsCount
-    }));
-    onComplete && onComplete(sessionData);
+      totalTime: Number(timeElapsed) || 0,
+      caloriesBurned: Math.round((Number(timeElapsed) || 0) * 0.1),
+      exercisesCompleted: Number(totalExercises) || 0,
+      setsCompleted: Number(completedSetsCount) || 0,
+    };
+    setSessionData(finalData);
+    if (typeof onComplete === "function") {
+      onComplete(finalData);
+    }
   };
 
   const resetWorkout = () => {
@@ -158,15 +185,16 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
       totalTime: 0,
       caloriesBurned: 0,
       exercisesCompleted: 0,
-      setsCompleted: 0
+      setsCompleted: 0,
     });
   };
 
   const getProgressPercentage = () => {
-    return (completedSetsCount / totalSetsInWorkout) * 100;
+    if (!Number(totalSetsInWorkout)) return 0;
+    return (Number(completedSetsCount) / Number(totalSetsInWorkout)) * 100;
   };
 
-  if (!workout) {
+  if (!workout || !Array.isArray(workout?.exercises) || workout.exercises.length === 0) {
     return (
       <div className="text-center py-12">
         <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -201,19 +229,27 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{completedSetsCount}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {completedSetsCount}
+              </div>
               <div className="text-sm text-gray-500">Sets Completos</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{currentExerciseIndex + 1}</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {Number(currentExerciseIndex) + 1}
+              </div>
               <div className="text-sm text-gray-500">Exercício Atual</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{Math.round(sessionData.caloriesBurned)}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {Math.round(Number(sessionData.caloriesBurned) || 0)}
+              </div>
               <div className="text-sm text-gray-500">Calorias</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{getProgressPercentage().toFixed(0)}%</div>
+              <div className="text-2xl font-bold text-red-600">
+                {getProgressPercentage().toFixed(0)}%
+              </div>
               <div className="text-sm text-gray-500">Progresso</div>
             </div>
           </div>
@@ -246,11 +282,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
                     Continuar
                   </Button>
                 ) : (
-                  <Button
-                    onClick={pauseWorkout}
-                    size="lg"
-                    variant="outline"
-                  >
+                  <Button onClick={pauseWorkout} size="lg" variant="outline">
                     <Pause className="w-5 h-5 mr-2" />
                     Pausar
                   </Button>
@@ -265,11 +297,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
                 </Button>
               </>
             )}
-            <Button
-              onClick={resetWorkout}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={resetWorkout} variant="outline" size="lg">
               <RotateCcw className="w-5 h-5 mr-2" />
               Reiniciar
             </Button>
@@ -287,11 +315,11 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
                   {currentExercise.name}
                 </CardTitle>
                 <CardDescription>
-                  Exercício {currentExerciseIndex + 1} de {totalExercises}
+                  Exercício {Number(currentExerciseIndex) + 1} de {Number(totalExercises)}
                 </CardDescription>
               </div>
               <Badge variant="outline">
-                Set {currentSet} de {totalSets}
+                Set {Number(currentSet)} de {Number(totalSets)}
               </Badge>
             </div>
           </CardHeader>
@@ -300,7 +328,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
               <div>
                 <h4 className="font-semibold mb-2">Instruções:</h4>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  {currentExercise.instructions?.map((instruction, index) => (
+                  {(Array.isArray(currentExercise?.instructions) ? currentExercise.instructions : []).map((instruction, index) => (
                     <li key={index} className="flex items-start">
                       <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
                       {instruction}
@@ -311,7 +339,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
               <div>
                 <h4 className="font-semibold mb-2">Dicas:</h4>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  {currentExercise.tips?.map((tip, index) => (
+                  {(Array.isArray(currentExercise?.tips) ? currentExercise.tips : []).map((tip, index) => (
                     <li key={index} className="flex items-start">
                       <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
                       {tip}
@@ -320,7 +348,7 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
                 </ul>
               </div>
             </div>
-            
+
             <div className="mt-6 flex justify-center">
               <Button
                 onClick={completeSet}
@@ -370,41 +398,45 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {workout.exercises.map((exercise, index) => {
+            {safeExercises.map((exercise, index) => {
               const isCompleted = index < currentExerciseIndex;
               const isCurrent = index === currentExerciseIndex;
-              const completedSetsForExercise = completedSets[exercise.id] || 0;
-              
+              const completedSetsForExercise = completedSets[exercise?.id] || 0;
+
               return (
                 <div
                   key={exercise.id}
                   className={`p-4 rounded-lg border-2 transition-all ${
-                    isCurrent 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : isCompleted 
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
+                    isCurrent
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : isCompleted
+                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                        : "border-gray-200 dark:border-gray-700"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isCompleted 
-                          ? 'bg-green-500 text-white' 
-                          : isCurrent 
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600'
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isCompleted
+                            ? "bg-green-500 text-white"
+                            : isCurrent
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200 dark:bg-gray-700 text-gray-600"
+                        }`}
+                      >
                         {isCompleted ? (
                           <CheckCircle className="w-5 h-5" />
                         ) : (
-                          <span className="text-sm font-semibold">{index + 1}</span>
+                          <span className="text-sm font-semibold">
+                            {index + 1}
+                          </span>
                         )}
                       </div>
                       <div>
-                        <h4 className="font-semibold">{exercise.name}</h4>
+                        <h4 className="font-semibold">{exercise?.name || "Exercício"}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {exercise.sets} sets × {exercise.reps}
+                          {Number(exercise?.sets) || 0} sets × {exercise?.reps || ""}
                         </p>
                       </div>
                     </div>
@@ -419,9 +451,9 @@ export const WorkoutSession = ({ workout, onComplete, onPause, onResume }) => {
                           Concluído
                         </Badge>
                       )}
-                      {completedSetsForExercise > 0 && (
+                      {Number(completedSetsForExercise) > 0 && (
                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {completedSetsForExercise}/{exercise.sets} sets
+                          {Number(completedSetsForExercise)}/{Number(exercise?.sets) || 0} sets
                         </div>
                       )}
                     </div>

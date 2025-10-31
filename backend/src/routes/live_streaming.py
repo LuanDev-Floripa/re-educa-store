@@ -1,17 +1,38 @@
+"""
+Rotas de Live Streaming RE-EDUCA.
+
+Gerencia transmissões ao vivo incluindo:
+- Iniciar e encerrar streams
+- Listar streams ativos
+- Gerenciar participantes e visualizadores
+- Chat e interações em tempo real
+"""
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from middleware.auth import token_required
 from services.live_streaming_service import LiveStreamingService
 from utils.decorators import handle_exceptions
 import logging
+
+logger = logging.getLogger(__name__)
 
 live_streaming_bp = Blueprint('live_streaming', __name__, url_prefix='/api/social/streams')
 live_streaming_service = LiveStreamingService()
 
 @live_streaming_bp.route('', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_streams():
-    """Get all active streams"""
+    """
+    Lista todos os streams ativos.
+    
+    Query Parameters:
+        category (str): Filtrar por categoria.
+        limit (int): Limite de resultados (padrão: 20).
+        offset (int): Offset para paginação (padrão: 0).
+        
+    Returns:
+        JSON: Lista de streams ativos ou erro.
+    """
     try:
         category = request.args.get('category')
         limit = int(request.args.get('limit', 20))
@@ -29,19 +50,30 @@ def get_streams():
             'total': len(streams)
         }), 200
     except Exception as e:
-        logging.error(f"Error getting streams: {str(e)}")
+        logger.error(f"Erro ao listar streams: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
             'message': 'Erro ao carregar streams'
         }), 500
 
 @live_streaming_bp.route('', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def start_stream():
-    """Start a new live stream"""
+    """
+    Inicia uma nova transmissão ao vivo.
+    
+    Request Body:
+        title (str): Título do stream (obrigatório).
+        category (str): Categoria (obrigatório).
+        description (str): Descrição opcional.
+        tags (list): Tags opcionais.
+        
+    Returns:
+        JSON: Stream criado com detalhes ou erro.
+    """
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         data = request.get_json()
         
         required_fields = ['title', 'category']
@@ -66,19 +98,27 @@ def start_stream():
             'message': 'Stream iniciado com sucesso'
         }), 201
     except Exception as e:
-        logging.error(f"Error starting stream: {str(e)}")
+        logger.error(f"Erro ao iniciar stream: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
             'message': 'Erro ao iniciar stream'
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>', methods=['DELETE'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def end_stream(stream_id):
-    """End a live stream"""
+    """
+    Encerra uma transmissão ao vivo.
+    
+    Args:
+        stream_id (int): ID do stream.
+        
+    Returns:
+        JSON: Confirmação de encerramento ou erro 404.
+    """
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         success = live_streaming_service.end_stream(
             stream_id=stream_id,
@@ -96,19 +136,19 @@ def end_stream(stream_id):
             'message': 'Stream encerrado com sucesso'
         }), 200
     except Exception as e:
-        logging.error(f"Error ending stream: {str(e)}")
+        logger.error(f"Erro ao encerrar stream: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
             'message': 'Erro ao encerrar stream'
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/join', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def join_stream(stream_id):
     """Join a live stream"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         stream = live_streaming_service.join_stream(
             stream_id=stream_id,
@@ -134,12 +174,12 @@ def join_stream(stream_id):
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/leave', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def leave_stream(stream_id):
     """Leave a live stream"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         success = live_streaming_service.leave_stream(
             stream_id=stream_id,
@@ -164,12 +204,12 @@ def leave_stream(stream_id):
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/messages', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def send_message(stream_id):
     """Send a message to a live stream"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         data = request.get_json()
         
         if 'message' not in data:
@@ -202,12 +242,12 @@ def send_message(stream_id):
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/gifts', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def send_gift(stream_id):
     """Send a gift to a live stream"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         data = request.get_json()
         
         required_fields = ['gift_id', 'gift_name', 'gift_cost']
@@ -244,12 +284,12 @@ def send_gift(stream_id):
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/report', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def report_stream(stream_id):
     """Report a live stream"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         data = request.get_json()
         
         if 'reason' not in data:
@@ -282,7 +322,7 @@ def report_stream(stream_id):
         }), 500
 
 @live_streaming_bp.route('/<int:stream_id>/stats', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_stream_stats(stream_id):
     """Get stream statistics"""

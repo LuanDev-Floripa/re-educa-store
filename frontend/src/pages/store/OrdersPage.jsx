@@ -1,30 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  Clock, 
-  XCircle, 
+import React, { useState, useEffect } from "react";
+/**
+ * OrdersPage
+ * - Lista pedidos com filtros, estados vazios e fallbacks seguros
+ */
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  XCircle,
   Eye,
   Download,
   RefreshCw,
   Filter,
   Search,
-  Loader2
-} from 'lucide-react';
-import { Input } from '@/components/Ui/input';
-import apiClient from '@/services/apiClient';
-import { toast } from 'sonner';
+  Loader2,
+} from "lucide-react";
+import { Input } from "@/components/Ui/input";
+import apiClient from "@/services/apiClient";
+import { toast } from "sonner";
+import OrderDetail from "@/components/orders/OrderDetail";
 
 const OrdersPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Carregar pedidos da API
   useEffect(() => {
@@ -35,84 +48,101 @@ const OrdersPage = () => {
     try {
       setLoading(true);
       setError(null);
+      if (!apiClient?.getOrders) {
+        throw new Error("Serviço de pedidos indisponível");
+      }
       const response = await apiClient.getOrders();
-      
-      if (response.orders) {
+
+      if (Array.isArray(response?.orders)) {
         // Formatar pedidos para o formato esperado
-        const formattedOrders = response.orders.map(order => ({
-          id: order.id || order.order_id,
-          date: order.created_at || order.date,
-          status: order.status || 'pending',
-          total: parseFloat(order.total || order.total_amount || 0),
-          items: order.items || order.order_items || [],
-          tracking: order.tracking_number || order.shipping?.tracking || null,
-          estimatedDelivery: order.estimated_delivery || order.shipping?.estimated_delivery || null
+        const formattedOrders = response.orders.map((order) => ({
+          id: order?.id || order?.order_id,
+          date: order?.created_at || order?.date,
+          status: order?.status || "pending",
+          total: Number(order?.total ?? order?.total_amount ?? 0) || 0,
+          items: Array.isArray(order?.items)
+            ? order.items
+            : Array.isArray(order?.order_items)
+              ? order.order_items
+              : [],
+          tracking: order?.tracking_number || order?.shipping?.tracking || null,
+          estimatedDelivery:
+            order?.estimated_delivery || order?.shipping?.estimated_delivery || null,
         }));
         setOrders(formattedOrders);
       } else {
         setOrders([]);
       }
     } catch (err) {
-      console.error('Erro ao carregar pedidos:', err);
-      setError('Erro ao carregar pedidos');
-      toast.error('Erro ao carregar seus pedidos');
+      console.error("Erro ao carregar pedidos:", err);
+      setError("Erro ao carregar pedidos");
+      toast.error("Erro ao carregar seus pedidos");
       setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
-
   const getStatusInfo = (status) => {
     switch (status) {
-      case 'processing':
+      case "processing":
         return {
-          label: 'Processando',
-          color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
-          icon: Clock
+          label: "Processando",
+          color:
+            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
+          icon: Clock,
         };
-      case 'shipped':
+      case "shipped":
         return {
-          label: 'Enviado',
-          color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-          icon: Truck
+          label: "Enviado",
+          color:
+            "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
+          icon: Truck,
         };
-      case 'delivered':
+      case "delivered":
         return {
-          label: 'Entregue',
-          color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
-          icon: CheckCircle
+          label: "Entregue",
+          color:
+            "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+          icon: CheckCircle,
         };
-      case 'cancelled':
+      case "cancelled":
         return {
-          label: 'Cancelado',
-          color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
-          icon: XCircle
+          label: "Cancelado",
+          color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
+          icon: XCircle,
         };
       default:
         return {
-          label: 'Desconhecido',
-          color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300',
-          icon: Package
+          label: "Desconhecido",
+          color:
+            "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300",
+          icon: Package,
         };
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+  const filteredOrders = (Array.isArray(orders) ? orders : []).filter((order) => {
+    const matchesSearch =
+      String(order?.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (Array.isArray(order?.items)
+        ? order.items.some((item) =>
+            String(item?.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+        : false);
+    const matchesStatus =
+      statusFilter === "all" || order?.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -129,8 +159,15 @@ const OrdersPage = () => {
             Acompanhe o status dos seus pedidos
           </p>
         </div>
-        <Button onClick={loadOrders} variant="outline" size="sm" disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button
+          onClick={loadOrders}
+          variant="outline"
+          size="sm"
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
           Atualizar
         </Button>
       </div>
@@ -176,7 +213,9 @@ const OrdersPage = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Carregando seus pedidos...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Carregando seus pedidos...
+            </p>
           </CardContent>
         </Card>
       )}
@@ -204,9 +243,9 @@ const OrdersPage = () => {
               Nenhum pedido encontrado
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'Você ainda não fez nenhum pedido'}
+              {searchTerm || statusFilter !== "all"
+                ? "Tente ajustar os filtros de busca"
+                : "Você ainda não fez nenhum pedido"}
             </p>
           </CardContent>
         </Card>
@@ -214,8 +253,8 @@ const OrdersPage = () => {
 
       {/* Orders List */}
       {!loading && !error && filteredOrders.length > 0 && (
-      <div className="space-y-4">
-        {filteredOrders.map((order) => {
+        <div className="space-y-4">
+          {filteredOrders.map((order) => {
             const statusInfo = getStatusInfo(order.status);
             const StatusIcon = statusInfo.icon;
 
@@ -228,7 +267,7 @@ const OrdersPage = () => {
                         Pedido #{order.id}
                       </CardTitle>
                       <CardDescription>
-                        Realizado em {formatDate(order.date)}
+                        Realizado em {order?.date ? formatDate(order.date) : "—"}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-3">
@@ -238,7 +277,7 @@ const OrdersPage = () => {
                       </Badge>
                       <div className="text-right">
                         <div className="text-lg font-bold text-gray-900 dark:text-white">
-                          {formatCurrency(order.total)}
+                          {formatCurrency(Number(order?.total) || 0)}
                         </div>
                       </div>
                     </div>
@@ -252,16 +291,19 @@ const OrdersPage = () => {
                         Itens do Pedido
                       </h4>
                       <div className="space-y-2">
-                        {order.items.map((item, index) => (
-                          <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                        {(Array.isArray(order?.items) ? order.items : []).map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          >
                             <div>
-                              <span className="font-medium">{item.name}</span>
+                              <span className="font-medium">{item?.name || "Item"}</span>
                               <span className="text-gray-600 dark:text-gray-400 ml-2">
-                                Qtd: {item.quantity}
+                                Qtd: {Number(item?.quantity) || 0}
                               </span>
                             </div>
                             <span className="font-medium">
-                              {formatCurrency(item.price * item.quantity)}
+                              {formatCurrency((Number(item?.price || 0) * Number(item?.quantity || 0)))}
                             </span>
                           </div>
                         ))}
@@ -280,7 +322,7 @@ const OrdersPage = () => {
                           </p>
                         </div>
                       )}
-                      
+
                       {order.estimatedDelivery && (
                         <div>
                           <h5 className="font-medium text-gray-900 dark:text-white mb-1">
@@ -295,24 +337,31 @@ const OrdersPage = () => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrderId(order.id);
+                          setIsDetailOpen(true);
+                        }}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalhes
                       </Button>
-                      
+
                       {order.tracking && (
                         <Button variant="outline" size="sm">
                           <Truck className="w-4 h-4 mr-2" />
                           Rastrear
                         </Button>
                       )}
-                      
+
                       <Button variant="outline" size="sm">
                         <Download className="w-4 h-4 mr-2" />
                         Nota Fiscal
                       </Button>
-                      
-                      {order.status === 'delivered' && (
+
+                      {order.status === "delivered" && (
                         <Button variant="outline" size="sm">
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Comprar Novamente
@@ -323,10 +372,16 @@ const OrdersPage = () => {
                 </CardContent>
               </Card>
             );
-          })
-      }
-      </div>
+          })}
+        </div>
       )}
+
+      {/* Order Detail Dialog */}
+      <OrderDetail
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        orderId={selectedOrderId}
+      />
     </div>
   );
 };

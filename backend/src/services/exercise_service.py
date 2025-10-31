@@ -1,6 +1,13 @@
 """
-Serviço de Exercícios RE-EDUCA Store - Supabase
-Gerencia exercícios, planos de treino e sessões semanais
+Serviço de Exercícios RE-EDUCA Store - Supabase.
+
+Gerencia sistema completo de exercícios incluindo:
+- CRUD de exercícios com filtros avançados
+- Planos de treino personalizados
+- Sessões semanais de treino
+- Tracking de progresso
+- Logs de exercícios realizados
+- Gestão de metas fitness
 """
 import logging
 from typing import Dict, Any, List, Optional

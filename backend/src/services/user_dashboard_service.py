@@ -1,5 +1,13 @@
 """
-Service de Dashboard do Usuário RE-EDUCA Store
+Service de Dashboard do Usuário RE-EDUCA Store.
+
+Agrega dados de múltiplas fontes para o dashboard incluindo:
+- Score de saúde calculado
+- Metas semanais e progresso
+- Atividades recentes
+- Conquistas e badges
+- Sumários de treino e nutrição
+- Estatísticas rápidas
 """
 import logging
 from typing import Dict, Any, List
@@ -9,13 +17,26 @@ from config.database import supabase_client
 logger = logging.getLogger(__name__)
 
 class UserDashboardService:
-    """Service para dados do dashboard do usuário"""
+    """
+    Service para dados do dashboard do usuário.
+    
+    Agrega e processa dados de várias fontes.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de dashboard."""
         self.db = supabase_client
     
     def get_dashboard_data(self, user_id: str) -> Dict[str, Any]:
-        """Retorna dados completos do dashboard do usuário"""
+        """
+        Retorna dados completos do dashboard do usuário.
+        
+        Args:
+            user_id (str): ID do usuário.
+            
+        Returns:
+            Dict[str, Any]: Dashboard com health_score, metas, atividades, etc.
+        """
         try:
             return {
                 'health_score': self._calculate_health_score(user_id),

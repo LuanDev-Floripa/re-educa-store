@@ -1,6 +1,12 @@
 """
-Rotas de Promoções e Cupons RE-EDUCA Store
+Rotas de Promoções e Cupons RE-EDUCA Store.
+
+Gerencia promoções e cupons de desconto incluindo:
+- Listagem e criação de cupons (admin)
+- Validação e aplicação de cupons
+- Regras de promoção e descontos
 """
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from services.promotion_service import PromotionService
 from utils.decorators import token_required, admin_required, rate_limit, validate_json

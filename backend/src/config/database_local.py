@@ -1,5 +1,14 @@
 """
-Configuração do Banco de Dados Local RE-EDUCA Store
+Configuração do Banco de Dados Local RE-EDUCA Store.
+
+Fornece acesso ao PostgreSQL local para desenvolvimento incluindo:
+- Conexão pool com psycopg2
+- Execução segura de queries (SELECT, INSERT, UPDATE, DELETE)
+- Transações com commit/rollback
+- Logs de erros
+
+AVISO: Para produção, use Supabase (database.py).
+Este arquivo é para desenvolvimento/testes locais apenas.
 """
 import os
 import logging
@@ -10,7 +19,15 @@ from typing import Optional, Dict, Any, List
 logger = logging.getLogger(__name__)
 
 class LocalDatabase:
+    """
+    Cliente para banco de dados PostgreSQL local.
+    
+    Attributes:
+        connection_params (dict): Parâmetros de conexão.
+    """
+    
     def __init__(self):
+        """Inicializa o cliente de banco de dados local."""
         self.connection_params = {
             'host': os.environ.get('POSTGRES_HOST', 'localhost'),
             'port': os.environ.get('POSTGRES_PORT', '5432'),
@@ -21,7 +38,15 @@ class LocalDatabase:
         self._connection = None
     
     def get_connection(self):
-        """Retorna conexão com o banco de dados"""
+        """
+        Retorna conexão com o banco de dados.
+        
+        Returns:
+            psycopg2.connection: Conexão ativa com PostgreSQL.
+            
+        Raises:
+            Exception: Se falhar ao conectar.
+        """
         if self._connection is None or self._connection.closed:
             try:
                 self._connection = psycopg2.connect(**self.connection_params)

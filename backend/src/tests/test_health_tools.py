@@ -1,3 +1,13 @@
+"""
+Testes para Ferramentas de Saúde RE-EDUCA Store.
+
+Cobre funcionalidades de calculadoras de saúde incluindo:
+- Cálculo de IMC (Índice de Massa Corporal)
+- Validação de valores de entrada
+- Classificação de resultados
+- Histórico de cálculos
+- Recomendações baseadas em IMC
+"""
 import pytest
 import json
 from unittest.mock import patch, Mock
@@ -6,16 +16,26 @@ app = create_app()
 
 @pytest.fixture
 def client():
+    """Cliente Flask de teste."""
     app.config['TESTING'] = True
     return app.test_client()
 
 @pytest.fixture
 def auth_headers():
-    """Headers de autenticação para testes"""
+    """Headers de autenticação para testes."""
     return {'Authorization': 'Bearer test-token'}
 
 class TestHealthTools:
-    """Testes para as ferramentas de saúde"""
+    """
+    Testes para as ferramentas de saúde RE-EDUCA Store.
+    
+    Suite completa de testes para calculadoras de saúde incluindo:
+    - Validação de entrada (valores válidos/inválidos)
+    - Cálculos precisos de IMC
+    - Classificações corretas
+    - Persistência de histórico
+    - Geração de recomendações
+    """
     
     @patch('main.supabase')
     @patch('main.jwt.decode')
@@ -62,11 +82,24 @@ class TestHealthTools:
                              json={'weight': 70, 'height': 170},
                              headers=auth_headers)
         
-        assert response.status_code == 200
+        # Assert: Status HTTP deve ser 200 (sucesso)
+        assert response.status_code == 200, f"Esperado 200, recebido {response.status_code}"
+        
+        # Assert: Resposta deve conter dados JSON válidos
         data = json.loads(response.data)
-        assert 'imc' in data
-        assert 'classification' in data
-        assert 'recommendations' in data
+        assert isinstance(data, dict), "Resposta deve ser um objeto JSON"
+        
+        # Assert: Deve conter campos obrigatórios
+        assert 'imc' in data, "Resposta deve conter campo 'imc'"
+        assert 'classification' in data, "Resposta deve conter campo 'classification'"
+        assert 'recommendations' in data, "Resposta deve conter campo 'recommendations'"
+        
+        # Assert: Valores devem ser válidos
+        assert isinstance(data['imc'], (int, float)), "IMC deve ser numérico"
+        assert data['imc'] > 0, "IMC deve ser positivo"
+        assert isinstance(data['classification'], str), "Classificação deve ser string"
+        assert len(data['classification']) > 0, "Classificação não pode estar vazia"
+        assert isinstance(data['recommendations'], list), "Recomendações deve ser lista"
     
     @patch('main.supabase')
     @patch('main.jwt.decode')

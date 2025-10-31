@@ -1,19 +1,29 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { AuthLayout } from '../../components/layouts/PageLayout';
-import { useApi } from '../../lib/api';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+/**
+ * ForgotPasswordPage
+ * - Validação de email; solicita link de reset; fallbacks/toasts
+ */
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { AuthLayout } from "../../components/layouts/PageLayout";
+import { useApi } from "../../lib/api";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 // Schema de validação
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Email inválido'),
+  email: z.string().email("Email inválido"),
 });
 
 export const ForgotPasswordPage = () => {
@@ -33,26 +43,34 @@ export const ForgotPasswordPage = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const response = await request(() => 
-        fetch('/api/auth/forgot-password', {
-          method: 'POST',
+      if (typeof request !== "function") {
+        throw new Error("Serviço de rede indisponível");
+      }
+      const response = await request(() =>
+        fetch("/api/auth/forgot-password", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        })
+        }),
       );
 
       if (response.ok) {
         setEmailSent(true);
-        toast.success('Email de reset enviado com sucesso!');
+        toast.success("Email de reset enviado com sucesso!");
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Erro ao enviar email de reset');
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          error = {};
+        }
+        toast.error(error?.error || "Erro ao enviar email de reset");
       }
     } catch (error) {
-      console.error('Erro ao solicitar reset:', error);
-      toast.error('Erro ao solicitar reset. Tente novamente.');
+      console.error("Erro ao solicitar reset:", error);
+      toast.error(error?.message || "Erro ao solicitar reset. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +88,7 @@ export const ForgotPasswordPage = () => {
             Enviamos um link para redefinir sua senha para:
           </p>
           <p className="font-medium text-gray-900 dark:text-white mb-6">
-            {getValues('email')}
+            {getValues("email")}
           </p>
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
             <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -104,10 +122,13 @@ export const ForgotPasswordPage = () => {
 
     return (
       <div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Email
             </label>
             <div className="relative">
@@ -117,11 +138,11 @@ export const ForgotPasswordPage = () => {
                 type="email"
                 placeholder="seu@email.com"
                 className="pl-10"
-                {...register('email')}
+                {...register("email")}
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert" aria-live="assertive">
                 {errors.email.message}
               </p>
             )}
@@ -130,7 +151,8 @@ export const ForgotPasswordPage = () => {
           {/* Instruções */}
           <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Digite o email associado à sua conta e enviaremos um link para redefinir sua senha.
+              Digite o email associado à sua conta e enviaremos um link para
+              redefinir sua senha.
             </p>
           </div>
 
@@ -146,7 +168,7 @@ export const ForgotPasswordPage = () => {
                 <span>Enviando...</span>
               </div>
             ) : (
-              'Enviar Link de Reset'
+              "Enviar Link de Reset"
             )}
           </Button>
         </form>
@@ -154,7 +176,7 @@ export const ForgotPasswordPage = () => {
         {/* Links */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Lembrou da senha?{' '}
+            Lembrou da senha?{" "}
             <Link
               to="/login"
               className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
@@ -189,9 +211,7 @@ export const ForgotPasswordPage = () => {
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
     </AuthLayout>
   );

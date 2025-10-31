@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Badge } from '../Ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
-import { 
+import React, { useState, useEffect } from "react";
+/**
+ * Busca Social com filtros e abas.
+ * - Carrega hashtags em tendência (API + fallback)
+ * - Mantém buscas recentes e executa onSearch/onFilterChange
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Badge } from "../Ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
+import {
   Search,
   Filter,
   X,
@@ -21,30 +26,30 @@ import {
   TrendingUp,
   Clock,
   Star,
-  Check
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
-import apiClient from '@/services/apiClient';
+  Check,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import apiClient from "@/services/apiClient";
 
-const SocialSearch = ({ 
-  searchResults, 
-  onSearch, 
+const SocialSearch = ({
+  searchResults,
+  onSearch,
   onFilterChange,
-  currentUser 
+  // eslint-disable-next-line no-unused-vars
+  currentUser,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
   const [filters, setFilters] = useState({
-    type: 'all',
-    dateRange: 'all',
-    sortBy: 'relevance',
+    type: "all",
+    dateRange: "all",
+    sortBy: "relevance",
     verified: false,
     hasMedia: false,
     minLikes: 0,
     hashtags: [],
-    location: ''
+    location: "",
   });
   const [showFilters, setShowFilters] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -53,12 +58,12 @@ const SocialSearch = ({
   // Carregar dados reais
   useEffect(() => {
     // Carregar buscas recentes do localStorage
-    const savedSearches = localStorage.getItem('social_recent_searches');
+    const savedSearches = localStorage.getItem("social_recent_searches");
     if (savedSearches) {
       try {
         setRecentSearches(JSON.parse(savedSearches));
       } catch (e) {
-        console.error('Erro ao carregar buscas recentes:', e);
+        console.error("Erro ao carregar buscas recentes:", e);
       }
     }
 
@@ -72,182 +77,194 @@ const SocialSearch = ({
       // Por enquanto, usar hashtags comuns da área de fitness/saúde
       // Em produção, poderia buscar posts e contar hashtags
       const commonHashtags = [
-        { tag: 'fitness', count: 0 },
-        { tag: 'saude', count: 0 },
-        { tag: 'exercicio', count: 0 },
-        { tag: 'nutricao', count: 0 },
-        { tag: 'bemestar', count: 0 },
-        { tag: 'treino', count: 0 },
-        { tag: 'hiit', count: 0 },
-        { tag: 'cardio', count: 0 }
+        { tag: "fitness", count: 0 },
+        { tag: "saude", count: 0 },
+        { tag: "exercicio", count: 0 },
+        { tag: "nutricao", count: 0 },
+        { tag: "bemestar", count: 0 },
+        { tag: "treino", count: 0 },
+        { tag: "hiit", count: 0 },
+        { tag: "cardio", count: 0 },
       ];
-      
+
       // Tentar buscar posts reais para calcular trending
       try {
-        const response = await apiClient.request('/api/social/posts?limit=100');
+        const response = await apiClient.request("/api/social/posts?limit=100");
         if (response.posts) {
           // Extrair hashtags dos posts
           const hashtagCounts = {};
-          response.posts.forEach(post => {
+          response.posts.forEach((post) => {
             if (post.content) {
               const hashtags = post.content.match(/#\w+/g) || [];
-              hashtags.forEach(tag => {
-                const cleanTag = tag.replace('#', '').toLowerCase();
+              hashtags.forEach((tag) => {
+                const cleanTag = tag.replace("#", "").toLowerCase();
                 hashtagCounts[cleanTag] = (hashtagCounts[cleanTag] || 0) + 1;
               });
             }
           });
-          
+
           // Converter para array e ordenar
           const trending = Object.entries(hashtagCounts)
             .map(([tag, count]) => ({ tag, count }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
-          
+
           if (trending.length > 0) {
             setTrendingHashtags(trending);
             return;
           }
         }
-      } catch (apiError) {
-        console.log('API de posts não disponível, usando hashtags padrão');
+      } catch {
+        console.log("API de posts não disponível, usando hashtags padrão");
       }
-      
+
       // Fallback para hashtags padrão
       setTrendingHashtags(commonHashtags);
     } catch (err) {
-      console.error('Erro ao carregar trending hashtags:', err);
+      console.error("Erro ao carregar trending hashtags:", err);
       // Usar valores padrão em caso de erro
       setTrendingHashtags([
-        { tag: 'fitness', count: 1250 },
-        { tag: 'saude', count: 980 },
-        { tag: 'exercicio', count: 750 },
-        { tag: 'nutricao', count: 620 },
-        { tag: 'bemestar', count: 580 }
+        { tag: "fitness", count: 1250 },
+        { tag: "saude", count: 980 },
+        { tag: "exercicio", count: 750 },
+        { tag: "nutricao", count: 620 },
+        { tag: "bemestar", count: 580 },
       ]);
     }
   };
 
   const handleSearch = (query = searchQuery) => {
     if (!query.trim()) return;
-    
-    onSearch(query, filters);
-    
+
+    onSearch?.(query, filters);
+
     // Adicionar à busca recente e salvar no localStorage
-    const updatedSearches = [query, ...recentSearches.filter(s => s !== query)].slice(0, 10);
+    const updatedSearches = [
+      query,
+      ...recentSearches.filter((s) => s !== query),
+    ].slice(0, 10);
     setRecentSearches(updatedSearches);
-    localStorage.setItem('social_recent_searches', JSON.stringify(updatedSearches));
+    localStorage.setItem(
+      "social_recent_searches",
+      JSON.stringify(updatedSearches),
+    );
   };
 
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    onFilterChange?.(newFilters);
   };
 
   const clearFilters = () => {
     const defaultFilters = {
-      type: 'all',
-      dateRange: 'all',
-      sortBy: 'relevance',
+      type: "all",
+      dateRange: "all",
+      sortBy: "relevance",
       verified: false,
       hasMedia: false,
       minLikes: 0,
       hashtags: [],
-      location: ''
+      location: "",
     };
     setFilters(defaultFilters);
-    onFilterChange(defaultFilters);
+    onFilterChange?.(defaultFilters);
   };
 
   const getFilteredResults = () => {
     if (!searchResults) return [];
-    
+
     let filtered = searchResults;
-    
+
     // Filtrar por tipo
-    if (filters.type !== 'all') {
-      filtered = filtered.filter(item => {
-        if (filters.type === 'posts') return item.type === 'post';
-        if (filters.type === 'users') return item.type === 'user';
-        if (filters.type === 'hashtags') return item.type === 'hashtag';
-        if (filters.type === 'media') return item.media_url;
+    if (filters.type !== "all") {
+      filtered = filtered.filter((item) => {
+        if (filters.type === "posts") return item.type === "post";
+        if (filters.type === "users") return item.type === "user";
+        if (filters.type === "hashtags") return item.type === "hashtag";
+        if (filters.type === "media") return item.media_url;
         return true;
       });
     }
-    
+
     // Filtrar por data
-    if (filters.dateRange !== 'all') {
+    if (filters.dateRange !== "all") {
       const now = new Date();
       const filterDate = new Date();
-      
+
       switch (filters.dateRange) {
-        case 'today':
+        case "today":
           filterDate.setHours(0, 0, 0, 0);
           break;
-        case 'week':
+        case "week":
           filterDate.setDate(now.getDate() - 7);
           break;
-        case 'month':
+        case "month":
           filterDate.setMonth(now.getMonth() - 1);
           break;
-        case 'year':
+        case "year":
           filterDate.setFullYear(now.getFullYear() - 1);
           break;
       }
-      
-      filtered = filtered.filter(item => 
-        new Date(item.created_at) >= filterDate
+
+      filtered = filtered.filter(
+        (item) => new Date(item.created_at) >= filterDate,
       );
     }
-    
+
     // Filtrar por verificados
     if (filters.verified) {
-      filtered = filtered.filter(item => item.is_verified);
+      filtered = filtered.filter((item) => item.is_verified);
     }
-    
+
     // Filtrar por mídia
     if (filters.hasMedia) {
-      filtered = filtered.filter(item => item.media_url);
+      filtered = filtered.filter((item) => item.media_url);
     }
-    
+
     // Filtrar por likes mínimos
     if (filters.minLikes > 0) {
-      filtered = filtered.filter(item => item.likes_count >= filters.minLikes);
+      filtered = filtered.filter(
+        (item) => item.likes_count >= filters.minLikes,
+      );
     }
-    
+
     // Filtrar por hashtags
     if (filters.hashtags.length > 0) {
-      filtered = filtered.filter(item => 
-        filters.hashtags.some(tag => 
-          item.content?.toLowerCase().includes(tag.toLowerCase())
-        )
+      filtered = filtered.filter((item) =>
+        filters.hashtags.some((tag) =>
+          item.content?.toLowerCase().includes(tag.toLowerCase()),
+        ),
       );
     }
-    
+
     // Filtrar por localização
     if (filters.location) {
-      filtered = filtered.filter(item => 
-        item.location?.toLowerCase().includes(filters.location.toLowerCase())
+      filtered = filtered.filter((item) =>
+        item.location?.toLowerCase().includes(filters.location.toLowerCase()),
       );
     }
-    
+
     // Ordenar resultados
     switch (filters.sortBy) {
-      case 'date':
-        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      case "date":
+        filtered.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at),
+        );
         break;
-      case 'likes':
+      case "likes":
         filtered.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
         break;
-      case 'comments':
-        filtered.sort((a, b) => (b.comments_count || 0) - (a.comments_count || 0));
+      case "comments":
+        filtered.sort(
+          (a, b) => (b.comments_count || 0) - (a.comments_count || 0),
+        );
         break;
       default:
         // Relevância (já ordenado pelo backend)
         break;
     }
-    
+
     return filtered;
   };
 
@@ -257,44 +274,40 @@ const SocialSearch = ({
         <div className="flex space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={post.user?.avatar_url} />
-            <AvatarFallback>
-              {post.user?.name?.charAt(0) || 'U'}
-            </AvatarFallback>
+            <AvatarFallback>{post.user?.name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-2">
               <h4 className="font-semibold text-sm">
-                {post.user?.name || 'Usuário'}
+                {post.user?.name || "Usuário"}
               </h4>
               {post.user?.is_verified && (
                 <Check className="h-4 w-4 text-blue-500" />
               )}
               <span className="text-xs text-gray-500">
-                @{post.user?.username || 'usuario'}
+                @{post.user?.username || "usuario"}
               </span>
               <span className="text-xs text-gray-500">
-                {formatDistanceToNow(new Date(post.created_at), { 
-                  addSuffix: true, 
-                  locale: ptBR 
+                {formatDistanceToNow(new Date(post.created_at), {
+                  addSuffix: true,
+                  locale: ptBR,
                 })}
               </span>
             </div>
-            
-            <p className="text-sm text-gray-900 mb-3">
-              {post.content}
-            </p>
-            
+
+            <p className="text-sm text-gray-900 mb-3">{post.content}</p>
+
             {post.media_url && (
               <div className="mb-3">
-                {post.media_type === 'image' ? (
+                {post.media_type === "image" ? (
                   <Image className="h-48 w-full object-cover rounded-lg" />
                 ) : (
                   <Video className="h-48 w-full object-cover rounded-lg" />
                 )}
               </div>
             )}
-            
+
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <div className="flex items-center space-x-1">
                 <Heart className="h-4 w-4" />
@@ -321,31 +334,25 @@ const SocialSearch = ({
         <div className="flex items-center space-x-3">
           <Avatar className="h-12 w-12">
             <AvatarImage src={user.avatar_url} />
-            <AvatarFallback>
-              {user.name?.charAt(0) || 'U'}
-            </AvatarFallback>
+            <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
               <h4 className="font-semibold text-sm">
-                {user.name || 'Usuário'}
+                {user.name || "Usuário"}
               </h4>
-              {user.is_verified && (
-                <Check className="h-4 w-4 text-blue-500" />
-              )}
+              {user.is_verified && <Check className="h-4 w-4 text-blue-500" />}
             </div>
-            
+
             <p className="text-xs text-gray-500 mb-2">
-              @{user.username || 'usuario'}
+              @{user.username || "usuario"}
             </p>
-            
+
             {user.bio && (
-              <p className="text-sm text-gray-700 mb-2">
-                {user.bio}
-              </p>
+              <p className="text-sm text-gray-700 mb-2">{user.bio}</p>
             )}
-            
+
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <div className="flex items-center space-x-1">
                 <Users className="h-4 w-4" />
@@ -357,7 +364,7 @@ const SocialSearch = ({
               </div>
             </div>
           </div>
-          
+
           <Button size="sm" variant="outline">
             Seguir
           </Button>
@@ -375,15 +382,11 @@ const SocialSearch = ({
               <Hash className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">
-                #{hashtag.tag}
-              </h4>
-              <p className="text-xs text-gray-500">
-                {hashtag.count} posts
-              </p>
+              <h4 className="font-semibold text-sm">#{hashtag.tag}</h4>
+              <p className="text-xs text-gray-500">{hashtag.count} posts</p>
             </div>
           </div>
-          
+
           <Button size="sm" variant="outline">
             Seguir
           </Button>
@@ -395,11 +398,11 @@ const SocialSearch = ({
   const filteredResults = getFilteredResults();
 
   const searchTypes = [
-    { id: 'all', label: 'Tudo', icon: Search },
-    { id: 'posts', label: 'Posts', icon: MessageCircle },
-    { id: 'users', label: 'Usuários', icon: Users },
-    { id: 'hashtags', label: 'Hashtags', icon: Hash },
-    { id: 'media', label: 'Mídia', icon: Image }
+    { id: "all", label: "Tudo", icon: Search },
+    { id: "posts", label: "Posts", icon: MessageCircle },
+    { id: "users", label: "Usuários", icon: Users },
+    { id: "hashtags", label: "Hashtags", icon: Hash },
+    { id: "media", label: "Mídia", icon: Image },
   ];
 
   return (
@@ -414,13 +417,11 @@ const SocialSearch = ({
                 placeholder="Buscar posts, usuários, hashtags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => handleSearch()}>
-              Buscar
-            </Button>
+            <Button onClick={() => handleSearch()}>Buscar</Button>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
@@ -455,7 +456,7 @@ const SocialSearch = ({
                 </label>
                 <select
                   value={filters.type}
-                  onChange={(e) => handleFilterChange('type', e.target.value)}
+                  onChange={(e) => handleFilterChange("type", e.target.value)}
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="all">Todos</option>
@@ -472,7 +473,9 @@ const SocialSearch = ({
                 </label>
                 <select
                   value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("dateRange", e.target.value)
+                  }
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="all">Qualquer data</option>
@@ -489,7 +492,7 @@ const SocialSearch = ({
                 </label>
                 <select
                   value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="relevance">Relevância</option>
@@ -506,7 +509,12 @@ const SocialSearch = ({
                 <Input
                   type="number"
                   value={filters.minLikes}
-                  onChange={(e) => handleFilterChange('minLikes', parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "minLikes",
+                      parseInt(e.target.value) || 0,
+                    )
+                  }
                   placeholder="0"
                 />
               </div>
@@ -517,7 +525,9 @@ const SocialSearch = ({
                 </label>
                 <Input
                   value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("location", e.target.value)
+                  }
                   placeholder="Cidade, estado..."
                 />
               </div>
@@ -528,7 +538,9 @@ const SocialSearch = ({
                 <input
                   type="checkbox"
                   checked={filters.verified}
-                  onChange={(e) => handleFilterChange('verified', e.target.checked)}
+                  onChange={(e) =>
+                    handleFilterChange("verified", e.target.checked)
+                  }
                   className="rounded"
                 />
                 <span className="text-sm">Apenas verificados</span>
@@ -537,7 +549,9 @@ const SocialSearch = ({
                 <input
                   type="checkbox"
                   checked={filters.hasMedia}
-                  onChange={(e) => handleFilterChange('hasMedia', e.target.checked)}
+                  onChange={(e) =>
+                    handleFilterChange("hasMedia", e.target.checked)
+                  }
                   className="rounded"
                 />
                 <span className="text-sm">Com mídia</span>
@@ -570,10 +584,14 @@ const SocialSearch = ({
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              {searchTypes.map(type => {
+              {searchTypes.map((type) => {
                 const Icon = type.icon;
                 return (
-                  <TabsTrigger key={type.id} value={type.id} className="flex items-center space-x-2">
+                  <TabsTrigger
+                    key={type.id}
+                    value={type.id}
+                    className="flex items-center space-x-2"
+                  >
                     <Icon className="h-4 w-4" />
                     <span>{type.label}</span>
                   </TabsTrigger>
@@ -582,28 +600,36 @@ const SocialSearch = ({
             </TabsList>
 
             <TabsContent value="all" className="mt-4">
-              {filteredResults.map(item => {
-                if (item.type === 'post') return renderPostResult(item);
-                if (item.type === 'user') return renderUserResult(item);
-                if (item.type === 'hashtag') return renderHashtagResult(item);
+              {filteredResults.map((item) => {
+                if (item.type === "post") return renderPostResult(item);
+                if (item.type === "user") return renderUserResult(item);
+                if (item.type === "hashtag") return renderHashtagResult(item);
                 return null;
               })}
             </TabsContent>
 
             <TabsContent value="posts" className="mt-4">
-              {filteredResults.filter(item => item.type === 'post').map(renderPostResult)}
+              {filteredResults
+                .filter((item) => item.type === "post")
+                .map(renderPostResult)}
             </TabsContent>
 
             <TabsContent value="users" className="mt-4">
-              {filteredResults.filter(item => item.type === 'user').map(renderUserResult)}
+              {filteredResults
+                .filter((item) => item.type === "user")
+                .map(renderUserResult)}
             </TabsContent>
 
             <TabsContent value="hashtags" className="mt-4">
-              {filteredResults.filter(item => item.type === 'hashtag').map(renderHashtagResult)}
+              {filteredResults
+                .filter((item) => item.type === "hashtag")
+                .map(renderHashtagResult)}
             </TabsContent>
 
             <TabsContent value="media" className="mt-4">
-              {filteredResults.filter(item => item.media_url).map(renderPostResult)}
+              {filteredResults
+                .filter((item) => item.media_url)
+                .map(renderPostResult)}
             </TabsContent>
           </Tabs>
         </div>

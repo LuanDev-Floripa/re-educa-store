@@ -1,3 +1,13 @@
+"""
+Testes Básicos de Funcionalidade RE-EDUCA Store.
+
+Testes fundamentais para validar:
+- Imports de dependências
+- Configuração do pytest
+- Funções utilitárias básicas
+- Criação da aplicação Flask
+- Variáveis de ambiente
+"""
 import pytest
 import sys
 import os
@@ -6,10 +16,25 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 class TestBasicFunctionality:
-    """Testes básicos de funcionalidade"""
+    """
+    Testes básicos de funcionalidade RE-EDUCA Store.
+    
+    Validações fundamentais do ambiente de testes e
+    configurações básicas da aplicação.
+    """
     
     def test_imports(self):
-        """Testa se os imports básicos funcionam"""
+        """
+        Testa se os imports básicos funcionam.
+        
+        Verifica:
+        - Importação do Flask
+        - Versão do Flask disponível
+        - Ausência de erros de importação
+        
+        Raises:
+            pytest.fail: Se Flask não puder ser importado.
+        """
         try:
             import flask
             assert flask.__version__ is not None

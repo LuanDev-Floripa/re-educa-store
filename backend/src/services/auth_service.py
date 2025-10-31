@@ -1,5 +1,12 @@
 """
-Service de autenticação RE-EDUCA Store - Supabase
+Service de autenticação RE-EDUCA Store - Supabase.
+
+Gerencia autenticação e autorização de usuários incluindo:
+- Registro de novos usuários com validação
+- Autenticação com email e senha
+- Geração e verificação de tokens JWT
+- Atualização de perfil e senha
+- Recuperação de senha
 """
 import logging
 from typing import Dict, Any, Optional
@@ -11,13 +18,27 @@ from utils.helpers import validate_email, generate_uuid
 logger = logging.getLogger(__name__)
 
 class AuthService:
-    """Service para operações de autenticação - Supabase"""
+    """
+    Service para operações de autenticação - Supabase.
+    
+    Attributes:
+        supabase: Cliente Supabase para operações de banco de dados.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de autenticação."""
         self.supabase = supabase_client
     
     def register_user(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Registra novo usuário"""
+        """
+        Registra novo usuário no sistema.
+        
+        Args:
+            data (Dict[str, Any]): Dados do usuário contendo name, email e password.
+            
+        Returns:
+            Dict[str, Any]: Resultado com success, user e token ou erro.
+        """
         try:
             # Verifica se email já existe
             existing_user = self.supabase.get_user_by_email(data['email'])
@@ -67,7 +88,16 @@ class AuthService:
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
-        """Autentica usuário"""
+        """
+        Autentica usuário com email e senha.
+        
+        Args:
+            email (str): Email do usuário.
+            password (str): Senha em texto plano.
+            
+        Returns:
+            Dict[str, Any]: Resultado com success, user e token ou erro.
+        """
         try:
             # Busca usuário por email
             user = self.supabase.get_user_by_email(email)

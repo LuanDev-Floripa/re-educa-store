@@ -1,26 +1,49 @@
-import React from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { AuthLayout } from '../../components/layouts/PageLayout';
-import { useApi } from '../../lib/api';
-import { Lock, Eye, EyeOff, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+/**
+ * ResetPasswordPage
+ * - Validação de senha; reset com token; fallbacks/toasts
+ */
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { AuthLayout } from "../../components/layouts/PageLayout";
+import { useApi } from "../../lib/api";
+import {
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  XCircle,
+  ArrowRight,
+} from "lucide-react";
+import { toast } from "sonner";
 
 // Schema de validação
-const resetPasswordSchema = z.object({
-  newPassword: z.string()
-    .min(8, 'Senha deve ter pelo menos 8 caracteres')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número'),
-  confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-});
+const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Senha deve ter pelo menos 8 caracteres")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número",
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Senhas não coincidem",
+    path: ["confirmPassword"],
+  });
 
 export const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -31,7 +54,7 @@ export const ResetPasswordPage = () => {
   const [isResetting, setIsResetting] = React.useState(false);
   const [resetStatus, setResetStatus] = React.useState(null);
 
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   const {
     register,
@@ -44,46 +67,54 @@ export const ResetPasswordPage = () => {
 
   const onSubmit = async (data) => {
     if (!token) {
-      toast.error('Token de reset inválido');
+      toast.error("Token de reset inválido");
       return;
     }
 
     setIsResetting(true);
     try {
-      const response = await request(() => 
-        fetch('/api/auth/reset-password', {
-          method: 'POST',
+      if (typeof request !== "function") {
+        throw new Error("Serviço de rede indisponível");
+      }
+      const response = await request(() =>
+        fetch("/api/auth/reset-password", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             token: token,
             new_password: data.newPassword,
           }),
-        })
+        }),
       );
 
       if (response.ok) {
-        setResetStatus('success');
-        toast.success('Senha alterada com sucesso!');
+        setResetStatus("success");
+        toast.success("Senha alterada com sucesso!");
         // Redireciona para o login após 3 segundos
         setTimeout(() => {
-          navigate('/login');
+          navigate("/login");
         }, 3000);
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Erro ao alterar senha');
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          error = {};
+        }
+        toast.error(error?.error || "Erro ao alterar senha");
       }
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
-      toast.error('Erro ao alterar senha. Tente novamente.');
+      console.error("Erro ao alterar senha:", error);
+      toast.error(error?.message || "Erro ao alterar senha. Tente novamente.");
     } finally {
       setIsResetting(false);
     }
   };
 
   const renderContent = () => {
-    if (resetStatus === 'success') {
+    if (resetStatus === "success") {
       return (
         <div className="text-center">
           <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -91,10 +122,11 @@ export const ResetPasswordPage = () => {
             Senha Alterada!
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Sua senha foi alterada com sucesso. Você será redirecionado para o login em alguns segundos.
+            Sua senha foi alterada com sucesso. Você será redirecionado para o
+            login em alguns segundos.
           </p>
           <Button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <ArrowRight className="w-4 h-4 mr-2" />
@@ -112,10 +144,11 @@ export const ResetPasswordPage = () => {
             Link Inválido
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            O link de reset de senha é inválido ou expirou. Solicite um novo link.
+            O link de reset de senha é inválido ou expirou. Solicite um novo
+            link.
           </p>
           <Button
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate("/forgot-password")}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             Solicitar Novo Link
@@ -128,17 +161,20 @@ export const ResetPasswordPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Nova Senha */}
         <div className="space-y-2">
-          <label htmlFor="newPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="newPassword"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Nova Senha
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="newPassword"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="Digite sua nova senha"
               className="pl-10 pr-10"
-              {...register('newPassword')}
+              {...register("newPassword")}
             />
             <button
               type="button"
@@ -161,17 +197,20 @@ export const ResetPasswordPage = () => {
 
         {/* Confirmar Senha */}
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="confirmPassword"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Confirmar Nova Senha
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirme sua nova senha"
               className="pl-10 pr-10"
-              {...register('confirmPassword')}
+              {...register("confirmPassword")}
             />
             <button
               type="button"
@@ -217,7 +256,7 @@ export const ResetPasswordPage = () => {
               <span>Alterando senha...</span>
             </div>
           ) : (
-            'Alterar Senha'
+            "Alterar Senha"
           )}
         </Button>
       </form>
@@ -246,9 +285,7 @@ export const ResetPasswordPage = () => {
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
     </AuthLayout>
   );

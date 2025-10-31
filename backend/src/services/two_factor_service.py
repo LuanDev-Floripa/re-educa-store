@@ -1,5 +1,12 @@
 """
-Serviço de Two-Factor Authentication (2FA) RE-EDUCA Store
+Serviço de Two-Factor Authentication (2FA) RE-EDUCA Store.
+
+Gerencia autenticação de dois fatores incluindo:
+- Geração de QR codes para authenticator apps
+- Validação de tokens TOTP
+- Códigos de backup para recuperação
+- Configuração e desativação do 2FA
+- Gestão de secret keys seguras
 """
 import os
 import logging
@@ -16,17 +23,39 @@ from utils.helpers import generate_uuid
 logger = logging.getLogger(__name__)
 
 class TwoFactorService:
-    """Service para operações de 2FA"""
+    """
+    Service para operações de 2FA (Two-Factor Authentication).
+    
+    Implementa TOTP (Time-based One-Time Password).
+    """
     
     def __init__(self):
-        self.db = supabase_client
+        """Inicializa o serviço de 2FA."""
+        self.supabase = supabase_client
     
     def generate_secret_key(self, user_email: str) -> str:
-        """Gera uma chave secreta para TOTP"""
+        """
+        Gera uma chave secreta para TOTP.
+        
+        Args:
+            user_email (str): Email do usuário.
+            
+        Returns:
+            str: Chave secreta base32.
+        """
         return pyotp.random_base32()
     
     def generate_qr_code(self, user_email: str, secret_key: str) -> str:
-        """Gera QR code para configuração do 2FA"""
+        """
+        Gera QR code para configuração do 2FA.
+        
+        Args:
+            user_email (str): Email do usuário.
+            secret_key (str): Chave secreta TOTP.
+            
+        Returns:
+            str: QR code em formato data URI (base64).
+        """
         try:
             # Cria URI para o app autenticador
             totp_uri = pyotp.totp.TOTP(secret_key).provisioning_uri(
@@ -73,30 +102,13 @@ class TwoFactorService:
             qr_code = self.generate_qr_code(user_email, secret_key)
             
             # Salva no banco de dados
-            if hasattr(self.db, 'execute_insert'):
-                # SQLite
-                self.db.execute_insert('''
-                    INSERT OR REPLACE INTO two_factor_auth 
-                    (user_id, secret_key, backup_codes, enabled, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (
-                    user_id,
-                    secret_key,
-                    ','.join(backup_codes),
-                    False,  # Não habilitado até verificação
-                    datetime.now().isoformat(),
-                    datetime.now().isoformat()
-                ))
-            else:
-                # Supabase
-                self.db._make_request("GET", 'two_factor_auth').upsert({
-                    'user_id': user_id,
-                    'secret_key': secret_key,
-                    'backup_codes': ','.join(backup_codes),
-                    'enabled': False,
-                    'created_at': datetime.now().isoformat(),
-                    'updated_at': datetime.now().isoformat()
-                }).execute()
+            self.supabase.table('two_factor_auth').upsert({
+                'user_id': user_id,
+                'secret_key': secret_key,
+                'backup_codes': ','.join(backup_codes),
+                'enabled': False,
+                'updated_at': datetime.now().isoformat()
+            }).execute()
             
             return {
                 'success': True,
@@ -114,21 +126,16 @@ class TwoFactorService:
         """Verifica código TOTP"""
         try:
             # Busca chave secreta do usuário
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT secret_key FROM two_factor_auth WHERE user_id = ?',
-                    (user_id,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'two_factor_auth').select('secret_key').eq('user_id', user_id).execute()
-                result = result.data
+            result = self.supabase.table('two_factor_auth')\
+                .select('secret_key')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
             
-            if not result:
+            if not result.data:
                 return {'success': False, 'error': '2FA não configurado'}
             
-            secret_key = result[0]['secret_key']
+            secret_key = result.data['secret_key']
             
             # Verifica código TOTP
             totp = pyotp.TOTP(secret_key)
@@ -145,38 +152,28 @@ class TwoFactorService:
         """Verifica código de backup"""
         try:
             # Busca códigos de backup do usuário
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT backup_codes FROM two_factor_auth WHERE user_id = ?',
-                    (user_id,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'two_factor_auth').select('backup_codes').eq('user_id', user_id).execute()
-                result = result.data
+            result = self.supabase.table('two_factor_auth')\
+                .select('backup_codes')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
             
-            if not result:
+            if not result.data:
                 return {'success': False, 'error': '2FA não configurado'}
             
-            backup_codes = result[0]['backup_codes'].split(',')
+            backup_codes = result.data['backup_codes'].split(',') if result.data.get('backup_codes') else []
             
             if backup_code.upper() in backup_codes:
                 # Remove código usado
                 backup_codes.remove(backup_code.upper())
                 
                 # Atualiza banco
-                if hasattr(self.db, 'execute_update'):
-                    # SQLite
-                    self.db.execute_update(
-                        'UPDATE two_factor_auth SET backup_codes = ? WHERE user_id = ?',
-                        (','.join(backup_codes), user_id)
-                    )
-                else:
-                    # Supabase
-                    self.db._make_request("GET", 'two_factor_auth').update({
+                self.supabase.table('two_factor_auth')\
+                    .update({
                         'backup_codes': ','.join(backup_codes)
-                    }).eq('user_id', user_id).execute()
+                    })\
+                    .eq('user_id', user_id)\
+                    .execute()
                 
                 return {'success': True, 'message': 'Código de backup válido'}
             else:
@@ -195,29 +192,22 @@ class TwoFactorService:
                 return verification
             
             # Habilita 2FA
-            if hasattr(self.db, 'execute_update'):
-                # SQLite
-                self.db.execute_update(
-                    'UPDATE two_factor_auth SET enabled = 1, updated_at = ? WHERE user_id = ?',
-                    (datetime.now().isoformat(), user_id)
-                )
-                
-                # Atualiza tabela users
-                self.db.execute_update(
-                    'UPDATE users SET two_factor_enabled = 1, updated_at = ? WHERE id = ?',
-                    (datetime.now().isoformat(), user_id)
-                )
-            else:
-                # Supabase
-                self.db._make_request("GET", 'two_factor_auth').update({
+            self.supabase.table('two_factor_auth')\
+                .update({
                     'enabled': True,
                     'updated_at': datetime.now().isoformat()
-                }).eq('user_id', user_id).execute()
-                
-                self.db._make_request("GET", 'users').update({
+                })\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            # Atualiza tabela users
+            self.supabase.table('users')\
+                .update({
                     'two_factor_enabled': True,
                     'updated_at': datetime.now().isoformat()
-                }).eq('id', user_id).execute()
+                })\
+                .eq('id', user_id)\
+                .execute()
             
             return {'success': True, 'message': '2FA habilitado com sucesso'}
             
@@ -229,18 +219,13 @@ class TwoFactorService:
         """Desabilita 2FA"""
         try:
             # Verifica se tem 2FA habilitado
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT enabled FROM two_factor_auth WHERE user_id = ?',
-                    (user_id,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'two_factor_auth').select('enabled').eq('user_id', user_id).execute()
-                result = result.data
+            result = self.supabase.table('two_factor_auth')\
+                .select('enabled')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
             
-            if not result or not result[0]['enabled']:
+            if not result.data or not result.data.get('enabled', False):
                 return {'success': False, 'error': '2FA não está habilitado'}
             
             # Verifica código (TOTP ou backup)
@@ -255,29 +240,22 @@ class TwoFactorService:
                 return verification
             
             # Desabilita 2FA
-            if hasattr(self.db, 'execute_update'):
-                # SQLite
-                self.db.execute_update(
-                    'UPDATE two_factor_auth SET enabled = 0, updated_at = ? WHERE user_id = ?',
-                    (datetime.now().isoformat(), user_id)
-                )
-                
-                # Atualiza tabela users
-                self.db.execute_update(
-                    'UPDATE users SET two_factor_enabled = 0, updated_at = ? WHERE id = ?',
-                    (datetime.now().isoformat(), user_id)
-                )
-            else:
-                # Supabase
-                self.db._make_request("GET", 'two_factor_auth').update({
+            self.supabase.table('two_factor_auth')\
+                .update({
                     'enabled': False,
                     'updated_at': datetime.now().isoformat()
-                }).eq('user_id', user_id).execute()
-                
-                self.db._make_request("GET", 'users').update({
+                })\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            # Atualiza tabela users
+            self.supabase.table('users')\
+                .update({
                     'two_factor_enabled': False,
                     'updated_at': datetime.now().isoformat()
-                }).eq('id', user_id).execute()
+                })\
+                .eq('id', user_id)\
+                .execute()
             
             return {'success': True, 'message': '2FA desabilitado com sucesso'}
             
@@ -288,18 +266,15 @@ class TwoFactorService:
     def is_two_factor_enabled(self, user_id: str) -> bool:
         """Verifica se 2FA está habilitado para o usuário"""
         try:
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT enabled FROM two_factor_auth WHERE user_id = ?',
-                    (user_id,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'two_factor_auth').select('enabled').eq('user_id', user_id).execute()
-                result = result.data
+            result = self.supabase.table('two_factor_auth')\
+                .select('enabled')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
             
-            return bool(result and result[0]['enabled'])
+            if result.data:
+                return bool(result.data.get('enabled', False))
+            return False
             
         except Exception as e:
             logger.error(f"Erro ao verificar status do 2FA: {str(e)}")
@@ -308,21 +283,16 @@ class TwoFactorService:
     def get_backup_codes(self, user_id: str) -> Dict[str, Any]:
         """Retorna códigos de backup do usuário"""
         try:
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT backup_codes FROM two_factor_auth WHERE user_id = ?',
-                    (user_id,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'two_factor_auth').select('backup_codes').eq('user_id', user_id).execute()
-                result = result.data
+            result = self.supabase.table('two_factor_auth')\
+                .select('backup_codes')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
             
-            if not result:
+            if not result.data:
                 return {'success': False, 'error': '2FA não configurado'}
             
-            backup_codes = result[0]['backup_codes'].split(',')
+            backup_codes = result.data['backup_codes'].split(',') if result.data.get('backup_codes') else []
             
             return {
                 'success': True,
@@ -346,18 +316,13 @@ class TwoFactorService:
             backup_codes = self.generate_backup_codes()
             
             # Atualiza banco
-            if hasattr(self.db, 'execute_update'):
-                # SQLite
-                self.db.execute_update(
-                    'UPDATE two_factor_auth SET backup_codes = ?, updated_at = ? WHERE user_id = ?',
-                    (','.join(backup_codes), datetime.now().isoformat(), user_id)
-                )
-            else:
-                # Supabase
-                self.db._make_request("GET", 'two_factor_auth').update({
+            self.supabase.table('two_factor_auth')\
+                .update({
                     'backup_codes': ','.join(backup_codes),
                     'updated_at': datetime.now().isoformat()
-                }).eq('user_id', user_id).execute()
+                })\
+                .eq('user_id', user_id)\
+                .execute()
             
             return {
                 'success': True,

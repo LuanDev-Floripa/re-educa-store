@@ -93,6 +93,11 @@ import {
 // SISTEMA DE PAGAMENTOS GLOBAL
 // ================================
 
+/**
+ * Componente principal do sistema global de pagamentos.
+ * Apresenta etapas: produtos, dados, pagamento, confirmação;
+ * Inclui fallback para falha na API/localização ou ausência de produtos.
+ */
 const GlobalPaymentSystem = () => {
   const [currentStep, setCurrentStep] = useState('products');
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -100,6 +105,7 @@ const GlobalPaymentSystem = () => {
   const [currency, setCurrency] = useState('BRL');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
   const [userLocation, setUserLocation] = useState('BR');
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -110,11 +116,6 @@ const GlobalPaymentSystem = () => {
   // const [subscriptionPlan] = useState(null); // Unused variable
   const [pixQrCode, setPixQrCode] = useState('');
   const [installments, setInstallments] = useState(1);
-
-  useEffect(() => {
-    detectUserLocation();
-    loadProducts();
-  }, []);
 
   const detectUserLocation = async () => {
     try {
@@ -131,7 +132,8 @@ const GlobalPaymentSystem = () => {
               const countryCode = data.countryCode || 'BR';
               setUserLocation(countryCode);
               setCurrency(countryCode === 'BR' ? 'BRL' : 'USD');
-            } catch (geoError) {
+            } catch (GEO_ERROR) {
+              console.error(GEO_ERROR);
               // Fallback baseado em timezone
               const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
               const isBR = timezone.includes('America/Sao_Paulo') || timezone.includes('America/Fortaleza');
@@ -139,7 +141,7 @@ const GlobalPaymentSystem = () => {
               setCurrency(isBR ? 'BRL' : 'USD');
             }
           },
-          (error) => {
+          () => {
             // Fallback baseado em timezone se geolocalização falhar
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const isBR = timezone.includes('America/Sao_Paulo') || timezone.includes('America/Fortaleza');
@@ -154,42 +156,49 @@ const GlobalPaymentSystem = () => {
         setUserLocation(isBR ? 'BR' : 'US');
         setCurrency(isBR ? 'BRL' : 'USD');
       }
-    } catch (error) {
-      console.error('Erro ao detectar localização:', error);
-      // Fallback padrão
+    } catch (ERROR) {
+      console.error(ERROR);
+      setErrorMsg("Falha ao detectar sua localização, usando dados padrão.");
       setUserLocation('BR');
       setCurrency('BRL');
     }
   };
 
   // Carregar produtos reais da API
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const response = await fetch('/api/products?per_page=10', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const productsList = data.products || data.data || data || [];
-          // Usar produtos reais ou manter vazio se não houver produtos
-          setSelectedProducts(productsList.slice(0, 3));
-        } else {
-          // Em caso de erro, manter array vazio ao invés de dados mockados
-          setSelectedProducts([]);
+  const loadProducts = async () => {
+    try {
+      const response = await fetch('/api/products?per_page=10', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
         }
-      } catch (error) {
-        console.error('Erro ao carregar produtos:', error);
-        setSelectedProducts([]);
-      }
-    };
+      });
 
-    loadProducts();
+      if (response.ok) {
+        const data = await response.json();
+        const productsList = data.products || data.data || data || [];
+        setSelectedProducts(productsList.slice(0, 3));
+        if (productsList.length === 0) {
+          setErrorMsg("Nenhum produto disponível no momento.");
+        }
+      } else {
+        setSelectedProducts([]);
+        setErrorMsg("Não foi possível carregar os produtos. Tente novamente mais tarde.");
+      }
+    } catch (LOAD_ERROR) {
+      console.error(LOAD_ERROR);
+      setSelectedProducts([]);
+      setErrorMsg("Não foi possível carregar os produtos. Tente novamente mais tarde.");
+    }
   };
+
+  useEffect(() => {
+    detectUserLocation();
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   const steps = [
     { id: 'products', title: 'Produtos', icon: Package },
@@ -197,6 +206,12 @@ const GlobalPaymentSystem = () => {
     { id: 'payment', title: 'Pagamento', icon: CreditCard },
     { id: 'confirmation', title: 'Confirmação', icon: CheckCircle }
   ];
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600 text-xl">{errorMsg}</div>
+    );
+  }
 
   return (
     <AnimatedGradient className="min-h-screen">

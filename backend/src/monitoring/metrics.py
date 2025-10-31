@@ -1,6 +1,21 @@
 """
-Sistema de Métricas Prometheus para Monitoramento
-RE-EDUCA - Sistema de Educação em Saúde
+Sistema de Métricas Prometheus para Monitoramento RE-EDUCA Store.
+
+Coleta métricas do sistema para Prometheus/Grafana incluindo:
+- Requisições HTTP (total, duração, status)
+- Erros da aplicação
+- Métricas de negócio (vendas, usuários, logins)
+- Performance de banco de dados
+- Cache hit/miss rates
+- Filas e workers
+
+INTEGRAÇÃO:
+- Endpoint /metrics para Prometheus scraping
+- Dashboards em Grafana
+- Alertas via Alertmanager
+
+DEPENDÊNCIA:
+- prometheus-client (pip install prometheus-client)
 """
 
 import time
@@ -23,10 +38,19 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class MetricsCollector:
-    """Coletor de métricas para o sistema RE-EDUCA"""
+    """
+    Coletor de métricas para o sistema RE-EDUCA.
+    
+    Centraliza coleta de métricas Prometheus.
+    """
     
     def __init__(self, registry: Optional[Any] = None):
-        """Inicializa o coletor de métricas"""
+        """
+        Inicializa o coletor de métricas.
+        
+        Args:
+            registry (CollectorRegistry, optional): Registry customizado.
+        """
         if not PROMETHEUS_AVAILABLE:
             logger.warning("Prometheus não disponível, métricas desabilitadas")
             self.enabled = False

@@ -1,5 +1,12 @@
 """
-Serviço de Pagamentos RE-EDUCA Store
+Serviço de Pagamentos RE-EDUCA Store.
+
+Integra múltiplos gateways de pagamento incluindo:
+- Stripe (cartão de crédito internacional, PIX)
+- PagSeguro (pagamentos Brasil)
+- Assinaturas recorrentes
+- Webhooks de confirmação
+- Controle antifraude
 """
 import os
 import stripe
@@ -36,7 +43,15 @@ class PaymentService:
     # ================================
     
     def create_stripe_customer(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria cliente no Stripe"""
+        """
+        Cria cliente no Stripe.
+        
+        Args:
+            user_data (Dict[str, Any]): Dados do usuário com email, name e id.
+            
+        Returns:
+            Dict[str, Any]: Resultado com success e customer_id ou erro.
+        """
         try:
             customer = stripe.Customer.create(
                 email=user_data['email'],
@@ -59,7 +74,18 @@ class PaymentService:
     
     def create_stripe_payment_intent(self, amount: float, currency: str = 'brl', 
                                    customer_id: str = None, metadata: Dict = None) -> Dict[str, Any]:
-        """Cria Payment Intent no Stripe"""
+        """
+        Cria Payment Intent no Stripe para processar pagamento.
+        
+        Args:
+            amount (float): Valor em reais.
+            currency (str): Moeda (padrão: 'brl').
+            customer_id (str, optional): ID do cliente Stripe.
+            metadata (Dict, optional): Metadados adicionais.
+            
+        Returns:
+            Dict[str, Any]: Resultado com client_secret e payment_intent_id ou erro.
+        """
         try:
             intent_data = {
                 'amount': int(amount * 100),  # Stripe usa centavos

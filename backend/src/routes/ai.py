@@ -1,5 +1,9 @@
 """
-Rotas para IA e Recomendações RE-EDUCA Store
+Rotas para IA e Recomendações RE-EDUCA Store.
+
+Fornece endpoints para recomendações inteligentes de produtos, exercícios
+e planos nutricionais, além de previsões de tendências de saúde baseadas
+em machine learning.
 """
 import logging
 from flask import Blueprint, request, jsonify
@@ -37,7 +41,15 @@ def get_user_profile():
 @ai_bp.route('/recommendations/products', methods=['GET'])
 @token_required
 def get_product_recommendations():
-    """Obtém recomendações de produtos para o usuário"""
+    """
+    Obtém recomendações de produtos para o usuário.
+    
+    Query Parameters:
+        limit (int): Número máximo de recomendações (padrão: 10).
+        
+    Returns:
+        JSON: Lista de produtos recomendados com scores ou erro.
+    """
     try:
         user_id = request.current_user['id']
         limit = int(request.args.get('limit', 10))
@@ -150,16 +162,34 @@ def get_ai_insights():
 @ai_bp.route('/chat', methods=['POST'])
 @token_required
 def chat_with_ai():
-    """Chat com assistente de IA"""
+    """
+    Chat com assistente de IA preditivo usando contexto do usuário
+    
+    Body:
+        - message (str): Mensagem do usuário
+        - agent_type (str, opcional): Tipo de agente (platform_concierge, dr_nutri, etc.)
+        - context (dict, opcional): Contexto do usuário (perfil, saúde, etc.)
+        - context_summary (str, opcional): Resumo textual do contexto
+    """
     try:
         data = request.get_json()
         user_id = request.current_user['id']
         message = data.get('message', '').strip()
+        agent_type = data.get('agent_type', 'platform_concierge')
+        context = data.get('context')  # Dados estruturados do usuário
+        context_summary = data.get('context_summary')  # Resumo textual
         
         if not message:
             return jsonify({'error': 'Mensagem é obrigatória'}), 400
         
-        result = ai_service.process_chat_message(user_id, message)
+        # Processar mensagem com contexto do usuário para IA preditiva
+        result = ai_service.process_chat_message(
+            user_id=user_id,
+            message=message,
+            agent_type=agent_type,
+            user_context=context,
+            context_summary=context_summary
+        )
         
         if result['success']:
             return jsonify(result), 200

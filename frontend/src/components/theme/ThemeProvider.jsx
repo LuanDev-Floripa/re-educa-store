@@ -1,12 +1,30 @@
-import React, { createContext, useContext } from 'react';
-import { theme } from '../../lib/theme';
+/**
+ * ThemeProvider Component - RE-EDUCA Store
+ * 
+ * Provider de tema para gerenciamento de light/dark mode.
+ * 
+ * Funcionalidades:
+ * - Gerenciamento de tema (light/dark)
+ * - Persist?ncia no localStorage
+ * - Sincroniza??o entre tabs
+ * - Hook useThemeContext para acesso ao tema
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Componentes filhos
+ * @returns {JSX.Element} Provider de tema
+ */
+import React, { createContext, useContext } from "react";
+import { theme } from "../../lib/theme";
 
 // Theme Context
 const ThemeContext = createContext();
 
 // Theme Provider Component
 export const ThemeProvider = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = React.useState(theme.utils.getCurrentTheme());
+  const [currentTheme, setCurrentTheme] = React.useState(
+    theme.utils.getCurrentTheme(),
+  );
 
   React.useEffect(() => {
     theme.utils.init();
@@ -15,12 +33,12 @@ export const ThemeProvider = ({ children }) => {
       setCurrentTheme(theme.utils.getCurrentTheme());
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    const newTheme = currentTheme === "light" ? "dark" : "light";
     theme.utils.setTheme(newTheme);
     setCurrentTheme(newTheme);
   };
@@ -38,9 +56,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={themeData}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={themeData}>{children}</ThemeContext.Provider>
   );
 };
 
@@ -48,7 +64,7 @@ export const ThemeProvider = ({ children }) => {
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useThemeContext must be used within a ThemeProvider');
+    throw new Error("useThemeContext must be used within a ThemeProvider");
   }
   return context;
 };

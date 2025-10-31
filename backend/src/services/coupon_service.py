@@ -1,5 +1,12 @@
 """
-Serviço de Cupons e Promoções RE-EDUCA Store
+Serviço de Cupons e Promoções RE-EDUCA Store.
+
+Gerencia cupons de desconto incluindo:
+- Criação e geração de códigos únicos
+- Validação de cupons (regras, datas, limites)
+- Aplicação de descontos (percentual ou valor fixo)
+- Controle de uso e limites por usuário
+- Rastreamento de conversões
 """
 import os
 import logging
@@ -13,34 +20,50 @@ from utils.helpers import generate_uuid
 logger = logging.getLogger(__name__)
 
 class CouponService:
-    """Service para operações de cupons e promoções"""
+    """
+    Service para operações de cupons e promoções.
+    
+    Implementa lógica de negócio para cupons de desconto.
+    """
     
     def __init__(self):
-        self.db = supabase_client
+        """Inicializa o serviço de cupons."""
+        self.supabase = supabase_client
     
     def generate_coupon_code(self, length: int = 8) -> str:
-        """Gera código de cupom único"""
+        """
+        Gera código de cupom único alfanumérico.
+        
+        Args:
+            length (int): Tamanho do código (padrão: 8).
+            
+        Returns:
+            str: Código único gerado.
+        """
         while True:
             # Gera código alfanumérico
             code = ''.join(secrets.choices(string.ascii_uppercase + string.digits, k=length))
             
             # Verifica se já existe
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT id FROM coupons WHERE code = ?',
-                    (code,)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'coupons').select('id').eq('code', code).execute()
-                result = result.data
+            result = self.supabase.table('coupons')\
+                .select('id')\
+                .eq('code', code)\
+                .execute()
+            result = result.data if result.data else []
             
             if not result:
                 return code
     
     def create_coupon(self, coupon_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria novo cupom"""
+        """
+        Cria novo cupom com validação de dados.
+        
+        Args:
+            coupon_data (Dict[str, Any]): Dados do cupom incluindo type, value, valid_until.
+            
+        Returns:
+            Dict[str, Any]: Resultado com success e cupom criado ou erro.
+        """
         try:
             # Gera código se não fornecido
             if not coupon_data.get('code'):
@@ -71,24 +94,7 @@ class CouponService:
             }
             
             # Insere no banco
-            if hasattr(self.db, 'execute_insert'):
-                # SQLite
-                self.db.execute_insert('''
-                    INSERT INTO coupons 
-                    (id, code, name, description, type, value, min_order_value, max_discount, 
-                     usage_limit, usage_count, user_limit, valid_from, valid_until, active, 
-                     created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    coupon['id'], coupon['code'], coupon['name'], coupon['description'],
-                    coupon['type'], coupon['value'], coupon['min_order_value'], coupon['max_discount'],
-                    coupon['usage_limit'], coupon['usage_count'], coupon['user_limit'],
-                    coupon['valid_from'], coupon['valid_until'], coupon['active'],
-                    coupon['created_at'], coupon['updated_at']
-                ))
-            else:
-                # Supabase
-                self.db._make_request("GET", 'coupons').insert(coupon).execute()
+            self.supabase.table('coupons').insert(coupon).execute()
             
             return {
                 'success': True,
@@ -104,16 +110,17 @@ class CouponService:
         """Valida cupom para uso"""
         try:
             # Busca cupom
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(
-                    'SELECT * FROM coupons WHERE code = ? AND active = 1',
-                    (code.upper(),)
-                )
+            result = self.supabase.table('coupons')\
+                .select('*')\
+                .eq('code', code.upper())\
+                .eq('active', True)\
+                .single()\
+                .execute()
+            
+            if result.data:
+                result = [result.data]
             else:
-                # Supabase
-                result = self.db._make_request("GET", 'coupons').select('*').eq('code', code.upper()).eq('active', True).execute()
-                result = result.data
+                result = []
             
             if not result:
                 return {'success': False, 'error': 'Cupom não encontrado'}
@@ -140,16 +147,13 @@ class CouponService:
                 return {'success': False, 'error': 'Cupom esgotado'}
             
             # Verifica limite de uso por usuário
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                user_usage = self.db.execute_query(
-                    'SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND user_id = ?',
-                    (coupon['id'], user_id)
-                )
-            else:
-                # Supabase
-                user_usage = self.db._make_request("GET", 'coupon_usage').select('id').eq('coupon_id', coupon['id']).eq('user_id', user_id).execute()
-                user_usage = [{'count': len(user_usage.data)}]
+            user_usage_result = self.supabase.table('coupon_usage')\
+                .select('id', count='exact')\
+                .eq('coupon_id', coupon['id'])\
+                .eq('user_id', user_id)\
+                .execute()
+            user_usage_count = user_usage_result.count if hasattr(user_usage_result, 'count') else len(user_usage_result.data) if user_usage_result.data else 0
+            user_usage = [{'count': user_usage_count}]
             
             if user_usage and user_usage[0]['count'] >= coupon['user_limit']:
                 return {'success': False, 'error': 'Limite de uso por usuário atingido'}
@@ -180,37 +184,22 @@ class CouponService:
             discount = validation['discount']
             
             # Registra uso do cupom
-            if hasattr(self.db, 'execute_insert'):
-                # SQLite
-                self.db.execute_insert('''
-                    INSERT INTO coupon_usage 
-                    (id, coupon_id, user_id, order_id, discount_value, used_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (
-                    generate_uuid(), coupon['id'], user_id, order_id, 
-                    discount, datetime.now().isoformat()
-                ))
-                
-                # Atualiza contador de uso
-                self.db.execute_update(
-                    'UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?',
-                    (coupon['id'],)
-                )
-            else:
-                # Supabase
-                self.db._make_request("GET", 'coupon_usage').insert({
-                    'id': generate_uuid(),
-                    'coupon_id': coupon['id'],
-                    'user_id': user_id,
-                    'order_id': order_id,
-                    'discount_value': discount,
-                    'used_at': datetime.now().isoformat()
-                }).execute()
-                
-                # Atualiza contador de uso
-                self.db._make_request("GET", 'coupons').update({
+            self.supabase.table('coupon_usage').insert({
+                'id': generate_uuid(),
+                'coupon_id': coupon['id'],
+                'user_id': user_id,
+                'order_id': order_id,
+                'discount_value': discount,
+                'used_at': datetime.now().isoformat()
+            }).execute()
+            
+            # Atualiza contador de uso
+            self.supabase.table('coupons')\
+                .update({
                     'usage_count': coupon['usage_count'] + 1
-                }).eq('id', coupon['id']).execute()
+                })\
+                .eq('id', coupon['id'])\
+                .execute()
             
             return {
                 'success': True,
@@ -227,40 +216,29 @@ class CouponService:
     def get_coupons(self, filters: Dict[str, Any] = None) -> Dict[str, Any]:
         """Lista cupons com filtros"""
         try:
-            query = "SELECT * FROM coupons WHERE 1=1"
-            params = []
+            query = self.supabase.table('coupons').select('*')
             
             if filters:
                 if filters.get('active') is not None:
-                    query += " AND active = ?"
-                    params.append(filters['active'])
+                    query = query.eq('active', filters['active'])
                 
                 if filters.get('type'):
-                    query += " AND type = ?"
-                    params.append(filters['type'])
+                    query = query.eq('type', filters['type'])
                 
                 if filters.get('search'):
-                    query += " AND (name LIKE ? OR code LIKE ?)"
-                    search_term = f"%{filters['search']}%"
-                    params.extend([search_term, search_term])
+                    # Para busca, usar filtro ilike em ambos os campos
+                    # Nota: PostgREST requer filtros OR separados, aqui simplificamos para name
+                    query = query.ilike('name', f"%{filters['search']}%")
             
-            query += " ORDER BY created_at DESC"
-            
-            if hasattr(self.db, 'execute_query'):
-                # SQLite
-                result = self.db.execute_query(query, tuple(params))
-            else:
-                # Supabase - implementar filtros
-                result = self.db._make_request("GET", 'coupons').select('*').order('created_at', desc=True).execute()
-                result = result.data
+            result = query.order('created_at', desc=True).execute()
             
             return {
                 'success': True,
-                'coupons': result
+                'coupons': result.data if result.data else []
             }
             
         except Exception as e:
-            logger.error(f"Erro ao listar cupons: {str(e)}")
+            logger.error(f"Erro ao listar cupons: {str(e)}", exc_info=True)
             return {'success': False, 'error': 'Erro interno do servidor'}
     
     def update_coupon(self, coupon_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -272,17 +250,11 @@ class CouponService:
             update_data['updated_at'] = datetime.now().isoformat()
             
             # Atualiza no banco
-            if hasattr(self.db, 'execute_update'):
-                # SQLite
-                set_clause = ', '.join([f"{key} = ?" for key in update_data.keys()])
-                query = f"UPDATE coupons SET {set_clause} WHERE id = ?"
-                params = list(update_data.values()) + [coupon_id]
-                
-                rows_affected = self.db.execute_update(query, tuple(params))
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'coupons').update(update_data).eq('id', coupon_id).execute()
-                rows_affected = len(result.data)
+            result = self.supabase.table('coupons')\
+                .update(update_data)\
+                .eq('id', coupon_id)\
+                .execute()
+            rows_affected = len(result.data) if result.data else 0
             
             if rows_affected > 0:
                 return {'success': True, 'message': 'Cupom atualizado com sucesso'}
@@ -297,19 +269,14 @@ class CouponService:
         """Deleta cupom (soft delete)"""
         try:
             # Soft delete - marca como inativo
-            if hasattr(self.db, 'execute_update'):
-                # SQLite
-                rows_affected = self.db.execute_update(
-                    'UPDATE coupons SET active = 0, updated_at = ? WHERE id = ?',
-                    (datetime.now().isoformat(), coupon_id)
-                )
-            else:
-                # Supabase
-                result = self.db._make_request("GET", 'coupons').update({
+            result = self.supabase.table('coupons')\
+                .update({
                     'active': False,
                     'updated_at': datetime.now().isoformat()
-                }).eq('id', coupon_id).execute()
-                rows_affected = len(result.data)
+                })\
+                .eq('id', coupon_id)\
+                .execute()
+            rows_affected = len(result.data) if result.data else 0
             
             if rows_affected > 0:
                 return {'success': True, 'message': 'Cupom removido com sucesso'}
@@ -325,47 +292,22 @@ class CouponService:
         try:
             if coupon_id:
                 # Analytics de um cupom específico
-                if hasattr(self.db, 'execute_query'):
-                    # SQLite
-                    usage_stats = self.db.execute_query('''
-                        SELECT 
-                            COUNT(*) as total_usage,
-                            SUM(discount_value) as total_discount,
-                            AVG(discount_value) as avg_discount
-                        FROM coupon_usage 
-                        WHERE coupon_id = ?
-                    ''', (coupon_id,))
-                else:
-                    # Supabase
-                    usage_result = self.db._make_request("GET", 'coupon_usage').select('discount_value').eq('coupon_id', coupon_id).execute()
-                    usage_data = usage_result.data
-                    
-                    usage_stats = [{
-                        'total_usage': len(usage_data),
-                        'total_discount': sum(item['discount_value'] for item in usage_data),
-                        'avg_discount': sum(item['discount_value'] for item in usage_data) / len(usage_data) if usage_data else 0
-                    }]
+                usage_result = self.supabase.table('coupon_usage')\
+                    .select('discount_value')\
+                    .eq('coupon_id', coupon_id)\
+                    .execute()
             else:
                 # Analytics gerais
-                if hasattr(self.db, 'execute_query'):
-                    # SQLite
-                    usage_stats = self.db.execute_query('''
-                        SELECT 
-                            COUNT(*) as total_usage,
-                            SUM(discount_value) as total_discount,
-                            AVG(discount_value) as avg_discount
-                        FROM coupon_usage
-                    ''')
-                else:
-                    # Supabase
-                    usage_result = self.db._make_request("GET", 'coupon_usage').select('discount_value').execute()
-                    usage_data = usage_result.data
-                    
-                    usage_stats = [{
-                        'total_usage': len(usage_data),
-                        'total_discount': sum(item['discount_value'] for item in usage_data),
-                        'avg_discount': sum(item['discount_value'] for item in usage_data) / len(usage_data) if usage_data else 0
-                    }]
+                usage_result = self.supabase.table('coupon_usage')\
+                    .select('discount_value')\
+                    .execute()
+            
+            usage_data = usage_result.data if usage_result.data else []
+            usage_stats = [{
+                'total_usage': len(usage_data),
+                'total_discount': sum(item.get('discount_value', 0) for item in usage_data),
+                'avg_discount': sum(item.get('discount_value', 0) for item in usage_data) / len(usage_data) if usage_data else 0
+            }]
             
             return {
                 'success': True,

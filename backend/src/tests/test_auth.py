@@ -29,10 +29,30 @@ def mock_supabase():
         yield mock_supabase
 
 class TestAuthService:
-    """Testes do serviço de autenticação"""
+    """
+    Testes do serviço de autenticação RE-EDUCA Store.
+    
+    Suite completa de testes para AuthService incluindo:
+    - Registro de usuários
+    - Autenticação e login
+    - Verificação de email
+    - Recuperação de senha
+    """
     
     def test_register_user_success(self, auth_service, mock_supabase):
-        """Testa registro de usuário com sucesso"""
+        """
+        Testa registro de usuário com sucesso.
+        
+        Verifica:
+        - Criação bem-sucedida do usuário
+        - Geração de tokens JWT (access e refresh)
+        - Envio de email de verificação
+        - Dados do usuário corretos na resposta
+        
+        Args:
+            auth_service: Instância do AuthService.
+            mock_supabase: Mock do Supabase.
+        """
         # Mock do Supabase
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{
@@ -58,13 +78,21 @@ class TestAuthService:
             # Executa teste
             result = auth_service.register_user(user_data)
             
-            # Verifica resultado
-            assert result['success'] is True
-            assert 'user' in result
-            assert 'token' in result
-            assert 'refresh_token' in result
-            assert result['user']['email'] == 'test@example.com'
-            assert result['user']['name'] == 'Test User'
+            # Assert: Operação deve ter sucesso
+            assert result['success'] is True, "Registro deve ter sucesso"
+            assert isinstance(result, dict), "Resultado deve ser um dicionário"
+            
+            # Assert: Deve conter dados do usuário
+            assert 'user' in result, "Resultado deve conter 'user'"
+            assert isinstance(result['user'], dict), "Campo 'user' deve ser um dicionário"
+            assert result['user']['email'] == 'test@example.com', "Email deve corresponder"
+            assert result['user']['name'] == 'Test User', "Nome deve corresponder"
+            
+            # Assert: Deve conter tokens JWT
+            assert 'token' in result, "Resultado deve conter 'token'"
+            assert 'refresh_token' in result, "Resultado deve conter 'refresh_token'"
+            assert isinstance(result['token'], str), "Token deve ser string"
+            assert len(result['token']) > 0, "Token não pode estar vazio"
     
     def test_register_user_email_exists(self, auth_service, mock_supabase):
         """Testa registro com email já existente"""

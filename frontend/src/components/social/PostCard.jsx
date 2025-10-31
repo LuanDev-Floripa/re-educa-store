@@ -1,47 +1,53 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/Ui/avatar';
-import { Badge } from '@/components/Ui/badge';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  MoreHorizontal, 
+import React, { useState } from "react";
+/**
+ * Cartão de Post do Social.
+ * - Exibe conteúdo, mídia, hashtags e ações
+ * - Fallbacks seguros e a11y básico
+ */
+import { Card, CardContent, CardHeader } from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/Ui/avatar";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
   MapPin,
   Hash,
   UserPlus,
   UserMinus,
   Flag,
   Bookmark,
-  ExternalLink
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
-import CommentsSection from './CommentsSection';
+  ExternalLink,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import CommentsSection from "./CommentsSection";
 
-const PostCard = ({ 
-  post, 
-  onReaction, 
-  onRemoveReaction, 
-  onFollow, 
-  currentUserId 
+const PostCard = ({
+  post,
+  onReaction,
+  onRemoveReaction,
+  onFollow,
+  currentUserId,
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const handleReaction = (reactionType) => {
+    if (!post) return;
     if (post.user_reacted) {
-      onRemoveReaction(post.id);
+      onRemoveReaction?.(post.id);
     } else {
-      onReaction(post.id, reactionType);
+      onReaction?.(post.id, reactionType);
     }
   };
 
   const handleFollow = () => {
-    if (onFollow) {
+    if (onFollow && post?.user_id) {
       onFollow(post.user_id);
       setIsFollowing(!isFollowing);
     }
@@ -49,46 +55,64 @@ const PostCard = ({
 
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
-    toast.success(isBookmarked ? 'Removido dos salvos' : 'Salvo!');
+    toast.success(isBookmarked ? "Removido dos salvos" : "Salvo!");
   };
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Post do Re-Educa',
+        title: "Post do Re-Educa",
         text: post.content,
-        url: window.location.href
+        url: window.location.href,
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copiado!');
+      toast.success("Link copiado!");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const getReactionIcon = (type) => {
     switch (type) {
-      case 'like': return <Heart className="w-4 h-4" />;
-      case 'love': return <Heart className="w-4 h-4 text-red-500 fill-current" />;
-      case 'laugh': return '😂';
-      case 'wow': return '😮';
-      case 'sad': return '😢';
-      case 'angry': return '😠';
-      case 'support': return '💪';
-      case 'motivate': return '🔥';
-      default: return <Heart className="w-4 h-4" />;
+      case "like":
+        return <Heart className="w-4 h-4" />;
+      case "love":
+        return <Heart className="w-4 h-4 text-red-500 fill-current" />;
+      case "laugh":
+        return "😂";
+      case "wow":
+        return "😮";
+      case "sad":
+        return "😢";
+      case "angry":
+        return "😠";
+      case "support":
+        return "💪";
+      case "motivate":
+        return "🔥";
+      default:
+        return <Heart className="w-4 h-4" />;
     }
   };
 
   const getMoodEmoji = (mood) => {
     switch (mood) {
-      case 'happy': return '😊';
-      case 'motivated': return '💪';
-      case 'tired': return '😴';
-      case 'excited': return '🤩';
-      case 'grateful': return '🙏';
-      case 'focused': return '🎯';
-      case 'relaxed': return '😌';
-      default: return null;
+      case "happy":
+        return "😊";
+      case "motivated":
+        return "💪";
+      case "tired":
+        return "😴";
+      case "excited":
+        return "🤩";
+      case "grateful":
+        return "🙏";
+      case "focused":
+        return "🎯";
+      case "relaxed":
+        return "😌";
+      default:
+        return null;
     }
   };
 
@@ -97,16 +121,16 @@ const PostCard = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={post.avatar_url} />
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={post?.avatar_url} />
               <AvatarFallback>
-                {post.user_name?.charAt(0) || 'U'}
+                {post?.user_name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
-                  {post.user_name}
+                  {post?.user_name || "Usuário"}
                 </h4>
                 {post.mood && (
                   <span className="text-lg" title={`Humor: ${post.mood}`}>
@@ -116,21 +140,21 @@ const PostCard = ({
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span>
-                  {formatDistanceToNow(new Date(post.created_at), { 
-                    addSuffix: true, 
-                    locale: ptBR 
+                  {formatDistanceToNow(new Date(post?.created_at ?? Date.now()), {
+                    addSuffix: true,
+                    locale: ptBR,
                   })}
                 </span>
                 {post.location && (
                   <div className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    <span>{post.location}</span>
+                    <span>{post?.location}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1">
             {post.user_id !== currentUserId && (
               <Button
@@ -139,11 +163,15 @@ const PostCard = ({
                 onClick={handleFollow}
                 className="text-xs"
               >
-                {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
-                {isFollowing ? 'Seguindo' : 'Seguir'}
+                {isFollowing ? (
+                  <UserMinus className="w-3 h-3" />
+                ) : (
+                  <UserPlus className="w-3 h-3" />
+                )}
+                {isFollowing ? "Seguindo" : "Seguir"}
               </Button>
             )}
-            
+
             <Button variant="ghost" size="sm">
               <MoreHorizontal className="w-4 h-4" />
             </Button>
@@ -159,17 +187,17 @@ const PostCard = ({
           </p>
 
           {/* Mídia */}
-          {post.media_urls && post.media_urls.length > 0 && (
+            {Array.isArray(post?.media_urls) && post.media_urls.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {post.media_urls.map((url, index) => (
                 <div key={index} className="relative">
-                  {post.post_type === 'image' ? (
+                  {post.post_type === "image" ? (
                     <img
                       src={url}
                       alt={`Mídia ${index + 1}`}
                       className="w-full h-48 object-cover rounded-lg"
                     />
-                  ) : post.post_type === 'video' ? (
+                  ) : post.post_type === "video" ? (
                     <video
                       src={url}
                       controls
@@ -182,7 +210,7 @@ const PostCard = ({
           )}
 
           {/* Hashtags */}
-          {post.hashtags && post.hashtags.length > 0 && (
+          {Array.isArray(post?.hashtags) && post.hashtags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {post.hashtags.map((hashtag, index) => (
                 <Badge key={index} variant="secondary" className="text-xs">
@@ -197,22 +225,22 @@ const PostCard = ({
         {/* Estatísticas */}
         <div className="flex items-center justify-between text-sm text-gray-500 border-t pt-3">
           <div className="flex items-center gap-4">
-            {post.reaction_count > 0 && (
+            {Number(post?.reaction_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <Heart className="w-4 h-4 text-red-500" />
-                {post.reaction_count}
+                {Number(post.reaction_count ?? 0)}
               </span>
             )}
-            {post.comment_count > 0 && (
+            {Number(post?.comment_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <MessageCircle className="w-4 h-4" />
-                {post.comment_count}
+                {Number(post.comment_count ?? 0)}
               </span>
             )}
-            {post.share_count > 0 && (
+            {Number(post?.share_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <Share2 className="w-4 h-4" />
-                {post.share_count}
+                {Number(post.share_count ?? 0)}
               </span>
             )}
           </div>
@@ -224,13 +252,15 @@ const PostCard = ({
             <Button
               variant={post.user_reacted ? "default" : "ghost"}
               size="sm"
-              onClick={() => handleReaction('like')}
+              onClick={() => handleReaction("like")}
               className="flex-1"
             >
-              <Heart className={`w-4 h-4 mr-2 ${post.user_reacted ? 'text-white fill-current' : ''}`} />
+              <Heart
+                className={`w-4 h-4 mr-2 ${post.user_reacted ? "text-white fill-current" : ""}`}
+              />
               Curtir
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -240,7 +270,7 @@ const PostCard = ({
               <MessageCircle className="w-4 h-4 mr-2" />
               Comentar
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -252,18 +282,16 @@ const PostCard = ({
             </Button>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBookmark}
-          >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current text-blue-600' : ''}`} />
+          <Button variant="ghost" size="sm" onClick={handleBookmark}>
+            <Bookmark
+              className={`w-4 h-4 ${isBookmarked ? "fill-current text-blue-600" : ""}`}
+            />
           </Button>
         </div>
 
         {/* Seção de Comentários */}
         {showComments && (
-          <CommentsSection 
+          <CommentsSection
             postId={post.id}
             postUserId={post.user_id}
             currentUserId={currentUserId}

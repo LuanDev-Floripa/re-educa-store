@@ -1,40 +1,52 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { 
-  Star, 
-  ShoppingCart, 
-  Heart, 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Star,
+  ShoppingCart,
+  Heart,
   Eye,
   Package,
   Truck,
   Shield,
   Award,
-  Tag
-} from 'lucide-react';
-import { formatCurrency } from '../../lib/utils';
+  Tag,
+} from "lucide-react";
+import { formatCurrency } from "../../lib/utils";
 
-const ProductCard = ({ 
-  product, 
-  onAddToCart, 
-  onAddToWishlist, 
-  viewMode = 'grid',
-  showQuickActions = true 
+/**
+ * Card de produto com modos grid e lista.
+ * - Exibe preço, avaliação, estoque e ações
+ * - Suporta callbacks externos para carrinho e wishlist
+ */
+const ProductCard = ({
+  product,
+  onAddToCart,
+  onAddToWishlist,
+  viewMode = "grid",
+  showQuickActions = true,
 }) => {
   const navigate = useNavigate();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const renderStars = (rating) => {
+    const safeRating = Number.isFinite(rating) ? rating : 0;
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
         className={`w-4 h-4 ${
-          i < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
+          i < Math.floor(safeRating)
+            ? "text-yellow-400 fill-current"
+            : "text-gray-300"
         }`}
       />
     ));
@@ -42,7 +54,7 @@ const ProductCard = ({
 
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
-    
+
     setIsAddingToCart(true);
     try {
       if (onAddToCart) {
@@ -64,11 +76,12 @@ const ProductCard = ({
     navigate(`/product/${product.id}`);
   };
 
-  const isOutOfStock = product.stock === 0;
-  const discountAmount = product.originalPrice ? 
-    product.originalPrice - product.price : 0;
+  const isOutOfStock = (product?.stock ?? 0) === 0;
+  const discountAmount = product?.originalPrice
+    ? product.originalPrice - (product.price ?? 0)
+    : 0;
 
-  if (viewMode === 'list') {
+  if (viewMode === "list") {
     return (
       <Card className="group hover:shadow-lg transition-all duration-300">
         <div className="flex">
@@ -148,11 +161,7 @@ const ProductCard = ({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewDetails}
-                >
+                <Button variant="outline" size="sm" onClick={handleViewDetails}>
                   <Eye className="h-4 w-4 mr-1" />
                   Ver Detalhes
                 </Button>
@@ -163,7 +172,7 @@ const ProductCard = ({
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <ShoppingCart className="h-4 w-4 mr-1" />
-                  {isAddingToCart ? 'Adicionando...' : 'Adicionar'}
+                  {isAddingToCart ? "Adicionando..." : "Adicionar"}
                 </Button>
                 {showQuickActions && (
                   <Button
@@ -171,7 +180,9 @@ const ProductCard = ({
                     size="sm"
                     onClick={handleAddToWishlist}
                   >
-                    <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+                    <Heart
+                      className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                    />
                   </Button>
                 )}
               </div>
@@ -199,8 +210,7 @@ const ProductCard = ({
         )}
         {product.discount && (
           <Badge className="absolute top-2 right-2 bg-red-500 text-white">
-            <Tag className="h-3 w-3 mr-1" />
-            -{product.discount}%
+            <Tag className="h-3 w-3 mr-1" />-{product.discount}%
           </Badge>
         )}
         {isOutOfStock && (
@@ -212,7 +222,7 @@ const ProductCard = ({
         )}
         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300" />
       </div>
-      
+
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -295,23 +305,17 @@ const ProductCard = ({
             size="sm"
           >
             <ShoppingCart className="h-4 w-4 mr-1" />
-            {isAddingToCart ? 'Adicionando...' : 'Adicionar'}
+            {isAddingToCart ? "Adicionando..." : "Adicionar"}
           </Button>
           {showQuickActions && (
             <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleViewDetails}
-              >
+              <Button variant="outline" size="sm" onClick={handleViewDetails}>
                 <Eye className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddToWishlist}
-              >
-                <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+              <Button variant="outline" size="sm" onClick={handleAddToWishlist}>
+                <Heart
+                  className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                />
               </Button>
             </>
           )}

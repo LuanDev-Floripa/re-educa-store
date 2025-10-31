@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Progress } from '@/components/Ui/progress';
-import { 
-  Star, 
-  Heart, 
-  ShoppingCart, 
-  TrendingUp, 
-  Users, 
-  Target, 
-  Activity, 
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+/**
+ * RecommendationEngine
+ * - Carrega recomendações (API + fallbacks), feedback e UI por abas
+ */
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Progress } from "@/components/Ui/progress";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  Target,
+  Activity,
   Calculator,
   Package,
   Award,
@@ -35,253 +46,282 @@ import {
   Brain,
   Dumbbell,
   Utensils,
-  Pill
-} from 'lucide-react';
+  Pill,
+} from "lucide-react";
 
-export const RecommendationEngine = ({ 
+/**
+ * Motor de recomendações (fallback + API autenticada).
+ * - Personalizadas, Tendências, Similares e categorias (saúde/fitness/nutrição)
+ * - Usa dados locais se sem token; emite toasts em erros
+ */
+export const RecommendationEngine = ({
   userProfile = {},
   onRecommendationClick,
   onFeedback,
   showPersonalized = true,
   showTrending = true,
-  showSimilar = true
+  showSimilar = true,
 }) => {
   // Usar as variáveis de controle
-  const [activeTab, setActiveTab] = useState(showPersonalized ? 'personalized' : showTrending ? 'trending' : 'similar');
+  const [activeTab, setActiveTab] = useState(
+    showPersonalized ? "personalized" : showTrending ? "trending" : "similar",
+  );
   const [recommendations, setRecommendations] = useState({
     personalized: [],
     trending: [],
     similar: [],
     health: [],
     fitness: [],
-    nutrition: []
+    nutrition: [],
   });
   const [loading, setLoading] = useState(false);
   const [userFeedback, setUserFeedback] = useState({});
 
   // Perfil do usuário de exemplo
-  const defaultUserProfile = {
+  const defaultUserProfile = useMemo(() => ({
     id: 1,
-    name: 'João Silva',
+    name: "João Silva",
     age: 28,
-    gender: 'male',
+    gender: "male",
     weight: 75,
     height: 175,
-    activityLevel: 'moderate',
-    goals: ['Ganho de Massa', 'Força'],
-    interests: ['Musculação', 'Suplementação', 'Nutrição'],
-    experience: 'intermediate',
+    activityLevel: "moderate",
+    goals: ["Ganho de Massa", "Força"],
+    interests: ["Musculação", "Suplementação", "Nutrição"],
+    experience: "intermediate",
     preferences: {
       priceRange: [50, 300],
-      brands: ['MuscleTech', 'Optimum Nutrition'],
-      categories: ['Suplementos', 'Equipamentos'],
-      flavors: ['Chocolate', 'Baunilha']
+      brands: ["MuscleTech", "Optimum Nutrition"],
+      categories: ["Suplementos", "Equipamentos"],
+      flavors: ["Chocolate", "Baunilha"],
     },
     purchaseHistory: [
-      { id: 1, type: 'product', name: 'Whey Protein', category: 'Suplementos', rating: 5 },
-      { id: 2, type: 'product', name: 'Creatina', category: 'Suplementos', rating: 4 },
-      { id: 3, type: 'exercise', name: 'Flexão de Braço', category: 'Peito', rating: 5 }
+      {
+        id: 1,
+        type: "product",
+        name: "Whey Protein",
+        category: "Suplementos",
+        rating: 5,
+      },
+      {
+        id: 2,
+        type: "product",
+        name: "Creatina",
+        category: "Suplementos",
+        rating: 4,
+      },
+      {
+        id: 3,
+        type: "exercise",
+        name: "Flexão de Braço",
+        category: "Peito",
+        rating: 5,
+      },
     ],
     workoutHistory: [
-      { type: 'strength', duration: 60, frequency: 4 },
-      { type: 'cardio', duration: 30, frequency: 2 }
+      { type: "strength", duration: 60, frequency: 4 },
+      { type: "cardio", duration: 30, frequency: 2 },
     ],
     healthData: {
       bmr: 1800,
       tdee: 2400,
       bodyFat: 15,
-      muscleMass: 65
-    }
-  };
+      muscleMass: 65,
+    },
+  }), []);
 
-  const currentUserProfile = { ...defaultUserProfile, ...userProfile };
+  const currentUserProfile = useMemo(() => ({ ...defaultUserProfile, ...userProfile }), [defaultUserProfile, userProfile]);
 
-  // Dados de exemplo para recomendações
-  const recommendationData = {
+  // Dados de exemplo para recomendações - memoizado
+  const recommendationData = useMemo(() => ({
     personalized: [
       {
         id: 1,
-        type: 'product',
-        name: 'Whey Protein Premium',
-        category: 'Suplementos',
-        subcategory: 'Proteínas',
-        brand: 'MuscleTech',
-        price: 189.90,
-        originalPrice: 229.90,
+        type: "product",
+        name: "Whey Protein Premium",
+        category: "Suplementos",
+        subcategory: "Proteínas",
+        brand: "MuscleTech",
+        price: 189.9,
+        originalPrice: 229.9,
         discount: 17,
         rating: 4.8,
         reviews: 1247,
-        image: '/images/whey-premium.jpg',
-        reason: 'Baseado no seu objetivo de ganho de massa',
+        image: "/images/whey-premium.jpg",
+        reason: "Baseado no seu objetivo de ganho de massa",
         confidence: 95,
         matchScore: 92,
-        tags: ['Ganho de Massa', 'Proteína', 'Recuperação'],
+        tags: ["Ganho de Massa", "Proteína", "Recuperação"],
         inStock: true,
-        popularity: 95
+        popularity: 95,
       },
       {
         id: 2,
-        type: 'exercise',
-        name: 'Supino Reto',
-        category: 'Peito',
-        difficulty: 'intermediate',
+        type: "exercise",
+        name: "Supino Reto",
+        category: "Peito",
+        difficulty: "intermediate",
         duration: 45,
-        equipment: ['Barra', 'Banco'],
-        reason: 'Perfeito para seu nível intermediário',
+        equipment: ["Barra", "Banco"],
+        reason: "Perfeito para seu nível intermediário",
         confidence: 88,
         matchScore: 85,
-        tags: ['Peito', 'Força', 'Intermediário'],
-        popularity: 90
+        tags: ["Peito", "Força", "Intermediário"],
+        popularity: 90,
       },
       {
         id: 3,
-        type: 'workout_plan',
-        name: 'Ganho de Massa Avançado',
-        category: 'Força',
+        type: "workout_plan",
+        name: "Ganho de Massa Avançado",
+        category: "Força",
         duration: 12,
-        difficulty: 'intermediate',
+        difficulty: "intermediate",
         workoutsPerWeek: 4,
-        reason: 'Alinhado com seus objetivos e experiência',
+        reason: "Alinhado com seus objetivos e experiência",
         confidence: 90,
         matchScore: 88,
-        tags: ['Ganho de Massa', 'Força', '12 semanas'],
-        popularity: 87
-      }
+        tags: ["Ganho de Massa", "Força", "12 semanas"],
+        popularity: 87,
+      },
     ],
     trending: [
       {
         id: 4,
-        type: 'product',
-        name: 'Creatina Monohidratada',
-        category: 'Suplementos',
-        brand: 'Optimum Nutrition',
-        price: 89.90,
+        type: "product",
+        name: "Creatina Monohidratada",
+        category: "Suplementos",
+        brand: "Optimum Nutrition",
+        price: 89.9,
         rating: 4.9,
         reviews: 2156,
-        reason: 'Tendência #1 em suplementos',
+        reason: "Tendência #1 em suplementos",
         confidence: 85,
-        trend: 'up',
+        trend: "up",
         trendValue: 25,
-        tags: ['Tendência', 'Creatina', 'Força'],
-        popularity: 98
+        tags: ["Tendência", "Creatina", "Força"],
+        popularity: 98,
       },
       {
         id: 5,
-        type: 'exercise',
-        name: 'Burpee',
-        category: 'Cardio',
-        difficulty: 'intermediate',
+        type: "exercise",
+        name: "Burpee",
+        category: "Cardio",
+        difficulty: "intermediate",
         duration: 20,
-        equipment: ['Nenhum'],
-        reason: 'Exercício mais popular esta semana',
+        equipment: ["Nenhum"],
+        reason: "Exercício mais popular esta semana",
         confidence: 80,
-        trend: 'up',
+        trend: "up",
         trendValue: 40,
-        tags: ['Cardio', 'HIIT', 'Popular'],
-        popularity: 95
-      }
+        tags: ["Cardio", "HIIT", "Popular"],
+        popularity: 95,
+      },
     ],
     similar: [
       {
         id: 6,
-        type: 'product',
-        name: 'BCAA 2:1:1',
-        category: 'Suplementos',
-        brand: 'Dymatize',
-        price: 79.90,
+        type: "product",
+        name: "BCAA 2:1:1",
+        category: "Suplementos",
+        brand: "Dymatize",
+        price: 79.9,
         rating: 4.7,
         reviews: 892,
-        reason: 'Usuários similares também compraram',
+        reason: "Usuários similares também compraram",
         confidence: 75,
         similarUsers: 1247,
-        tags: ['BCAA', 'Recuperação', 'Similar'],
-        popularity: 87
-      }
+        tags: ["BCAA", "Recuperação", "Similar"],
+        popularity: 87,
+      },
     ],
     health: [
       {
         id: 7,
-        type: 'tool',
-        name: 'Calculadora de Metabolismo',
-        category: 'Saúde',
-        description: 'Calcule seu metabolismo basal',
-        reason: 'Baseado no seu perfil de saúde',
+        type: "tool",
+        name: "Calculadora de Metabolismo",
+        category: "Saúde",
+        description: "Calcule seu metabolismo basal",
+        reason: "Baseado no seu perfil de saúde",
         confidence: 90,
-        tags: ['Metabolismo', 'Saúde', 'Calculadora'],
-        popularity: 85
-      }
+        tags: ["Metabolismo", "Saúde", "Calculadora"],
+        popularity: 85,
+      },
     ],
     fitness: [
       {
         id: 8,
-        type: 'workout_plan',
-        name: 'HIIT Queima Gordura',
-        category: 'Cardio',
+        type: "workout_plan",
+        name: "HIIT Queima Gordura",
+        category: "Cardio",
         duration: 6,
-        difficulty: 'intermediate',
-        reason: 'Complementa seu treino de força',
+        difficulty: "intermediate",
+        reason: "Complementa seu treino de força",
         confidence: 82,
-        tags: ['HIIT', 'Cardio', 'Queima Gordura'],
-        popularity: 90
-      }
+        tags: ["HIIT", "Cardio", "Queima Gordura"],
+        popularity: 90,
+      },
     ],
     nutrition: [
       {
         id: 9,
-        type: 'product',
-        name: 'Multivitamínico Completo',
-        category: 'Suplementos',
-        brand: 'Centrum',
-        price: 59.90,
+        type: "product",
+        name: "Multivitamínico Completo",
+        category: "Suplementos",
+        brand: "Centrum",
+        price: 59.9,
         rating: 4.6,
         reviews: 634,
-        reason: 'Suporte nutricional completo',
+        reason: "Suporte nutricional completo",
         confidence: 78,
-        tags: ['Vitaminas', 'Saúde', 'Completo'],
-        popularity: 82
-      }
-    ]
-  };
+        tags: ["Vitaminas", "Saúde", "Completo"],
+        popularity: 82,
+      },
+    ],
+  }), []);
 
   useEffect(() => {
     loadRecommendations();
-  }, [currentUserProfile]);
+  }, [currentUserProfile, loadRecommendations]);
 
-  const loadRecommendations = async () => {
+  const loadRecommendations = useCallback(async () => {
     setLoading(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
+      const token = localStorage.getItem("token");
+
+    if (!token) {
         // Fallback para recomendações padrão se não autenticado
         setRecommendations(recommendationData);
         setLoading(false);
+        toast.message?.("Usando recomendações padrão (não autenticado)");
         return;
       }
 
       // Carregar recomendações personalizadas da API
-      const personalizedResponse = await fetch('/api/recommendations/personalized', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const personalizedResponse = await fetch(
+        "/api/recommendations/personalized",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
       // Carregar recomendações em tendência
-      const trendingResponse = await fetch('/api/recommendations/trending', {
+      const trendingResponse = await fetch("/api/recommendations/trending", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       // Carregar recomendações similares
-      const similarResponse = await fetch('/api/recommendations/similar', {
+      const similarResponse = await fetch("/api/recommendations/similar", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       const newRecommendations = { ...recommendationData };
@@ -303,13 +343,14 @@ export const RecommendationEngine = ({
 
       setRecommendations(newRecommendations);
     } catch (error) {
-      console.error('Erro ao carregar recomendações:', error);
+      console.error("Erro ao carregar recomendações:", error);
       // Fallback para recomendações padrão em caso de erro
       setRecommendations(recommendationData);
+      toast.error("Falha ao carregar recomendações. Exibindo padrão.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUserProfile, recommendationData]);
 
   const handleRecommendationClick = (recommendation) => {
     if (onRecommendationClick) {
@@ -318,11 +359,11 @@ export const RecommendationEngine = ({
   };
 
   const handleFeedback = (recommendationId, feedback) => {
-    setUserFeedback(prev => ({
+    setUserFeedback((prev) => ({
       ...prev,
-      [recommendationId]: feedback
+      [recommendationId]: feedback,
     }));
-    
+
     if (onFeedback) {
       onFeedback(recommendationId, feedback);
     }
@@ -330,37 +371,50 @@ export const RecommendationEngine = ({
 
   const getRecommendationIcon = (type) => {
     switch (type) {
-      case 'product': return Package;
-      case 'exercise': return Dumbbell;
-      case 'workout_plan': return Target;
-      case 'tool': return Calculator;
-      default: return Star;
+      case "product":
+        return Package;
+      case "exercise":
+        return Dumbbell;
+      case "workout_plan":
+        return Target;
+      case "tool":
+        return Calculator;
+      default:
+        return Star;
     }
   };
 
   const getRecommendationColor = (type) => {
     switch (type) {
-      case 'product': return 'text-green-600';
-      case 'exercise': return 'text-blue-600';
-      case 'workout_plan': return 'text-purple-600';
-      case 'tool': return 'text-orange-600';
-      default: return 'text-gray-600';
+      case "product":
+        return "text-green-600";
+      case "exercise":
+        return "text-blue-600";
+      case "workout_plan":
+        return "text-purple-600";
+      case "tool":
+        return "text-orange-600";
+      default:
+        return "text-gray-600";
     }
   };
 
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'up': return <TrendingUp className="w-4 h-4 text-green-500" />;
-      case 'down': return <TrendingDown className="w-4 h-4 text-red-500" />;
-      default: return <TrendingUp className="w-4 h-4 text-gray-500" />;
+      case "up":
+        return <TrendingUp className="w-4 h-4 text-green-500" />;
+      case "down":
+        return <TrendingDown className="w-4 h-4 text-red-500" />;
+      default:
+        return <TrendingUp className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getConfidenceColor = (confidence) => {
-    if (confidence >= 90) return 'text-green-600';
-    if (confidence >= 80) return 'text-yellow-600';
-    if (confidence >= 70) return 'text-orange-600';
-    return 'text-red-600';
+    if (confidence >= 90) return "text-green-600";
+    if (confidence >= 80) return "text-yellow-600";
+    if (confidence >= 70) return "text-orange-600";
+    return "text-red-600";
   };
 
   const renderRecommendationCard = (recommendation) => {
@@ -368,15 +422,24 @@ export const RecommendationEngine = ({
     const feedback = userFeedback[recommendation.id];
 
     return (
-      <Card key={recommendation.id} className="hover:shadow-lg transition-shadow">
+      <Card
+        key={recommendation.id}
+        className="hover:shadow-lg transition-shadow"
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-2">
-              <IconComponent className={`w-5 h-5 ${getRecommendationColor(recommendation.type)}`} />
+              <IconComponent
+                className={`w-5 h-5 ${getRecommendationColor(recommendation.type)}`}
+              />
               <Badge variant="outline" className="text-xs">
-                {recommendation.type === 'product' ? 'Produto' :
-                 recommendation.type === 'exercise' ? 'Exercício' :
-                 recommendation.type === 'workout_plan' ? 'Plano' : 'Ferramenta'}
+                {recommendation.type === "product"
+                  ? "Produto"
+                  : recommendation.type === "exercise"
+                    ? "Exercício"
+                    : recommendation.type === "workout_plan"
+                      ? "Plano"
+                      : "Ferramenta"}
               </Badge>
             </div>
             <div className="flex items-center space-x-1">
@@ -387,7 +450,7 @@ export const RecommendationEngine = ({
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-3">
           {/* Nome e Categoria */}
           <div>
@@ -401,36 +464,37 @@ export const RecommendationEngine = ({
           </div>
 
           {/* Preço (para produtos) */}
-          {recommendation.price && (
+          {typeof recommendation.price === "number" && (
             <div className="flex items-center space-x-2">
               <span className="font-bold text-green-600">
-                R$ {recommendation.price.toFixed(2).replace('.', ',')}
+                R$ {recommendation.price.toFixed(2).replace(".", ",")}
               </span>
-              {recommendation.originalPrice > recommendation.price && (
+              {typeof recommendation.originalPrice === "number" &&
+                recommendation.originalPrice > recommendation.price && (
                 <span className="text-xs text-gray-500 line-through">
-                  R$ {recommendation.originalPrice.toFixed(2).replace('.', ',')}
+                  R$ {recommendation.originalPrice.toFixed(2).replace(".", ",")}
                 </span>
               )}
             </div>
           )}
 
           {/* Rating (para produtos) */}
-          {recommendation.rating && (
+          {Number.isFinite(recommendation.rating) && (
             <div className="flex items-center space-x-2">
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     className={`w-3 h-3 ${
-                      i < Math.floor(recommendation.rating)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
+                      i < Math.floor(Number.isFinite(recommendation.rating) ? recommendation.rating : 0)
+                        ? "text-yellow-400 fill-current"
+                        : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
               <span className="text-xs text-gray-600">
-                {recommendation.rating} ({recommendation.reviews})
+                {Number.isFinite(recommendation.rating) ? recommendation.rating : 0} ({recommendation.reviews ?? 0})
               </span>
             </div>
           )}
@@ -451,15 +515,12 @@ export const RecommendationEngine = ({
                 {recommendation.confidence}%
               </span>
             </div>
-            <Progress 
-              value={recommendation.confidence} 
-              className="h-1"
-            />
+            <Progress value={recommendation.confidence} className="h-1" />
           </div>
 
           {/* Tags */}
           <div className="flex flex-wrap gap-1">
-            {recommendation.tags.slice(0, 3).map((tag, index) => (
+            {(Array.isArray(recommendation.tags) ? recommendation.tags : []).slice(0, 3).map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tag}
               </Badge>
@@ -478,33 +539,29 @@ export const RecommendationEngine = ({
                 <Eye className="w-3 h-3 mr-1" />
                 Ver
               </Button>
-              {recommendation.type === 'product' && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                >
+              {recommendation.type === "product" && (
+                <Button size="sm" variant="outline" className="text-xs">
                   <ShoppingCart className="w-3 h-3 mr-1" />
                   Comprar
                 </Button>
               )}
             </div>
-            
+
             {/* Feedback */}
             <div className="flex space-x-1">
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleFeedback(recommendation.id, 'like')}
-                className={`text-xs ${feedback === 'like' ? 'text-green-600' : 'text-gray-400'}`}
+                onClick={() => handleFeedback(recommendation.id, "like")}
+                className={`text-xs ${feedback === "like" ? "text-green-600" : "text-gray-400"}`}
               >
                 <ThumbsUp className="w-3 h-3" />
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleFeedback(recommendation.id, 'dislike')}
-                className={`text-xs ${feedback === 'dislike' ? 'text-red-600' : 'text-gray-400'}`}
+                onClick={() => handleFeedback(recommendation.id, "dislike")}
+                className={`text-xs ${feedback === "dislike" ? "text-red-600" : "text-gray-400"}`}
               >
                 <ThumbsDown className="w-3 h-3" />
               </Button>
@@ -516,12 +573,42 @@ export const RecommendationEngine = ({
   };
 
   const tabs = [
-    { id: 'personalized', label: 'Personalizado', icon: Star, count: recommendations.personalized.length },
-    { id: 'trending', label: 'Tendências', icon: TrendingUp, count: recommendations.trending.length },
-    { id: 'similar', label: 'Similar', icon: Users, count: recommendations.similar.length },
-    { id: 'health', label: 'Saúde', icon: Heart, count: recommendations.health.length },
-    { id: 'fitness', label: 'Fitness', icon: Activity, count: recommendations.fitness.length },
-    { id: 'nutrition', label: 'Nutrição', icon: Utensils, count: recommendations.nutrition.length }
+    {
+      id: "personalized",
+      label: "Personalizado",
+      icon: Star,
+      count: recommendations.personalized.length,
+    },
+    {
+      id: "trending",
+      label: "Tendências",
+      icon: TrendingUp,
+      count: recommendations.trending.length,
+    },
+    {
+      id: "similar",
+      label: "Similar",
+      icon: Users,
+      count: recommendations.similar.length,
+    },
+    {
+      id: "health",
+      label: "Saúde",
+      icon: Heart,
+      count: recommendations.health.length,
+    },
+    {
+      id: "fitness",
+      label: "Fitness",
+      icon: Activity,
+      count: recommendations.fitness.length,
+    },
+    {
+      id: "nutrition",
+      label: "Nutrição",
+      icon: Utensils,
+      count: recommendations.nutrition.length,
+    },
   ];
 
   const currentRecommendations = recommendations[activeTab] || [];
@@ -541,26 +628,26 @@ export const RecommendationEngine = ({
         <div className="flex items-center space-x-2">
           {/* Controles de exibição */}
           <div className="flex items-center space-x-2">
-            <Button 
-              variant={activeTab === 'personalized' ? "default" : "outline"} 
+            <Button
+              variant={activeTab === "personalized" ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveTab('personalized')}
+              onClick={() => setActiveTab("personalized")}
               disabled={!showPersonalized}
             >
               Personalizadas
             </Button>
-            <Button 
-              variant={activeTab === 'trending' ? "default" : "outline"} 
+            <Button
+              variant={activeTab === "trending" ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveTab('trending')}
+              onClick={() => setActiveTab("trending")}
               disabled={!showTrending}
             >
               Em Tendência
             </Button>
-            <Button 
-              variant={activeTab === 'similar' ? "default" : "outline"} 
+            <Button
+              variant={activeTab === "similar" ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveTab('similar')}
+              onClick={() => setActiveTab("similar")}
               disabled={!showSimilar}
             >
               Similares
@@ -571,7 +658,9 @@ export const RecommendationEngine = ({
             onClick={loadRecommendations}
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
         </div>
@@ -587,8 +676,8 @@ export const RecommendationEngine = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <IconComponent className="w-4 h-4" />
@@ -657,7 +746,7 @@ export const RecommendationEngine = ({
                   Foco em ganho de massa e força
                 </p>
               </div>
-              
+
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-600" />
@@ -667,7 +756,7 @@ export const RecommendationEngine = ({
                   Suplementos em alta esta semana
                 </p>
               </div>
-              
+
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <Users className="w-4 h-4 text-purple-600" />

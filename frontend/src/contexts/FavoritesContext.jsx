@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const FavoritesContext = createContext();
 
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
   if (!context) {
-    throw new Error('useFavorites must be used within a FavoritesProvider');
+    throw new Error("useFavorites must be used within a FavoritesProvider");
   }
   return context;
 };
@@ -16,12 +16,12 @@ export const FavoritesProvider = ({ children }) => {
 
   // Carregar favoritos do localStorage na inicialização
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('re-educa-favorites');
+    const savedFavorites = localStorage.getItem("re-educa-favorites");
     if (savedFavorites) {
       try {
         setFavorites(JSON.parse(savedFavorites));
       } catch (error) {
-        console.error('Erro ao carregar favoritos:', error);
+        console.error("Erro ao carregar favoritos:", error);
         setFavorites([]);
       }
     }
@@ -29,34 +29,40 @@ export const FavoritesProvider = ({ children }) => {
 
   // Salvar favoritos no localStorage sempre que houver mudanças
   useEffect(() => {
-    localStorage.setItem('re-educa-favorites', JSON.stringify(favorites));
+    localStorage.setItem("re-educa-favorites", JSON.stringify(favorites));
   }, [favorites]);
 
   const addToFavorites = (item) => {
-    setFavorites(prev => {
+    setFavorites((prev) => {
       // Verificar se o item já está nos favoritos
-      const exists = prev.some(fav => fav.id === item.id && fav.type === item.type);
+      const exists = prev.some(
+        (fav) => fav.id === item.id && fav.type === item.type,
+      );
       if (exists) {
         return prev;
       }
-      
+
       // Adicionar timestamp para ordenação
       const favoriteItem = {
         ...item,
-        addedAt: new Date().toISOString()
+        addedAt: new Date().toISOString(),
       };
-      
+
       return [...prev, favoriteItem];
     });
   };
 
   const removeFromFavorites = (itemId, itemType) => {
-    setFavorites(prev => prev.filter(fav => !(fav.id === itemId && fav.type === itemType)));
+    setFavorites((prev) =>
+      prev.filter((fav) => !(fav.id === itemId && fav.type === itemType)),
+    );
   };
 
   const toggleFavorite = (item) => {
-    const isFavorite = favorites.some(fav => fav.id === item.id && fav.type === item.type);
-    
+    const isFavorite = favorites.some(
+      (fav) => fav.id === item.id && fav.type === item.type,
+    );
+
     if (isFavorite) {
       removeFromFavorites(item.id, item.type);
     } else {
@@ -65,11 +71,11 @@ export const FavoritesProvider = ({ children }) => {
   };
 
   const isFavorite = (itemId, itemType) => {
-    return favorites.some(fav => fav.id === itemId && fav.type === itemType);
+    return favorites.some((fav) => fav.id === itemId && fav.type === itemType);
   };
 
   const getFavoritesByType = (type) => {
-    return favorites.filter(fav => fav.type === type);
+    return favorites.filter((fav) => fav.type === type);
   };
 
   const clearFavorites = () => {
@@ -81,7 +87,7 @@ export const FavoritesProvider = ({ children }) => {
   };
 
   const getFavoritesCountByType = (type) => {
-    return favorites.filter(fav => fav.type === type).length;
+    return favorites.filter((fav) => fav.type === type).length;
   };
 
   const value = {
@@ -94,7 +100,7 @@ export const FavoritesProvider = ({ children }) => {
     getFavoritesByType,
     clearFavorites,
     getFavoritesCount,
-    getFavoritesCountByType
+    getFavoritesCountByType,
   };
 
   return (

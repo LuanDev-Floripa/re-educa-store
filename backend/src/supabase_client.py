@@ -8,9 +8,15 @@ import os
 from typing import Dict, List, Optional, Any
 
 class SupabaseClient:
-    """Cliente simplificado para Supabase usando API REST"""
+    """
+    Cliente simplificado para Supabase usando API REST.
+    
+    Fornece métodos para interagir com todas as tabelas do
+    banco de dados Supabase através da API PostgREST.
+    """
     
     def __init__(self):
+        """Inicializa o cliente Supabase com credenciais."""
         self.url = os.environ.get('SUPABASE_URL', 'https://hgfrntbtqsarencqzsla.supabase.co')
         self.anon_key = os.environ.get('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZnJudGJ0cXNhcmVuY3F6c2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NzQ4NzMsImV4cCI6MjA0ODA1MDg3M30.8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b')
         self.headers = {
@@ -20,7 +26,20 @@ class SupabaseClient:
         }
     
     def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
-        """Faz uma requisição para a API do Supabase"""
+        """
+        Faz uma requisição para a API do Supabase.
+        
+        Args:
+            method (str): Método HTTP (GET, POST, PUT, PATCH, DELETE).
+            endpoint (str): Endpoint da API (ex: 'users', 'products').
+            data (Optional[Dict]): Dados para enviar na requisição.
+            
+        Returns:
+            Dict: Resposta da API ou dicionário de erro.
+            
+        Raises:
+            ValueError: Se o método HTTP não for suportado.
+        """
         url = f"{self.url}/rest/v1/{endpoint}"
         
         try:
@@ -41,21 +60,48 @@ class SupabaseClient:
             return response.json() if response.content else {}
             
         except requests.exceptions.RequestException as e:
-            print(f"Erro na requisição Supabase: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erro na requisição Supabase: {e}")
             return {'error': str(e)}
     
     # Métodos para usuários
     def get_user_by_email(self, email: str) -> Optional[Dict]:
-        """Busca usuário por email"""
+        """
+        Busca usuário por email.
+        
+        Args:
+            email (str): Email do usuário.
+            
+        Returns:
+            Optional[Dict]: Dados do usuário ou None.
+        """
         result = self._make_request('GET', 'users', {'email': f'eq.{email}'})
         return result[0] if result and len(result) > 0 else None
     
     def create_user(self, user_data: Dict) -> Optional[Dict]:
-        """Cria um novo usuário"""
+        """
+        Cria um novo usuário.
+        
+        Args:
+            user_data (Dict): Dados do usuário.
+            
+        Returns:
+            Optional[Dict]: Usuário criado ou None.
+        """
         return self._make_request('POST', 'users', user_data)
     
     def update_user(self, user_id: str, user_data: Dict) -> Optional[Dict]:
-        """Atualiza um usuário"""
+        """
+        Atualiza um usuário.
+        
+        Args:
+            user_id (str): ID do usuário.
+            user_data (Dict): Dados para atualizar.
+            
+        Returns:
+            Optional[Dict]: Usuário atualizado ou None.
+        """
         return self._make_request('PATCH', f'users?id=eq.{user_id}', user_data)
     
     def get_user_by_id(self, user_id: str) -> Optional[Dict]:

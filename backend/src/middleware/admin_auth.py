@@ -1,5 +1,8 @@
 """
-Middleware de autenticação administrativa
+Middleware de autenticação administrativa.
+
+Fornece decorators para proteção de rotas que exigem
+privilegios administrativos ou acesso a dados próprios.
 """
 from functools import wraps
 from flask import request, jsonify, g
@@ -10,7 +13,13 @@ logger = logging.getLogger(__name__)
 
 def admin_required(f):
     """
-    Decorator que verifica se o usuário é admin
+    Decorator que verifica se o usuário é admin.
+    
+    Args:
+        f (callable): Função a ser decorada.
+        
+    Returns:
+        callable: Função decorada com verificação de admin.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -47,7 +56,15 @@ def admin_required(f):
 
 def admin_or_self_required(f):
     """
-    Decorator que verifica se o usuário é admin ou está acessando seus próprios dados
+    Decorator que verifica se o usuário é admin ou está acessando seus próprios dados.
+    
+    Permite que usuários acessem apenas seus próprios dados, exceto se forem admins.
+    
+    Args:
+        f (callable): Função a ser decorada.
+        
+    Returns:
+        callable: Função decorada com verificação de autorização.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):

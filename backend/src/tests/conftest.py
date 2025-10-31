@@ -1,3 +1,18 @@
+"""
+Configurações de Testes Pytest RE-EDUCA Store.
+
+Centraliza fixtures e configurações de testes incluindo:
+- Fixtures da aplicação Flask
+- Mocks do Supabase
+- Mocks de autenticação
+- Variáveis de ambiente de teste
+- Setup e teardown de testes
+
+IMPORTANTE:
+- Fixtures são compartilhadas entre todos os testes
+- Usar mocks para evitar chamadas reais às APIs
+- Limpar estado entre testes
+"""
 import pytest
 import os
 import sys
@@ -18,7 +33,12 @@ os.environ['USDA_API_KEY'] = 'test-usda-key'
 
 @pytest.fixture
 def app():
-    """Fixture para criar a aplicação Flask de teste"""
+    """
+    Fixture para criar a aplicação Flask de teste.
+    
+    Yields:
+        Flask: App configurada para testes.
+    """
     from app import create_app
     app = create_app()
     
@@ -110,6 +130,7 @@ def mock_token_required():
         @wraps(f)
         def decorated(*args, **kwargs):
             # Simula usuário autenticado
+            from flask import request
             request.current_user = {
                 'id': 'test-user-id',
                 'email': 'test@example.com',

@@ -1,22 +1,39 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { useApi } from '../../lib/api';
-import { CreditCard, Lock, CheckCircle, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import { useApi } from "../../lib/api";
+import { CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
-export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError }) => {
+/**
+ * Formulário de pagamento via Stripe (simulado client_secret).
+ * - Cria PaymentIntent no backend e confirma pagamento
+ * - Alterna entre Cartão e PIX (simulado)
+ */
+export const StripePaymentForm = ({
+  amount,
+  currency = "brl",
+  onSuccess,
+  onError,
+}) => {
   const { request } = useApi();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [paymentMethod, setPaymentMethod] = React.useState('card');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState('card');
+  const [paymentMethod, setPaymentMethod] = React.useState("card");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    React.useState("card");
   const [cardDetails, setCardDetails] = React.useState({
-    number: '',
-    expiry: '',
-    cvc: '',
-    name: ''
+    number: "",
+    expiry: "",
+    cvc: "",
+    name: "",
   });
 
   const handleSubmit = async (e) => {
@@ -25,50 +42,53 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
 
     try {
       // Cria Payment Intent usando a API real
-      const response = await request(() => 
-        fetch('/api/payments/stripe/create-payment-intent', {
-          method: 'POST',
+      const response = await request(() =>
+        fetch("/api/payments/stripe/create-payment-intent", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
             amount: Math.round(amount * 100), // Converter para centavos
             currency: currency,
-            payment_method: selectedPaymentMethod
+            payment_method: selectedPaymentMethod,
           }),
-        })
+        }),
       );
 
       if (response.ok) {
         const result = await response.json();
-        
+
         if (result.success) {
           const { client_secret, payment_intent_id } = result;
-          
+
           // Usar o client_secret para processar o pagamento
-          
+
           // Aqui você integraria com o Stripe Elements usando o client_secret
           // Por enquanto, vamos simular a confirmação do pagamento
           setTimeout(() => {
             setIsLoading(false);
-            toast.success(`Pagamento de R$ ${amount.toFixed(2)} realizado com sucesso!`);
-            onSuccess && onSuccess({ 
-              client_secret, 
-              payment_intent_id,
-              paymentMethod: selectedPaymentMethod 
-            });
+            toast.success(
+              `Pagamento de R$ ${amount.toFixed(2)} realizado com sucesso!`,
+            );
+            onSuccess &&
+              onSuccess({
+                client_secret,
+                payment_intent_id,
+                paymentMethod: selectedPaymentMethod,
+              });
           }, 2000);
         } else {
-          throw new Error(result.error || 'Erro ao criar payment intent');
+          throw new Error(result.error || "Erro ao criar payment intent");
         }
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao processar pagamento');
+        throw new Error(error.error || "Erro ao processar pagamento");
       }
     } catch (error) {
-      console.error('Erro no pagamento:', error);
-      toast.error(error.message || 'Erro ao processar pagamento');
+      console.error("Erro no pagamento:", error);
+      toast.error(error.message || "Erro ao processar pagamento");
       onError && onError(error);
     } finally {
       setIsLoading(false);
@@ -76,11 +96,17 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
   };
 
   const formatCardNumber = (value) => {
-    return value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+    return value
+      .replace(/\s/g, "")
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
   };
 
   const formatExpiry = (value) => {
-    return value.replace(/\D/g, '').replace(/(.{2})/, '$1/').trim();
+    return value
+      .replace(/\D/g, "")
+      .replace(/(.{2})/, "$1/")
+      .trim();
   };
 
   return (
@@ -94,7 +120,7 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
           Valor: R$ {amount.toFixed(2)} - Método: {paymentMethod}
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Número do Cartão */}
@@ -105,10 +131,12 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
               type="text"
               placeholder="1234 5678 9012 3456"
               value={cardDetails.number}
-              onChange={(e) => setCardDetails(prev => ({
-                ...prev,
-                number: formatCardNumber(e.target.value)
-              }))}
+              onChange={(e) =>
+                setCardDetails((prev) => ({
+                  ...prev,
+                  number: formatCardNumber(e.target.value),
+                }))
+              }
               maxLength={19}
               required
             />
@@ -122,10 +150,12 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
               type="text"
               placeholder="João Silva"
               value={cardDetails.name}
-              onChange={(e) => setCardDetails(prev => ({
-                ...prev,
-                name: e.target.value
-              }))}
+              onChange={(e) =>
+                setCardDetails((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
               required
             />
           </div>
@@ -139,10 +169,12 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
                 type="text"
                 placeholder="MM/AA"
                 value={cardDetails.expiry}
-                onChange={(e) => setCardDetails(prev => ({
-                  ...prev,
-                  expiry: formatExpiry(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setCardDetails((prev) => ({
+                    ...prev,
+                    expiry: formatExpiry(e.target.value),
+                  }))
+                }
                 maxLength={5}
                 required
               />
@@ -154,10 +186,12 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
                 type="text"
                 placeholder="123"
                 value={cardDetails.cvc}
-                onChange={(e) => setCardDetails(prev => ({
-                  ...prev,
-                  cvc: e.target.value.replace(/\D/g, '')
-                }))}
+                onChange={(e) =>
+                  setCardDetails((prev) => ({
+                    ...prev,
+                    cvc: e.target.value.replace(/\D/g, ""),
+                  }))
+                }
                 maxLength={4}
                 required
               />
@@ -180,13 +214,13 @@ export const StripePaymentForm = ({ amount, currency = 'brl', onSuccess, onError
             type="button"
             variant="outline"
             onClick={() => {
-              const newMethod = paymentMethod === 'card' ? 'pix' : 'card';
+              const newMethod = paymentMethod === "card" ? "pix" : "card";
               setPaymentMethod(newMethod);
               setSelectedPaymentMethod(newMethod);
             }}
             className="w-full mb-4"
           >
-            Alternar para {paymentMethod === 'card' ? 'PIX' : 'Cartão'}
+            Alternar para {paymentMethod === "card" ? "PIX" : "Cartão"}
           </Button>
 
           {/* Botão de Pagamento */}

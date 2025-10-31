@@ -1,5 +1,11 @@
 """
-Rotas de Autenticação de Dois Fatores RE-EDUCA Store
+Rotas de Autenticação de Dois Fatores RE-EDUCA Store.
+
+Gerencia autenticação de dois fatores (2FA/TOTP) incluindo:
+- Configuração inicial do 2FA
+- Verificação de tokens
+- Geração de códigos de backup
+- Desativação do 2FA
 """
 from flask import Blueprint, request, jsonify
 from services.two_factor_service import TwoFactorService
@@ -13,7 +19,14 @@ two_factor_service = TwoFactorService()
 @token_required
 @rate_limit("5 per minute")
 def setup_2fa():
-    """Configura 2FA para usuário"""
+    """
+    Configura 2FA para usuário.
+    
+    Gera QR code e secret key para configuração do authenticator.
+    
+    Returns:
+        JSON: QR code URL, secret key e códigos de backup.
+    """
     try:
         user_id = request.current_user['id']
         user_email = request.current_user['email']

@@ -1,5 +1,12 @@
 """
-Service de Analytics RE-EDUCA Store
+Service de Analytics RE-EDUCA Store.
+
+Gerencia analytics e métricas incluindo:
+- Analytics de vendas por período
+- Métricas de usuários e engajamento
+- Análise de produtos e categorias
+- Comparações temporais
+- KPIs e dashboards
 """
 import logging
 from typing import Dict, Any, List
@@ -10,13 +17,26 @@ from collections import defaultdict
 logger = logging.getLogger(__name__)
 
 class AnalyticsService:
-    """Service para analytics e métricas do admin"""
+    """
+    Service para analytics e métricas do admin.
+    
+    Processa dados para gerar insights e relatórios.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de analytics."""
         self.db = supabase_client
     
     def get_sales_analytics(self, period: str = 'month') -> Dict[str, Any]:
-        """Retorna analytics de vendas por período"""
+        """
+        Retorna analytics de vendas por período.
+        
+        Args:
+            period (str): Período (today, week, month, quarter, year).
+            
+        Returns:
+            Dict[str, Any]: Métricas de vendas, conversão e produtos top.
+        """
         try:
             start_date, end_date = self._get_date_range(period)
             

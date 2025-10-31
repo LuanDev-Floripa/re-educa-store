@@ -1,5 +1,14 @@
 """
-Validadores para RE-EDUCA Store
+Validadores para RE-EDUCA Store.
+
+Fornece validadores especializados para:
+- Dados de usuário (registro, perfil, senha)
+- Dados de produto
+- Dados de pedido
+- Cupons e promoções
+- Dados de saúde
+
+Todos os validadores retornam lista de erros detalhada.
 """
 import re
 from typing import Dict, Any, List, Optional
@@ -7,9 +16,14 @@ from datetime import datetime, date
 from utils.helpers import validate_email, validate_password, is_valid_cpf
 
 class Validator:
-    """Classe base para validadores"""
+    """
+    Classe base para validadores.
+    
+    Fornece estrutura comum para todos os validadores.
+    """
     
     def __init__(self):
+        """Inicializa o validador."""
         self.errors = []
     
     def add_error(self, field: str, message: str):
@@ -28,10 +42,22 @@ class Validator:
         return self.errors
 
 class UserValidator(Validator):
-    """Validador para dados de usuário"""
+    """
+    Validador para dados de usuário.
+    
+    Valida registro, login, atualização de perfil, etc.
+    """
     
     def validate_registration(self, data: Dict[str, Any]) -> bool:
-        """Valida dados de registro"""
+        """
+        Valida dados de registro.
+        
+        Args:
+            data (Dict[str, Any]): Dados do usuário.
+            
+        Returns:
+            bool: True se válido, False com erros em self.errors.
+        """
         self.errors = []
         
         # Nome

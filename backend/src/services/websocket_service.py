@@ -1,6 +1,13 @@
 """
-Serviço de WebSocket para Live Streaming
-Gerencia conexões em tempo real, chat, visualizações e presentes
+Serviço de WebSocket para Live Streaming RE-EDUCA.
+
+Gerencia comunicação em tempo real incluindo:
+- Conexões WebSocket autenticadas
+- Salas de chat de streams
+- Mensagens e reações em tempo real
+- Sistema de presentes virtuais
+- Tracking de visualizadores ativos
+- Eventos de follows e interações
 """
 
 import json
@@ -9,30 +16,64 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from flask_socketio import emit, join_room, leave_room, disconnect
 from flask import request
-from flask_jwt_extended import decode_token
+from middleware.auth import token_required
+import jwt
+from config.settings import get_config
 from services.live_streaming_service import LiveStreamingService
-from database.connection import get_db_connection
 
 logger = logging.getLogger(__name__)
 
 class WebSocketService:
+    """
+    Service para gerenciamento de conexões WebSocket.
+    
+    Gerencia todas as interações em tempo real do sistema.
+    """
+    
     def __init__(self, socketio):
+        """Inicializa o serviço WebSocket com instância do SocketIO."""
         self.socketio = socketio
         self.live_streaming_service = LiveStreamingService()
         self.active_connections = {}  # {user_id: [socket_ids]}
         self.stream_rooms = {}  # {stream_id: [user_ids]}
         
     def authenticate_user(self, token):
-        """Autentica usuário via JWT token"""
+        """
+        Autentica usuário via JWT token.
+        
+        Args:
+            token (str): Token JWT.
+            
+        Returns:
+            str: User ID se válido, None caso contrário.
+        """
         try:
-            decoded_token = decode_token(token)
-            return decoded_token.get('sub')
+            # Remove 'Bearer ' se presente
+            if token.startswith('Bearer '):
+                token = token[7:]
+            
+            # Decodifica o token JWT
+            config = get_config()
+            data = jwt.decode(token, config.JWT_SECRET_KEY, algorithms=['HS256'])
+            user_id = data.get('user_id')
+            
+            if user_id:
+                return user_id
+            return None
         except Exception as e:
-            logger.error(f"Erro na autenticação WebSocket: {e}")
+            logger.error(f"Erro na autenticação WebSocket: {e}", exc_info=True)
             return None
     
     def on_connect(self, auth=None):
-        """Evento de conexão do WebSocket"""
+        """
+        Evento de conexão do WebSocket.
+        
+        Args:
+            auth (dict): Dicionário com token de autenticação.
+            
+        Returns:
+            bool: True se conectado com sucesso, False caso contrário.
+        """
         try:
             if not auth or 'token' not in auth:
                 logger.warning("Conexão WebSocket sem token de autenticação")

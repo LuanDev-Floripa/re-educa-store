@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Input } from '@/components/Ui/input';
-import { 
-  Users, 
-  Search, 
-  Filter, 
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Input } from "@/components/Ui/input";
+import {
+  Users,
+  Search,
+  Filter,
   MoreHorizontal,
   UserCheck,
   UserX,
@@ -15,15 +21,21 @@ import {
   Shield,
   Eye,
   Edit,
-  Trash2
-} from 'lucide-react';
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
 
+/**
+ * AdminUsers
+ * Lista e gerencia usuários com filtros, com robustez em storage e API.
+ * @returns {JSX.Element}
+ */
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     loadUsers();
@@ -32,25 +44,33 @@ const AdminUsers = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('admin_token') || localStorage.getItem('auth_token');
+      let token = null;
+      try {
+        token =
+          localStorage.getItem("admin_token") || localStorage.getItem("auth_token");
+      } catch (e) {
+        token = null;
+      }
       if (!token) {
-        console.error('Token de autenticação não encontrado');
+        console.error("Token de autenticação não encontrado");
         setUsers([]);
+        toast.error("Sessão inválida. Faça login novamente.");
         return;
       }
 
-      const response = await fetch('/api/admin/users', {
-        method: 'GET',
+      const response = await fetch("/api/admin/users", {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.error('Não autorizado - verifique seu token de admin');
+          console.error("Não autorizado - verifique seu token de admin");
           setUsers([]);
+          toast.error("Não autorizado. Faça login novamente.");
           return;
         }
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -58,59 +78,62 @@ const AdminUsers = () => {
 
       const data = await response.json();
       // A API retorna { users: [], total: 0, page: 1 } ou formato similar
-      const usersList = data.users || data.data || data || [];
+      const usersList = data?.users || data?.data || (Array.isArray(data) ? data : []) || [];
       setUsers(usersList);
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error);
+      console.error("Erro ao carregar usuários:", error);
       // Em caso de erro, manter array vazio ao invés de mostrar dados mockados
       setUsers([]);
+      toast.error("Erro ao carregar usuários");
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      String(user?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(user?.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === "all" || user?.role === filterRole;
+    const matchesStatus =
+      filterStatus === "all" || user?.status === filterStatus;
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      case 'suspended':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case "active":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "inactive":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "suspended":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'user':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case "admin":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+      case "user":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   if (loading) {
@@ -133,7 +156,7 @@ const AdminUsers = () => {
             Gerencie usuários, permissões e status da conta
           </p>
         </div>
-        
+
         <Button>
           <Users className="h-4 w-4 mr-2" />
           Novo Usuário
@@ -147,7 +170,9 @@ const AdminUsers = () => {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Usuários</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total de Usuários
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {users.length}
                 </p>
@@ -161,9 +186,11 @@ const AdminUsers = () => {
             <div className="flex items-center">
               <UserCheck className="h-8 w-8 text-green-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuários Ativos</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Usuários Ativos
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {users.filter(u => u.status === 'active').length}
+                  {users.filter((u) => u.status === "active").length}
                 </p>
               </div>
             </div>
@@ -175,9 +202,11 @@ const AdminUsers = () => {
             <div className="flex items-center">
               <UserX className="h-8 w-8 text-gray-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuários Inativos</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Usuários Inativos
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {users.filter(u => u.status === 'inactive').length}
+                  {users.filter((u) => u.status === "inactive").length}
                 </p>
               </div>
             </div>
@@ -189,9 +218,11 @@ const AdminUsers = () => {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-purple-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Administradores</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Administradores
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {users.filter(u => u.role === 'admin').length}
+                  {users.filter((u) => u.role === "admin").length}
                 </p>
               </div>
             </div>
@@ -214,7 +245,7 @@ const AdminUsers = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <select
                 value={filterRole}
@@ -225,7 +256,7 @@ const AdminUsers = () => {
                 <option value="admin">Administrador</option>
                 <option value="user">Usuário</option>
               </select>
-              
+
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -254,19 +285,38 @@ const AdminUsers = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Usuário</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Role</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Verificação</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Pedidos</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Total Gasto</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Último Login</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Ações</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Usuário
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Role
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Verificação
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Pedidos
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Total Gasto
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Último Login
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <tr
+                    key={user.id}
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
@@ -276,27 +326,30 @@ const AdminUsers = () => {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
-                            {user.name}
+                            {user?.name || "Usuário"}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {user.email}
+                            {user?.email || ""}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <Badge className={getRoleColor(user.role)}>
-                        {user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                      <Badge className={getRoleColor(user?.role)}>
+                        {user?.role === "admin" ? "Administrador" : "Usuário"}
                       </Badge>
                     </td>
                     <td className="py-4 px-4">
-                      <Badge className={getStatusColor(user.status)}>
-                        {user.status === 'active' ? 'Ativo' : 
-                         user.status === 'inactive' ? 'Inativo' : 'Suspenso'}
+                      <Badge className={getStatusColor(user?.status)}>
+                        {user?.status === "active"
+                          ? "Ativo"
+                          : user?.status === "inactive"
+                            ? "Inativo"
+                            : "Suspenso"}
                       </Badge>
                     </td>
                     <td className="py-4 px-4">
-                      {user.emailVerified ? (
+                      {user?.emailVerified ? (
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                           Verificado
                         </Badge>
@@ -307,13 +360,13 @@ const AdminUsers = () => {
                       )}
                     </td>
                     <td className="py-4 px-4 text-gray-900 dark:text-white">
-                      {user.totalOrders}
+                      {Number(user?.totalOrders || 0)}
                     </td>
                     <td className="py-4 px-4 text-gray-900 dark:text-white">
-                      {formatCurrency(user.totalSpent)}
+                      {formatCurrency(Number(user?.totalSpent || 0))}
                     </td>
                     <td className="py-4 px-4 text-gray-500 dark:text-gray-400">
-                      {formatDate(user.lastLogin)}
+                      {user?.lastLogin ? formatDate(user.lastLogin) : "—"}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-2">
@@ -323,7 +376,11 @@ const AdminUsers = () => {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

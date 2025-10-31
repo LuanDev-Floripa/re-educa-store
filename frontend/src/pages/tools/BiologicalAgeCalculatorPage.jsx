@@ -1,20 +1,19 @@
-import React from 'react';
-import { BiologicalAgeCalculator } from '../../components/calculators/BiologicalAgeCalculator';
-import AIAssistantPopup from '../../components/AIAssistantPopup';
+import React from "react";
+import { BiologicalAgeCalculator } from "../../components/calculators/BiologicalAgeCalculator";
+// import AIAssistantPopup - Substituído por UnifiedAIAssistant global
 
+/**
+ * BiologicalAgeCalculatorPage
+ * Wrapper para idade biol?gica com contexto de IA.
+ */
 const BiologicalAgeCalculatorPage = () => {
-  const [currentTool, setCurrentTool] = React.useState('biological_age_calculator');
+  const [currentTool, setCurrentTool] = React.useState(
+    "biological_age_calculator",
+  );
 
   return (
     <div>
       <BiologicalAgeCalculator />
-      <AIAssistantPopup 
-        currentTool={currentTool}
-        toolContext={{
-          tool: 'biological_age_calculator',
-          userInputs: {}
-        }}
-      />
     </div>
   );
 };

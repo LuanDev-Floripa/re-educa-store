@@ -1,17 +1,37 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { useApi, apiService } from '../../lib/api';
-import { toast } from 'sonner';
-import { 
-  Calculator, 
-  Brain, 
-  Heart, 
+/**
+ * StressCalculator Component - RE-EDUCA Store
+ * 
+ * Calculadora de nível de estresse baseada em fatores.
+ * 
+ * Funcionalidades:
+ * - Avaliação de fatores de estresse
+ * - Cálculo de nível de estresse
+ * - Recomendações personalizadas
+ * - Estratégias de gerenciamento
+ * 
+ * @component
+ * @returns {JSX.Element} Calculadora de estresse
+ */
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { useApi, apiService } from "../../lib/api";
+import { toast } from "sonner";
+import {
+  Calculator,
+  Brain,
+  Heart,
   AlertTriangle,
   CheckCircle,
-  Info
-} from 'lucide-react';
+  Info,
+} from "lucide-react";
 
 export const StressCalculator = () => {
   const { request, loading } = useApi();
@@ -19,23 +39,27 @@ export const StressCalculator = () => {
   const [results, setResults] = useState(null);
 
   const availableFactors = [
-    { id: 'work', name: 'Pressão no Trabalho', severity: 'medium' },
-    { id: 'financial', name: 'Problemas Financeiros', severity: 'high' },
-    { id: 'relationships', name: 'Problemas de Relacionamento', severity: 'medium' },
-    { id: 'health', name: 'Preocupações com Saúde', severity: 'high' },
-    { id: 'family', name: 'Problemas Familiares', severity: 'medium' },
-    { id: 'time', name: 'Falta de Tempo', severity: 'low' },
-    { id: 'social', name: 'Isolamento Social', severity: 'medium' },
-    { id: 'future', name: 'Incerteza sobre o Futuro', severity: 'high' },
-    { id: 'perfectionism', name: 'Perfeccionismo', severity: 'medium' },
-    { id: 'change', name: 'Mudanças na Vida', severity: 'medium' }
+    { id: "work", name: "Pressão no Trabalho", severity: "medium" },
+    { id: "financial", name: "Problemas Financeiros", severity: "high" },
+    {
+      id: "relationships",
+      name: "Problemas de Relacionamento",
+      severity: "medium",
+    },
+    { id: "health", name: "Preocupações com Saúde", severity: "high" },
+    { id: "family", name: "Problemas Familiares", severity: "medium" },
+    { id: "time", name: "Falta de Tempo", severity: "low" },
+    { id: "social", name: "Isolamento Social", severity: "medium" },
+    { id: "future", name: "Incerteza sobre o Futuro", severity: "high" },
+    { id: "perfectionism", name: "Perfeccionismo", severity: "medium" },
+    { id: "change", name: "Mudanças na Vida", severity: "medium" },
   ];
 
   const handleFactorToggle = (factor) => {
-    setStressFactors(prev => {
-      const exists = prev.find(f => f.id === factor.id);
+    setStressFactors((prev) => {
+      const exists = prev.find((f) => f.id === factor.id);
       if (exists) {
-        return prev.filter(f => f.id !== factor.id);
+        return prev.filter((f) => f.id !== factor.id);
       } else {
         return [...prev, factor];
       }
@@ -44,15 +68,15 @@ export const StressCalculator = () => {
 
   const calculateStress = async () => {
     if (stressFactors.length === 0) {
-      toast.error('Selecione pelo menos um fator de estresse');
+      toast.error("Selecione pelo menos um fator de estresse");
       return;
     }
 
     try {
-      const response = await request(() => 
+      const response = await request(() =>
         apiService.health.calculateStress({
-          stress_factors: stressFactors
-        })
+          stress_factors: stressFactors,
+        }),
       );
 
       setResults({
@@ -60,41 +84,54 @@ export const StressCalculator = () => {
         stress_score: response.stress_score,
         coping_strategies: response.coping_strategies,
         recommendations: response.recommendations,
-        saved: response.saved
+        saved: response.saved,
       });
 
-      toast.success('Análise realizada e salva com sucesso!');
+      toast.success("Análise realizada e salva com sucesso!");
     } catch (error) {
-      console.error('Erro ao calcular estresse:', error);
-      toast.error('Erro ao analisar estresse. Tente novamente.');
+      console.error("Erro ao calcular estresse:", error);
+      toast.error("Erro ao analisar estresse. Tente novamente.");
     }
   };
 
   const getSeverityColor = (severity) => {
     switch (severity) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "high":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "low":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getSeverityLabel = (severity) => {
     switch (severity) {
-      case 'high': return 'Alto';
-      case 'medium': return 'Médio';
-      case 'low': return 'Baixo';
-      default: return 'N/A';
+      case "high":
+        return "Alto";
+      case "medium":
+        return "Médio";
+      case "low":
+        return "Baixo";
+      default:
+        return "N/A";
     }
   };
 
   const getStressLevelColor = (level) => {
     switch (level) {
-      case 'Baixo': return 'text-green-600';
-      case 'Moderado': return 'text-yellow-600';
-      case 'Alto': return 'text-orange-600';
-      case 'Muito Alto': return 'text-red-600';
-      default: return 'text-gray-600';
+      case "Baixo":
+        return "text-green-600";
+      case "Moderado":
+        return "text-yellow-600";
+      case "Alto":
+        return "text-orange-600";
+      case "Muito Alto":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -129,21 +166,23 @@ export const StressCalculator = () => {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               {availableFactors.map((factor) => {
-                const isSelected = stressFactors.find(f => f.id === factor.id);
+                const isSelected = stressFactors.find(
+                  (f) => f.id === factor.id,
+                );
                 return (
                   <div
                     key={factor.id}
                     onClick={() => handleFactorToggle(factor)}
                     className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                        : 'border-gray-200 hover:border-gray-300'
+                      isSelected
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{factor.name}</span>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={getSeverityColor(factor.severity)}
                       >
                         {getSeverityLabel(factor.severity)}
@@ -158,8 +197,8 @@ export const StressCalculator = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Fatores selecionados: {stressFactors.length}
               </p>
-              
-              <Button 
+
+              <Button
                 onClick={calculateStress}
                 className="w-full bg-red-600 hover:bg-red-700"
                 disabled={loading || stressFactors.length === 0}
@@ -169,7 +208,7 @@ export const StressCalculator = () => {
                 ) : (
                   <Calculator className="w-4 h-4 mr-2" />
                 )}
-                {loading ? 'Analisando...' : 'Analisar Estresse'}
+                {loading ? "Analisando..." : "Analisar Estresse"}
               </Button>
             </div>
           </CardContent>
@@ -189,7 +228,9 @@ export const StressCalculator = () => {
                 {/* Nível de Estresse */}
                 <div className="text-center p-6 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg">
                   <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-2" />
-                  <div className={`text-3xl font-bold mb-1 ${getStressLevelColor(results.stress_level)}`}>
+                  <div
+                    className={`text-3xl font-bold mb-1 ${getStressLevelColor(results.stress_level)}`}
+                  >
                     {results.stress_level}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">

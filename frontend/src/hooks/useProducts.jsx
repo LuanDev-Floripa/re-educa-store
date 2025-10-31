@@ -1,4 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from "react";
+/**
+ * useProducts
+ * - Carrega produtos e categorias; utilitários de filtro/ordenação
+ * - Fallbacks seguros para campos opcionais e erros de API
+ */
 
 // Hook para gerenciar produtos e catálogo
 export const useProducts = () => {
@@ -14,11 +19,11 @@ export const useProducts = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/products', {
-          method: 'GET',
+        const response = await fetch("/api/products", {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         });
 
         if (!response.ok) {
@@ -27,32 +32,38 @@ export const useProducts = () => {
 
         const data = await response.json();
         // A API retorna { products: [], total: 0, page: 1 } ou formato similar
-        const productsList = data.products || data.data || data || [];
+        const productsList = Array.isArray(data?.products)
+          ? data.products
+          : Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data)
+              ? data
+              : [];
         setProducts(productsList);
 
         // Gerar categorias dinamicamente a partir dos produtos
         const categoriesMap = new Map();
-        productsList.forEach(product => {
-          const cat = product.category || 'outros';
+        productsList.forEach((product) => {
+          const cat = product?.category || "outros";
           const count = categoriesMap.get(cat) || 0;
           categoriesMap.set(cat, count + 1);
         });
 
         const categoriesList = [
-          { id: 'all', name: 'Todos os Produtos', count: productsList.length },
+          { id: "all", name: "Todos os Produtos", count: productsList.length },
           ...Array.from(categoriesMap.entries()).map(([id, count]) => ({
             id,
             name: id.charAt(0).toUpperCase() + id.slice(1),
-            count
-          }))
+            count,
+          })),
         ];
 
         setCategories(categoriesList);
       } catch (err) {
-        console.error('Erro ao carregar produtos:', err);
+        console.error("Erro ao carregar produtos:", err);
         setError(err.message);
         setProducts([]);
-        setCategories([{ id: 'all', name: 'Todos os Produtos', count: 0 }]);
+        setCategories([{ id: "all", name: "Todos os Produtos", count: 0 }]);
       } finally {
         setLoading(false);
       }
@@ -66,42 +77,56 @@ export const useProducts = () => {
     let filtered = [...products];
 
     // Filtro por categoria
-    if (filters.category && filters.category !== 'all') {
-      filtered = filtered.filter(product => product.category === filters.category);
+    if (filters.category && filters.category !== "all") {
+      filtered = filtered.filter(
+        (product) => (product?.category || "") === filters.category,
+      );
     }
 
     // Filtro por subcategoria
     if (filters.subcategory) {
-      filtered = filtered.filter(product => product.subcategory === filters.subcategory);
+      filtered = filtered.filter(
+        (product) => (product?.subcategory || "") === filters.subcategory,
+      );
     }
 
     // Filtro por busca
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(searchLower) ||
-        product.brand.toLowerCase().includes(searchLower) ||
-        product.description.toLowerCase().includes(searchLower) ||
-        product.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      );
+      filtered = filtered.filter((product) => {
+        const name = product?.name || "";
+        const brand = product?.brand || "";
+        const description = product?.description || "";
+        const tags = Array.isArray(product?.tags) ? product.tags : [];
+        return (
+          name.toLowerCase().includes(searchLower) ||
+          brand.toLowerCase().includes(searchLower) ||
+          description.toLowerCase().includes(searchLower) ||
+          tags.some((tag) => (tag || "").toLowerCase().includes(searchLower))
+        );
+      });
     }
 
     // Filtro por preço
     if (filters.minPrice) {
-      filtered = filtered.filter(product => product.price >= filters.minPrice);
+      filtered = filtered.filter(
+        (product) => Number(product?.price) >= Number(filters.minPrice),
+      );
     }
     if (filters.maxPrice) {
-      filtered = filtered.filter(product => product.price <= filters.maxPrice);
+      filtered = filtered.filter(
+        (product) => Number(product?.price) <= Number(filters.maxPrice),
+      );
     }
 
     // Filtro por disponibilidade
     if (filters.inStock) {
-      filtered = filtered.filter(product => product.stock > 0);
+      filtered = filtered.filter((product) => Number(product?.stock) > 0);
     }
 
     // Filtro por frete grátis
     if (filters.freeShipping) {
-      filtered = filtered.filter(product => product.freeShipping);
+      filtered = filtered.filter((product) => Boolean(product?.freeShipping));
     }
 
     return filtered;
@@ -109,22 +134,22 @@ export const useProducts = () => {
 
   const sortProducts = (products, sortBy) => {
     const sorted = [...products];
-    
+
     switch (sortBy) {
-      case 'name':
+      case "name":
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
-      case 'price-low':
-        return sorted.sort((a, b) => a.price - b.price);
-      case 'price-high':
-        return sorted.sort((a, b) => b.price - a.price);
-      case 'rating':
-        return sorted.sort((a, b) => b.rating - a.rating);
-      case 'reviews':
-        return sorted.sort((a, b) => b.reviews - a.reviews);
-      case 'newest':
-        return sorted.sort((a, b) => b.isNew - a.isNew);
-      case 'discount':
-        return sorted.sort((a, b) => b.discount - a.discount);
+      case "price-low":
+        return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case "price-high":
+        return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case "rating":
+        return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case "reviews":
+        return sorted.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+      case "newest":
+        return sorted.sort((a, b) => Number(b.isNew) - Number(a.isNew));
+      case "discount":
+        return sorted.sort((a, b) => (b.discount || 0) - (a.discount || 0));
       default:
         return sorted;
     }
@@ -132,17 +157,23 @@ export const useProducts = () => {
 
   // Produtos em destaque
   const featuredProducts = useMemo(() => {
-    return products.filter(product => product.isNew || product.discount > 20).slice(0, 6);
+    return (products || [])
+      .filter((product) => Boolean(product?.isNew) || (product?.discount || 0) > 20)
+      .slice(0, 6);
   }, [products]);
 
   // Produtos mais vendidos
   const bestSellers = useMemo(() => {
-    return products.sort((a, b) => b.reviews - a.reviews).slice(0, 6);
+    return [...(products || [])]
+      .sort((a, b) => (b.reviews || 0) - (a.reviews || 0))
+      .slice(0, 6);
   }, [products]);
 
   // Produtos com desconto
   const discountedProducts = useMemo(() => {
-    return products.filter(product => product.discount > 0).sort((a, b) => b.discount - a.discount);
+    return (products || [])
+      .filter((product) => (product?.discount || 0) > 0)
+      .sort((a, b) => (b.discount || 0) - (a.discount || 0));
   }, [products]);
 
   return {
@@ -156,14 +187,15 @@ export const useProducts = () => {
     filterProducts,
     sortProducts,
     // Funções utilitárias
-    getProductById: (id) => products.find(p => p.id === id),
-    getProductsByCategory: (category) => products.filter(p => p.category === category),
+    getProductById: (id) => (products || []).find((p) => p.id === id),
+    getProductsByCategory: (category) =>
+      (products || []).filter((p) => p.category === category),
     getRelatedProducts: (productId, limit = 4) => {
-      const product = products.find(p => p.id === productId);
+      const product = products.find((p) => p.id === productId);
       if (!product) return [];
       return products
-        .filter(p => p.id !== productId && p.category === product.category)
+        .filter((p) => p.id !== productId && p.category === product.category)
         .slice(0, limit);
-    }
+    },
   };
 };

@@ -1,18 +1,45 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { Badge } from '@/components/Ui/badge';
-import { useApi, apiService } from '../../lib/api';
-import { toast } from 'sonner';
-import { 
-  Calculator, 
-  Target, 
-  Activity, 
-  Flame, 
+/**
+ * CalorieCalculator Component - RE-EDUCA Store
+ * 
+ * Calculadora de calorias (TMB, TDEE) e macronutrientes.
+ * 
+ * Funcionalidades:
+ * - Cálculo de TMB (Taxa Metabólica Basal)
+ * - Cálculo de TDEE (Total Daily Energy Expenditure)
+ * - Distribuição de macronutrientes
+ * - Recomendações baseadas em objetivos
+ * - Histórico de cálculos
+ * 
+ * @component
+ * @returns {JSX.Element} Calculadora de calorias
+ */
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import { Badge } from "@/components/Ui/badge";
+import { useApi, apiService } from "../../lib/api";
+import { toast } from "sonner";
+import {
+  Calculator,
+  Target,
+  Activity,
+  Flame,
   TrendingUp,
   TrendingDown,
   Scale,
@@ -20,43 +47,75 @@ import {
   Zap,
   Info,
   Save,
-  History
-} from 'lucide-react';
+  History,
+} from "lucide-react";
 
 export const CalorieCalculator = () => {
   const { request, loading } = useApi();
   const [formData, setFormData] = useState({
-    age: '',
-    gender: '',
-    weight: '',
-    height: '',
-    activityLevel: '',
-    goal: 'maintain'
+    age: "",
+    gender: "",
+    weight: "",
+    height: "",
+    activityLevel: "",
+    goal: "maintain",
   });
 
   const [results, setResults] = useState(null);
-  const [activeTab, setActiveTab] = useState('calculator');
+  const [activeTab, setActiveTab] = useState("calculator");
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
   const activityLevels = [
-    { value: 'sedentary', label: 'Sedentário', description: 'Pouco ou nenhum exercício' },
-    { value: 'light', label: 'Levemente Ativo', description: 'Exercício leve 1-3 dias/semana' },
-    { value: 'moderate', label: 'Moderadamente Ativo', description: 'Exercício moderado 3-5 dias/semana' },
-    { value: 'active', label: 'Muito Ativo', description: 'Exercício pesado 6-7 dias/semana' },
-    { value: 'very_active', label: 'Extremamente Ativo', description: 'Exercício muito pesado, trabalho físico' }
+    {
+      value: "sedentary",
+      label: "Sedentário",
+      description: "Pouco ou nenhum exercício",
+    },
+    {
+      value: "light",
+      label: "Levemente Ativo",
+      description: "Exercício leve 1-3 dias/semana",
+    },
+    {
+      value: "moderate",
+      label: "Moderadamente Ativo",
+      description: "Exercício moderado 3-5 dias/semana",
+    },
+    {
+      value: "active",
+      label: "Muito Ativo",
+      description: "Exercício pesado 6-7 dias/semana",
+    },
+    {
+      value: "very_active",
+      label: "Extremamente Ativo",
+      description: "Exercício muito pesado, trabalho físico",
+    },
   ];
 
   const goals = [
-    { value: 'lose_weight', label: 'Perder Peso', description: 'Deficit calórico de 500-750 cal/dia' },
-    { value: 'maintain', label: 'Manter Peso', description: 'Manter peso atual' },
-    { value: 'gain_weight', label: 'Ganhar Peso', description: 'Superávit calórico de 300-500 cal/dia' }
+    {
+      value: "lose_weight",
+      label: "Perder Peso",
+      description: "Deficit calórico de 500-750 cal/dia",
+    },
+    {
+      value: "maintain",
+      label: "Manter Peso",
+      description: "Manter peso atual",
+    },
+    {
+      value: "gain_weight",
+      label: "Ganhar Peso",
+      description: "Superávit calórico de 300-500 cal/dia",
+    },
   ];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -70,29 +129,29 @@ export const CalorieCalculator = () => {
       const data = await request(() => apiService.health.getCalorieHistory());
       setHistory(data.calculations || []);
     } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
+      console.error("Erro ao carregar histórico:", error);
     }
   }, [request]);
 
   const calculateCalories = async () => {
     const { age, gender, weight, height, activityLevel, goal } = formData;
-    
+
     if (!age || !gender || !weight || !height || !activityLevel) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     try {
       // Enviar dados para o backend
-      const response = await request(() => 
+      const response = await request(() =>
         apiService.health.calculateCalories({
           age: parseInt(age),
           gender,
           weight: parseFloat(weight),
           height: parseFloat(height),
           activity_level: activityLevel,
-          goal
-        })
+          goal,
+        }),
       );
 
       setResults({
@@ -100,35 +159,43 @@ export const CalorieCalculator = () => {
         tdee: response.daily_calories,
         targetCalories: response.daily_calories,
         goal,
-        deficit: goal === 'lose_weight' ? 500 : 0,
-        surplus: goal === 'gain_weight' ? 300 : 0,
+        deficit: goal === "lose_weight" ? 500 : 0,
+        surplus: goal === "gain_weight" ? 300 : 0,
         macros: response.macros,
-        saved: response.saved
+        saved: response.saved,
       });
 
-      toast.success('Cálculo realizado e salvo com sucesso!');
+      toast.success("Cálculo realizado e salvo com sucesso!");
       loadHistory(); // Recarregar histórico
     } catch (error) {
-      console.error('Erro ao calcular calorias:', error);
-      toast.error('Erro ao calcular calorias. Tente novamente.');
+      console.error("Erro ao calcular calorias:", error);
+      toast.error("Erro ao calcular calorias. Tente novamente.");
     }
   };
 
   const getGoalColor = (goal) => {
     switch (goal) {
-      case 'lose_weight': return 'text-red-600';
-      case 'maintain': return 'text-blue-600';
-      case 'gain_weight': return 'text-green-600';
-      default: return 'text-gray-600';
+      case "lose_weight":
+        return "text-red-600";
+      case "maintain":
+        return "text-blue-600";
+      case "gain_weight":
+        return "text-green-600";
+      default:
+        return "text-gray-600";
     }
   };
 
   const getGoalIcon = (goal) => {
     switch (goal) {
-      case 'lose_weight': return <TrendingDown className="w-5 h-5" />;
-      case 'maintain': return <Target className="w-5 h-5" />;
-      case 'gain_weight': return <TrendingUp className="w-5 h-5" />;
-      default: return <Target className="w-5 h-5" />;
+      case "lose_weight":
+        return <TrendingDown className="w-5 h-5" />;
+      case "maintain":
+        return <Target className="w-5 h-5" />;
+      case "gain_weight":
+        return <TrendingUp className="w-5 h-5" />;
+      default:
+        return <Target className="w-5 h-5" />;
     }
   };
 
@@ -153,7 +220,10 @@ export const CalorieCalculator = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="calculator" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="calculator"
+            className="flex items-center space-x-2"
+          >
             <Calculator className="w-4 h-4" />
             <span>Calculadora</span>
           </TabsTrigger>
@@ -170,7 +240,8 @@ export const CalorieCalculator = () => {
               <CardHeader>
                 <CardTitle>Dados Pessoais</CardTitle>
                 <CardDescription>
-                  Preencha suas informações para calcular suas necessidades calóricas
+                  Preencha suas informações para calcular suas necessidades
+                  calóricas
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -182,12 +253,17 @@ export const CalorieCalculator = () => {
                       type="number"
                       placeholder="25"
                       value={formData.age}
-                      onChange={(e) => handleInputChange('age', e.target.value)}
+                      onChange={(e) => handleInputChange("age", e.target.value)}
                     />
                   </div>
                   <div>
                     <Label htmlFor="gender">Gênero *</Label>
-                    <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                    <Select
+                      value={formData.gender}
+                      onValueChange={(value) =>
+                        handleInputChange("gender", value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -208,7 +284,9 @@ export const CalorieCalculator = () => {
                       step="0.1"
                       placeholder="70.0"
                       value={formData.weight}
-                      onChange={(e) => handleInputChange('weight', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("weight", e.target.value)
+                      }
                     />
                   </div>
                   <div>
@@ -218,23 +296,32 @@ export const CalorieCalculator = () => {
                       type="number"
                       placeholder="175"
                       value={formData.height}
-                      onChange={(e) => handleInputChange('height', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("height", e.target.value)
+                      }
                     />
                   </div>
                 </div>
 
                 <div>
                   <Label htmlFor="activity">Nível de Atividade *</Label>
-                  <Select value={formData.activityLevel} onValueChange={(value) => handleInputChange('activityLevel', value)}>
+                  <Select
+                    value={formData.activityLevel}
+                    onValueChange={(value) =>
+                      handleInputChange("activityLevel", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione seu nível" />
                     </SelectTrigger>
                     <SelectContent>
-                      {activityLevels.map(level => (
+                      {activityLevels.map((level) => (
                         <SelectItem key={level.value} value={level.value}>
                           <div>
                             <div className="font-medium">{level.label}</div>
-                            <div className="text-sm text-gray-500">{level.description}</div>
+                            <div className="text-sm text-gray-500">
+                              {level.description}
+                            </div>
                           </div>
                         </SelectItem>
                       ))}
@@ -244,16 +331,21 @@ export const CalorieCalculator = () => {
 
                 <div>
                   <Label htmlFor="goal">Objetivo</Label>
-                  <Select value={formData.goal} onValueChange={(value) => handleInputChange('goal', value)}>
+                  <Select
+                    value={formData.goal}
+                    onValueChange={(value) => handleInputChange("goal", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione seu objetivo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {goals.map(goal => (
+                      {goals.map((goal) => (
                         <SelectItem key={goal.value} value={goal.value}>
                           <div>
                             <div className="font-medium">{goal.label}</div>
-                            <div className="text-sm text-gray-500">{goal.description}</div>
+                            <div className="text-sm text-gray-500">
+                              {goal.description}
+                            </div>
                           </div>
                         </SelectItem>
                       ))}
@@ -261,7 +353,7 @@ export const CalorieCalculator = () => {
                   </Select>
                 </div>
 
-                <Button 
+                <Button
                   onClick={calculateCalories}
                   className="w-full bg-orange-600 hover:bg-orange-700"
                   disabled={loading}
@@ -271,7 +363,7 @@ export const CalorieCalculator = () => {
                   ) : (
                     <Calculator className="w-4 h-4 mr-2" />
                   )}
-                  {loading ? 'Calculando...' : 'Calcular Calorias'}
+                  {loading ? "Calculando..." : "Calcular Calorias"}
                 </Button>
               </CardContent>
             </Card>
@@ -292,10 +384,12 @@ export const CalorieCalculator = () => {
                       <div className="flex items-center justify-center space-x-2 mb-2">
                         {getGoalIcon(results.goal)}
                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {goals.find(g => g.value === results.goal)?.label}
+                          {goals.find((g) => g.value === results.goal)?.label}
                         </span>
                       </div>
-                      <div className={`text-4xl font-bold ${getGoalColor(results.goal)}`}>
+                      <div
+                        className={`text-4xl font-bold ${getGoalColor(results.goal)}`}
+                      >
                         {results.targetCalories}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -308,26 +402,38 @@ export const CalorieCalculator = () => {
                       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <Heart className="w-5 h-5 text-red-500" />
-                          <span className="font-medium">Taxa Metabólica Basal (BMR)</span>
+                          <span className="font-medium">
+                            Taxa Metabólica Basal (BMR)
+                          </span>
                         </div>
-                        <span className="font-bold text-lg">{results.bmr} cal</span>
+                        <span className="font-bold text-lg">
+                          {results.bmr} cal
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <Activity className="w-5 h-5 text-blue-500" />
-                          <span className="font-medium">Gasto Total Diário (TDEE)</span>
+                          <span className="font-medium">
+                            Gasto Total Diário (TDEE)
+                          </span>
                         </div>
-                        <span className="font-bold text-lg">{results.tdee} cal</span>
+                        <span className="font-bold text-lg">
+                          {results.tdee} cal
+                        </span>
                       </div>
 
                       {results.deficit > 0 && (
                         <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                           <div className="flex items-center space-x-2">
                             <TrendingDown className="w-5 h-5 text-red-500" />
-                            <span className="font-medium">Deficit Calórico</span>
+                            <span className="font-medium">
+                              Deficit Calórico
+                            </span>
                           </div>
-                          <span className="font-bold text-lg text-red-600">-{results.deficit} cal</span>
+                          <span className="font-bold text-lg text-red-600">
+                            -{results.deficit} cal
+                          </span>
                         </div>
                       )}
 
@@ -335,9 +441,13 @@ export const CalorieCalculator = () => {
                         <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <div className="flex items-center space-x-2">
                             <TrendingUp className="w-5 h-5 text-green-500" />
-                            <span className="font-medium">Superávit Calórico</span>
+                            <span className="font-medium">
+                              Superávit Calórico
+                            </span>
                           </div>
-                          <span className="font-bold text-lg text-green-600">+{results.surplus} cal</span>
+                          <span className="font-bold text-lg text-green-600">
+                            +{results.surplus} cal
+                          </span>
                         </div>
                       )}
                     </div>
@@ -348,7 +458,10 @@ export const CalorieCalculator = () => {
                         💡 Dicas Importantes
                       </h4>
                       <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                        <li>• Consulte um nutricionista para um plano personalizado</li>
+                        <li>
+                          • Consulte um nutricionista para um plano
+                          personalizado
+                        </li>
                         <li>• Monitore seu progresso semanalmente</li>
                         <li>• Ajuste as calorias conforme necessário</li>
                         <li>• Mantenha uma alimentação equilibrada</li>
@@ -367,10 +480,10 @@ export const CalorieCalculator = () => {
                           variant="outline"
                           size="sm"
                         >
-                          {showHistory ? 'Ocultar' : 'Ver Histórico'}
+                          {showHistory ? "Ocultar" : "Ver Histórico"}
                         </Button>
                       </div>
-                      
+
                       {showHistory && (
                         <div className="space-y-3 max-h-64 overflow-y-auto">
                           {history.length === 0 ? (
@@ -379,16 +492,24 @@ export const CalorieCalculator = () => {
                             </p>
                           ) : (
                             history.map((entry, index) => (
-                              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                              >
                                 <div>
-                                  <p className="font-medium">{entry.target_calories} cal/dia</p>
+                                  <p className="font-medium">
+                                    {entry.target_calories} cal/dia
+                                  </p>
                                   <p className="text-sm text-gray-500">
-                                    {new Date(entry.created_at).toLocaleDateString('pt-BR')}
+                                    {new Date(
+                                      entry.created_at,
+                                    ).toLocaleDateString("pt-BR")}
                                   </p>
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm text-gray-500">
-                                    {entry.age} anos • {entry.weight}kg • {entry.height}cm
+                                    {entry.age} anos • {entry.weight}kg •{" "}
+                                    {entry.height}cm
                                   </p>
                                   <Badge variant="outline">{entry.goal}</Badge>
                                 </div>
@@ -426,7 +547,9 @@ export const CalorieCalculator = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  A BMR é a quantidade de calorias que seu corpo queima em repouso para manter funções básicas como respiração, circulação e digestão.
+                  A BMR é a quantidade de calorias que seu corpo queima em
+                  repouso para manter funções básicas como respiração,
+                  circulação e digestão.
                 </p>
                 <div className="space-y-2">
                   <h4 className="font-semibold">Fatores que afetam a BMR:</h4>
@@ -450,7 +573,8 @@ export const CalorieCalculator = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  O TDEE é o total de calorias que você queima em um dia, incluindo atividades físicas e exercícios.
+                  O TDEE é o total de calorias que você queima em um dia,
+                  incluindo atividades físicas e exercícios.
                 </p>
                 <div className="space-y-2">
                   <h4 className="font-semibold">Componentes do TDEE:</h4>
@@ -473,7 +597,8 @@ export const CalorieCalculator = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Para perder peso de forma saudável, é recomendado um deficit calórico de 500-750 calorias por dia.
+                  Para perder peso de forma saudável, é recomendado um deficit
+                  calórico de 500-750 calorias por dia.
                 </p>
                 <div className="space-y-2">
                   <h4 className="font-semibold">Recomendações:</h4>
@@ -496,7 +621,8 @@ export const CalorieCalculator = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Para ganhar peso de forma saudável, é recomendado um superávit calórico de 300-500 calorias por dia.
+                  Para ganhar peso de forma saudável, é recomendado um superávit
+                  calórico de 300-500 calorias por dia.
                 </p>
                 <div className="space-y-2">
                   <h4 className="font-semibold">Recomendações:</h4>

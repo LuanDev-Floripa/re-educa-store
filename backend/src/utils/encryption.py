@@ -1,5 +1,13 @@
 """
-Sistema de Criptografia para Chaves de API
+Sistema de Criptografia para Chaves de API RE-EDUCA Store.
+
+Fornece criptografia segura para dados sensíveis incluindo:
+- Criptografia/descriptografia com Fernet (AES-128)
+- Derivação de chave com PBKDF2-HMAC-SHA256
+- Proteção de API keys
+- Salt e password configuráveis via env
+
+Usa cryptography library para segurança robusta.
 """
 import os
 import base64
@@ -11,9 +19,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EncryptionService:
-    """Serviço de criptografia para dados sensíveis"""
+    """
+    Serviço de criptografia para dados sensíveis.
+    
+    Usa Fernet (AES-128 CBC + HMAC) para criptografia simétrica.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de criptografia."""
         self.salt = os.environ.get('ENCRYPTION_SALT', 're-educa-salt-2024').encode()
         self.password = os.environ.get('ENCRYPTION_PASSWORD', 're-educa-encryption-key').encode()
         self._fernet = None
@@ -32,7 +45,15 @@ class EncryptionService:
         return self._fernet
     
     def encrypt(self, data: str) -> str:
-        """Criptografa dados sensíveis"""
+        """
+        Criptografa dados sensíveis.
+        
+        Args:
+            data (str): Dados em texto plano.
+            
+        Returns:
+            str: Dados criptografados em base64.
+        """
         try:
             if not data:
                 return ""

@@ -1,16 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/Ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Badge } from '@/components/Ui/badge';
-import { Separator } from '@/components/Ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../hooks/useAuth.jsx';
-import { useProducts } from '../hooks/useProducts';
-import { formatCurrency } from '../lib/utils';
-import { toast } from 'sonner';
-import { 
+import React, { useState, useEffect } from "react";
+/**
+ * ProductDetailPage
+ * - Exibe detalhes do produto com fallbacks e ações (carrinho/favorito)
+ */
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/Ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Badge } from "@/components/Ui/badge";
+import { Separator } from "@/components/Ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../hooks/useAuth.jsx";
+import { useProducts } from "../hooks/useProducts";
+import { formatCurrency } from "../lib/utils";
+import { toast } from "sonner";
+import {
   ArrowLeft,
   Star,
   Heart,
@@ -25,8 +35,8 @@ import {
   Plus,
   Share2,
   MessageCircle,
-  ThumbsUp
-} from 'lucide-react';
+  ThumbsUp,
+} from "lucide-react";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -34,7 +44,7 @@ const ProductDetailPage = () => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { getProductById, getRelatedProducts } = useProducts();
-  
+
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -47,21 +57,27 @@ const ProductDetailPage = () => {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        const productData = getProductById(parseInt(id));
+        const productId = Number.parseInt(id, 10);
+        if (!Number.isFinite(productId)) {
+          toast.error("ID de produto inválido");
+          navigate("/catalog");
+          return;
+        }
+        const productData = getProductById(productId);
         if (productData) {
           setProduct(productData);
           setSelectedImage(0);
-          
+
           // Carregar produtos relacionados
-          const related = getRelatedProducts(parseInt(id), 4);
+          const related = getRelatedProducts(productId, 4) || [];
           setRelatedProducts(related);
         } else {
-          toast.error('Produto não encontrado');
-          navigate('/catalog');
+          toast.error("Produto não encontrado");
+          navigate("/catalog");
         }
       } catch (error) {
-        console.error('Erro ao carregar produto:', error);
-        toast.error('Erro ao carregar produto');
+        console.error("Erro ao carregar produto:", error);
+        toast.error("Erro ao carregar produto");
       } finally {
         setLoading(false);
       }
@@ -77,9 +93,9 @@ const ProductDetailPage = () => {
       <Star
         key={i}
         className={`w-5 h-5 ${
-          i < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
+          i < Math.floor(Number(rating) || 0)
+            ? "text-yellow-400 fill-current"
+            : "text-gray-300"
         }`}
       />
     ));
@@ -87,19 +103,25 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      toast.error('Faça login para adicionar produtos ao carrinho');
-      navigate('/login');
+      toast.error("Faça login para adicionar produtos ao carrinho");
+      navigate("/login");
       return;
     }
 
     if (isAddingToCart) return;
-    
+
     setIsAddingToCart(true);
     try {
+      if (typeof addToCart !== "function") {
+        throw new Error("Carrinho indisponível");
+      }
+      if (!product) {
+        throw new Error("Produto inválido");
+      }
       addToCart(product, quantity);
-      toast.success(`${product.name} adicionado ao carrinho!`);
+      toast.success(`${product?.name || "Produto"} adicionado ao carrinho!`);
     } catch (error) {
-      toast.error('Erro ao adicionar produto ao carrinho');
+      toast.error("Erro ao adicionar produto ao carrinho");
     } finally {
       setIsAddingToCart(false);
     }
@@ -107,12 +129,14 @@ const ProductDetailPage = () => {
 
   const handleAddToWishlist = () => {
     setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+    toast.success(
+      isWishlisted ? "Removido dos favoritos" : "Adicionado aos favoritos",
+    );
   };
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= product.stock) {
+    if (newQuantity >= 1 && newQuantity <= Number(product?.stock || 0)) {
       setQuantity(newQuantity);
     }
   };
@@ -132,21 +156,21 @@ const ProductDetailPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Produto não encontrado
         </h3>
-        <Button onClick={() => navigate('/catalog')}>
-          Voltar ao Catálogo
-        </Button>
+        <Button onClick={() => navigate("/catalog")}>Voltar ao Catálogo</Button>
       </div>
     );
   }
 
-  const discountAmount = product.originalPrice ? product.originalPrice - product.price : 0;
-  const isOutOfStock = product.stock === 0;
+  const discountAmount = product?.originalPrice
+    ? Number(product.originalPrice) - Number(product.price || 0)
+    : 0;
+  const isOutOfStock = Number(product?.stock || 0) === 0;
 
   return (
     <div className="space-y-8">
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/catalog')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
@@ -161,28 +185,27 @@ const ProductDetailPage = () => {
         {/* Imagens */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-            <img
-              src={product.image}
-              alt={product.name}
+              <img
+              src={product?.image}
+              alt={product?.name || "Produto"}
               className="w-full h-full object-cover"
             />
           </div>
-          
+
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            {product.isNew && (
+            {product?.isNew && (
               <Badge className="bg-green-500 text-white">
                 <Award className="h-3 w-3 mr-1" />
                 Novo
               </Badge>
             )}
-            {product.discount && (
+            {product?.discount && (
               <Badge className="bg-red-500 text-white">
-                <Tag className="h-3 w-3 mr-1" />
-                -{product.discount}%
+                <Tag className="h-3 w-3 mr-1" />-{product.discount}%
               </Badge>
             )}
-            {product.freeShipping && (
+            {product?.freeShipping && (
               <Badge variant="secondary">
                 <Truck className="h-3 w-3 mr-1" />
                 Frete Grátis
@@ -195,23 +218,23 @@ const ProductDetailPage = () => {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {product.name}
+              {product?.name}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              {product.brand}
+              {product?.brand}
             </p>
           </div>
 
           {/* Avaliação */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              {renderStars(product.rating)}
+              {renderStars(product?.rating)}
               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {product.rating}
+                {Number(product?.rating) || 0}
               </span>
             </div>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              ({product.reviews} avaliações)
+              ({Number(product?.reviews) || 0} avaliações)
             </span>
           </div>
 
@@ -219,11 +242,11 @@ const ProductDetailPage = () => {
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
               <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(product.price)}
+                {formatCurrency(Number(product?.price || 0))}
               </span>
-              {product.originalPrice && (
+              {product?.originalPrice && (
                 <span className="text-xl text-gray-500 line-through">
-                  {formatCurrency(product.originalPrice)}
+                  {formatCurrency(Number(product.originalPrice))}
                 </span>
               )}
             </div>
@@ -236,14 +259,16 @@ const ProductDetailPage = () => {
 
           {/* Descrição */}
           <p className="text-gray-600 dark:text-gray-400">
-            {product.description}
+            {product?.description}
           </p>
 
           {/* Estoque */}
           <div className="flex items-center space-x-2">
             <Package className="h-5 w-5 text-gray-500" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {isOutOfStock ? 'Esgotado' : `${product.stock} unidades em estoque`}
+              {isOutOfStock
+                ? "Esgotado"
+                : `${Number(product?.stock || 0)} unidades em estoque`}
             </span>
           </div>
 
@@ -265,7 +290,7 @@ const ProductDetailPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= product.stock}
+                  disabled={quantity >= Number(product?.stock || 0)}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -280,14 +305,12 @@ const ProductDetailPage = () => {
                 size="lg"
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {isAddingToCart ? 'Adicionando...' : 'Adicionar ao Carrinho'}
+                {isAddingToCart ? "Adicionando..." : "Adicionar ao Carrinho"}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleAddToWishlist}
-              >
-                <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+              <Button variant="outline" size="lg" onClick={handleAddToWishlist}>
+                <Heart
+                  className={`h-5 w-5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                />
               </Button>
               <Button variant="outline" size="lg">
                 <Share2 className="h-5 w-5" />
@@ -376,7 +399,10 @@ const ProductDetailPage = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {relatedProducts.map((relatedProduct) => (
-              <Card key={relatedProduct.id} className="group hover:shadow-lg transition-all duration-300">
+              <Card
+                key={relatedProduct.id}
+                className="group hover:shadow-lg transition-all duration-300"
+              >
                 <div className="relative overflow-hidden rounded-t-lg">
                   <img
                     src={relatedProduct.image}

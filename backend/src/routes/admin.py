@@ -1,5 +1,11 @@
 """
-Rotas administrativas RE-EDUCA Store
+Rotas administrativas RE-EDUCA Store.
+
+Fornece endpoints para gerenciamento administrativo incluindo:
+- Dashboard e estatísticas
+- Gestão de usuários
+- Analytics de vendas, usuários e produtos
+- Gestão de pedidos
 """
 from flask import Blueprint, request, jsonify
 from services.admin_service import AdminService
@@ -14,17 +20,34 @@ analytics_service = AnalyticsService()
 @admin_bp.route('/dashboard', methods=['GET'])
 @admin_required
 def get_dashboard_stats():
-    """Retorna estatísticas do dashboard admin"""
+    """
+    Retorna estatísticas do dashboard admin.
+    
+    Returns:
+        JSON: Estatísticas gerais do dashboard ou erro.
+    """
     try:
         stats = admin_service.get_dashboard_stats()
         return jsonify(stats), 200
     except Exception as e:
-        return jsonify({'error': 'Erro interno do servidor'}), 500
+        import logging
+        logging.getLogger(__name__).error(f"Erro ao obter stats do dashboard: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Erro interno do servidor', 'details': str(e)}), 500
 
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
 def get_all_users():
-    """Retorna todos os usuários (admin)"""
+    """
+    Retorna todos os usuários (admin).
+    
+    Query Parameters:
+        page (int): Página de resultados (padrão: 1).
+        per_page (int): Itens por página (padrão: 20).
+        search (str): Termo de busca opcional.
+        
+    Returns:
+        JSON: Lista de usuários paginada ou erro.
+    """
     try:
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
@@ -33,7 +56,11 @@ def get_all_users():
         users = admin_service.get_all_users(page, per_page, search)
         return jsonify(users), 200
         
+    except ValueError as e:
+        return jsonify({'error': 'Parâmetros inválidos', 'details': str(e)}), 400
     except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Erro ao listar usuários: {str(e)}", exc_info=True)
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @admin_bp.route('/analytics', methods=['GET'])

@@ -1,11 +1,28 @@
 """
-Configurações da aplicação RE-EDUCA Store
+Configurações da aplicação RE-EDUCA Store.
+
+Centraliza todas as variáveis de ambiente e configurações incluindo:
+- Supabase (URL, API keys)
+- JWT (tokens, expiração)
+- APIs externas (USDA, pagamentos)
+- CORS, rate limiting, cache
+- Email, upload, logging
+- Ambientes (dev, staging, prod)
+
+SEGURANÇA:
+- NUNCA commitar secrets reais
+- Usar .env para valores sensíveis
+- Defaults são apenas para desenvolvimento
 """
 import os
 from typing import Optional
 
 class Config:
-    """Configuração base da aplicação"""
+    """
+    Configuração base da aplicação.
+    
+    Carrega valores de variáveis de ambiente com fallbacks.
+    """
     
     # Configurações básicas
     SECRET_KEY = os.environ.get('SECRET_KEY', 'your-super-secret-key-change-in-production')

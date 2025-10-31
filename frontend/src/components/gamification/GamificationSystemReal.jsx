@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import { useAuth } from '../../hooks/useAuth';
-import apiClient from '../../services/apiClient';
-import { 
-  Trophy, 
-  Award, 
-  Star, 
-  Target, 
-  Zap, 
-  Crown, 
-  Medal, 
+import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import apiClient from "../../services/apiClient";
+import {
+  Trophy,
+  Award,
+  Star,
+  Target,
+  Zap,
+  Crown,
+  Medal,
   Diamond,
   Flame,
   TrendingUp,
@@ -26,15 +26,20 @@ import {
   AlertCircle,
   Plus,
   Eye,
-  EyeOff
-} from 'lucide-react';
+  EyeOff,
+} from "lucide-react";
 
-const GamificationSystemReal = ({ 
+/**
+ * Sistema de Gamificação (dados reais via apiClient)
+ * - Exibe progresso, conquistas, recompensas e ranking
+ * - Inclui fallback de erro e carregamento
+ */
+const GamificationSystemReal = ({
   onRewardClaim,
   showProgress = true,
   showAchievements = true,
   showRewards = true,
-  showLeaderboard = true
+  showLeaderboard = true,
 }) => {
   const [gamificationData, setGamificationData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,14 +65,15 @@ const GamificationSystemReal = ({
       // Busca conquistas
       const achievementsResponse = await apiClient.getAchievements();
       if (achievementsResponse.success) {
-        setGamificationData(prev => ({
+        setGamificationData((prev) => ({
           ...prev,
-          achievements: achievementsResponse.data
+          achievements: achievementsResponse.data,
         }));
       }
     } catch (err) {
-      setError('Erro ao carregar dados de gamificação');
-      console.error('Erro:', err);
+      setError("Erro ao carregar dados de gamificação");
+      console.error("Erro:", err);
+      toast.error("Falha ao carregar gamificação. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -78,19 +84,22 @@ const GamificationSystemReal = ({
       const response = await apiClient.claimReward(rewardId);
       if (response.success) {
         // Atualiza dados locais
-        setGamificationData(prev => ({
+        setGamificationData((prev) => ({
           ...prev,
-          rewards: prev.rewards.map(reward => 
-            reward.id === rewardId ? { ...reward, claimed: true } : reward
-          )
+          rewards: prev.rewards.map((reward) =>
+            reward.id === rewardId ? { ...reward, claimed: true } : reward,
+          ),
         }));
 
         if (onRewardClaim) {
           onRewardClaim(response.data);
         }
+      } else {
+        toast.error("Não foi possível reivindicar a recompensa.");
       }
     } catch (err) {
-      console.error('Erro ao reivindicar recompensa:', err);
+      console.error("Erro ao reivindicar recompensa:", err);
+      toast.error("Erro ao reivindicar recompensa.");
     }
   };
 
@@ -103,40 +112,52 @@ const GamificationSystemReal = ({
   };
 
   const getLevelColor = (level) => {
-    if (level >= 100) return 'text-purple-600';
-    if (level >= 50) return 'text-blue-600';
-    if (level >= 25) return 'text-yellow-600';
-    if (level >= 10) return 'text-orange-600';
-    return 'text-gray-600';
+    if (level >= 100) return "text-purple-600";
+    if (level >= 50) return "text-blue-600";
+    if (level >= 25) return "text-yellow-600";
+    if (level >= 10) return "text-orange-600";
+    return "text-gray-600";
   };
 
   const getLevelBgColor = (level) => {
-    if (level >= 100) return 'bg-purple-50';
-    if (level >= 50) return 'bg-blue-50';
-    if (level >= 25) return 'bg-yellow-50';
-    if (level >= 10) return 'bg-orange-50';
-    return 'bg-gray-50';
+    if (level >= 100) return "bg-purple-50";
+    if (level >= 50) return "bg-blue-50";
+    if (level >= 25) return "bg-yellow-50";
+    if (level >= 10) return "bg-orange-50";
+    return "bg-gray-50";
   };
 
   const getAchievementIcon = (type) => {
     switch (type) {
-      case 'streak': return Flame;
-      case 'level': return TrendingUp;
-      case 'exercise': return Zap;
-      case 'goal': return Target;
-      case 'social': return Star;
-      default: return Award;
+      case "streak":
+        return Flame;
+      case "level":
+        return TrendingUp;
+      case "exercise":
+        return Zap;
+      case "goal":
+        return Target;
+      case "social":
+        return Star;
+      default:
+        return Award;
     }
   };
 
   const getAchievementColor = (type) => {
     switch (type) {
-      case 'streak': return 'text-red-600';
-      case 'level': return 'text-blue-600';
-      case 'exercise': return 'text-yellow-600';
-      case 'goal': return 'text-green-600';
-      case 'social': return 'text-purple-600';
-      default: return 'text-gray-600';
+      case "streak":
+        return "text-red-600";
+      case "level":
+        return "text-blue-600";
+      case "exercise":
+        return "text-yellow-600";
+      case "goal":
+        return "text-green-600";
+      case "social":
+        return "text-purple-600";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -167,7 +188,15 @@ const GamificationSystemReal = ({
     );
   }
 
-  const { user: userData, level, xp, nextLevelXp, achievements, rewards, leaderboard } = gamificationData;
+  const {
+    user: userData,
+    level,
+    xp,
+    nextLevelXp,
+    achievements,
+    rewards,
+    leaderboard,
+  } = gamificationData;
   const LevelIcon = getLevelIcon(level);
   const progressPercentage = (xp / nextLevelXp) * 100;
 
@@ -183,7 +212,7 @@ const GamificationSystemReal = ({
               </div>
               <div>
                 <h2 className="text-2xl font-bold">
-                  {userData?.name || 'Usuário'}
+                  {userData?.name || "Usuário"}
                 </h2>
                 <p className="text-gray-600">
                   Nível {level} • {xp} XP
@@ -193,7 +222,9 @@ const GamificationSystemReal = ({
             <div className="text-right">
               <div className="flex items-center space-x-2">
                 <Coins className="w-5 h-5 text-yellow-500" />
-                <span className="text-lg font-semibold">{userData?.coins || 0}</span>
+                <span className="text-lg font-semibold">
+                  {userData?.coins || 0}
+                </span>
               </div>
               <p className="text-sm text-gray-600">Moedas</p>
             </div>
@@ -243,53 +274,83 @@ const GamificationSystemReal = ({
                   size="sm"
                   onClick={() => setShowAllAchievements(!showAllAchievements)}
                 >
-                  {showAllAchievements ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  {showAllAchievements ? 'Ocultar' : 'Ver Todas'}
+                  {showAllAchievements ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                  {showAllAchievements ? "Ocultar" : "Ver Todas"}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {achievements
-                  ?.filter(achievement => showAllAchievements || achievement.unlocked)
+                  ?.filter(
+                    (achievement) =>
+                      showAllAchievements || achievement.unlocked,
+                  )
                   ?.slice(0, showAllAchievements ? achievements.length : 5)
                   ?.map((achievement, index) => {
-                    const AchievementIcon = getAchievementIcon(achievement.type);
+                    const AchievementIcon = getAchievementIcon(
+                      achievement.type,
+                    );
                     return (
                       <div
                         key={index}
                         className={`flex items-center space-x-3 p-3 rounded-lg ${
-                          achievement.unlocked ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                          achievement.unlocked
+                            ? "bg-green-50 border border-green-200"
+                            : "bg-gray-50"
                         }`}
                       >
-                        <div className={`p-2 rounded-full ${
-                          achievement.unlocked ? 'bg-green-100' : 'bg-gray-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            achievement.unlocked
+                              ? "bg-green-100"
+                              : "bg-gray-100"
+                          }`}
+                        >
                           {achievement.unlocked ? (
-                            <AchievementIcon className={`w-5 h-5 ${getAchievementColor(achievement.type)}`} />
+                            <AchievementIcon
+                              className={`w-5 h-5 ${getAchievementColor(achievement.type)}`}
+                            />
                           ) : (
                             <Lock className="w-5 h-5 text-gray-400" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <h4 className={`font-medium ${
-                            achievement.unlocked ? 'text-green-900' : 'text-gray-500'
-                          }`}>
+                          <h4
+                            className={`font-medium ${
+                              achievement.unlocked
+                                ? "text-green-900"
+                                : "text-gray-500"
+                            }`}
+                          >
                             {achievement.name}
                           </h4>
-                          <p className={`text-sm ${
-                            achievement.unlocked ? 'text-green-700' : 'text-gray-400'
-                          }`}>
+                          <p
+                            className={`text-sm ${
+                              achievement.unlocked
+                                ? "text-green-700"
+                                : "text-gray-400"
+                            }`}
+                          >
                             {achievement.description}
                           </p>
                           {achievement.progress && (
                             <div className="mt-2">
-                              <Progress 
-                                value={(achievement.progress.current / achievement.progress.target) * 100} 
-                                className="h-2" 
+                              <Progress
+                                value={
+                                  (achievement.progress.current /
+                                    achievement.progress.target) *
+                                  100
+                                }
+                                className="h-2"
                               />
                               <p className="text-xs text-gray-500 mt-1">
-                                {achievement.progress.current} / {achievement.progress.target}
+                                {achievement.progress.current} /{" "}
+                                {achievement.progress.target}
                               </p>
                             </div>
                           )}
@@ -300,11 +361,13 @@ const GamificationSystemReal = ({
                       </div>
                     );
                   }) || (
-                    <div className="text-center py-4">
-                      <Award className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500">Nenhuma conquista disponível</p>
-                    </div>
-                  )}
+                  <div className="text-center py-4">
+                    <Award className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500">
+                      Nenhuma conquista disponível
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -325,33 +388,45 @@ const GamificationSystemReal = ({
                   <div
                     key={index}
                     className={`flex items-center justify-between p-3 rounded-lg ${
-                      reward.claimed ? 'bg-gray-50' : 'bg-yellow-50 border border-yellow-200'
+                      reward.claimed
+                        ? "bg-gray-50"
+                        : "bg-yellow-50 border border-yellow-200"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-full ${
-                        reward.claimed ? 'bg-gray-100' : 'bg-yellow-100'
-                      }`}>
-                        <Gift className={`w-5 h-5 ${
-                          reward.claimed ? 'text-gray-400' : 'text-yellow-600'
-                        }`} />
+                      <div
+                        className={`p-2 rounded-full ${
+                          reward.claimed ? "bg-gray-100" : "bg-yellow-100"
+                        }`}
+                      >
+                        <Gift
+                          className={`w-5 h-5 ${
+                            reward.claimed ? "text-gray-400" : "text-yellow-600"
+                          }`}
+                        />
                       </div>
                       <div>
-                        <h4 className={`font-medium ${
-                          reward.claimed ? 'text-gray-500' : 'text-yellow-900'
-                        }`}>
+                        <h4
+                          className={`font-medium ${
+                            reward.claimed ? "text-gray-500" : "text-yellow-900"
+                          }`}
+                        >
                           {reward.name}
                         </h4>
-                        <p className={`text-sm ${
-                          reward.claimed ? 'text-gray-400' : 'text-yellow-700'
-                        }`}>
+                        <p
+                          className={`text-sm ${
+                            reward.claimed ? "text-gray-400" : "text-yellow-700"
+                          }`}
+                        >
                           {reward.description}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={reward.claimed ? 'secondary' : 'default'}>
-                        {reward.claimed ? 'Reivindicada' : `${reward.cost} moedas`}
+                      <Badge variant={reward.claimed ? "secondary" : "default"}>
+                        {reward.claimed
+                          ? "Reivindicada"
+                          : `${reward.cost} moedas`}
                       </Badge>
                       {!reward.claimed && (
                         <Button
@@ -367,7 +442,9 @@ const GamificationSystemReal = ({
                 )) || (
                   <div className="text-center py-4">
                     <Gift className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500">Nenhuma recompensa disponível</p>
+                    <p className="text-gray-500">
+                      Nenhuma recompensa disponível
+                    </p>
                   </div>
                 )}
               </div>
@@ -391,20 +468,22 @@ const GamificationSystemReal = ({
                 <div
                   key={index}
                   className={`flex items-center justify-between p-3 rounded-lg ${
-                    player.id === userData?.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                    player.id === userData?.id
+                      ? "bg-blue-50 border border-blue-200"
+                      : "bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
-                      <span className="text-sm font-bold">
-                        {index + 1}
-                      </span>
+                      <span className="text-sm font-bold">{index + 1}</span>
                     </div>
                     <div>
                       <h4 className="font-medium">
                         {player.name}
                         {player.id === userData?.id && (
-                          <Badge variant="secondary" className="ml-2">Você</Badge>
+                          <Badge variant="secondary" className="ml-2">
+                            Você
+                          </Badge>
                         )}
                       </h4>
                       <p className="text-sm text-gray-600">

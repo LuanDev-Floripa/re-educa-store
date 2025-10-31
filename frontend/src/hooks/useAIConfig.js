@@ -1,5 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+/**
+ * useAIConfig
+ * - Gestão de configurações de AI (CRUD, testes, métricas)
+ * - Fallbacks com mensagens e retorno seguro; deps corretas
+ */
 
 const useAIConfig = () => {
   const [configs, setConfigs] = useState([]);
@@ -8,12 +13,17 @@ const useAIConfig = () => {
 
   // Obter token de autenticação
   const getAuthToken = () => {
-    const token = localStorage.getItem('admin_token');
-    if (!token) {
-      toast.error('Token de autenticação não encontrado');
-      throw new Error('Token de autenticação requerido');
+    try {
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        toast.error("Token de autenticação não encontrado");
+        throw new Error("Token de autenticação requerido");
+      }
+      return token;
+    } catch (e) {
+      toast.error("Falha ao acessar token de autenticação");
+      throw e;
     }
-    return token;
   };
 
   // Carregar configurações
@@ -21,12 +31,12 @@ const useAIConfig = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/admin/ai/configs', {
+
+      const response = await fetch("/api/admin/ai/configs", {
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -35,7 +45,7 @@ const useAIConfig = () => {
         return data.data || [];
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao carregar configurações');
+        throw new Error(errorData.error || "Erro ao carregar configurações");
       }
     } catch (err) {
       setError(err.message);
@@ -47,127 +57,136 @@ const useAIConfig = () => {
   }, []);
 
   // Criar nova configuração
-  const createConfig = useCallback(async (configData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/admin/ai/configs', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(configData)
-      });
+  const createConfig = useCallback(
+    async (configData) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          toast.success('Configuração criada com sucesso');
-          await loadConfigs(); // Recarregar lista
-          return data.data;
+        const response = await fetch("/api/admin/ai/configs", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(configData),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            toast.success("Configuração criada com sucesso");
+            await loadConfigs(); // Recarregar lista
+            return data.data;
+          } else {
+            throw new Error(data.error || "Erro ao criar configuração");
+          }
         } else {
-          throw new Error(data.error || 'Erro ao criar configuração');
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Erro ao criar configuração");
         }
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao criar configuração');
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [loadConfigs]);
+    },
+    [loadConfigs],
+  );
 
   // Atualizar configuração
-  const updateConfig = useCallback(async (configId, updateData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`/api/admin/ai/configs/${configId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
-      });
+  const updateConfig = useCallback(
+    async (configId, updateData) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          toast.success('Configuração atualizada com sucesso');
-          await loadConfigs(); // Recarregar lista
-          return data.data;
+        const response = await fetch(`/api/admin/ai/configs/${configId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            toast.success("Configuração atualizada com sucesso");
+            await loadConfigs(); // Recarregar lista
+            return data.data;
+          } else {
+            throw new Error(data.error || "Erro ao atualizar configuração");
+          }
         } else {
-          throw new Error(data.error || 'Erro ao atualizar configuração');
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Erro ao atualizar configuração");
         }
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao atualizar configuração');
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [loadConfigs]);
+    },
+    [loadConfigs],
+  );
 
   // Deletar configuração
-  const deleteConfig = useCallback(async (configId) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`/api/admin/ai/configs/${configId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  const deleteConfig = useCallback(
+    async (configId) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          toast.success('Configuração deletada com sucesso');
-          await loadConfigs(); // Recarregar lista
-          return true;
+        const response = await fetch(`/api/admin/ai/configs/${configId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            toast.success("Configuração deletada com sucesso");
+            await loadConfigs(); // Recarregar lista
+            return true;
+          } else {
+            throw new Error(data.error || "Erro ao deletar configuração");
+          }
         } else {
-          throw new Error(data.error || 'Erro ao deletar configuração');
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Erro ao deletar configuração");
         }
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao deletar configuração');
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [loadConfigs]);
+    },
+    [loadConfigs],
+  );
 
   // Testar configuração
   const testConfig = useCallback(async (configId) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(`/api/admin/ai/configs/${configId}/test`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -176,11 +195,11 @@ const useAIConfig = () => {
           toast.success(`Teste bem-sucedido: ${data.data.status}`);
           return data.data;
         } else {
-          throw new Error(data.error || 'Teste falhou');
+          throw new Error(data.error || "Teste falhou");
         }
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao testar configuração');
+        throw new Error(errorData.error || "Erro ao testar configuração");
       }
     } catch (err) {
       setError(err.message);
@@ -196,12 +215,12 @@ const useAIConfig = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/admin/ai/health', {
+
+      const response = await fetch("/api/admin/ai/health", {
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -209,7 +228,7 @@ const useAIConfig = () => {
         return data.data;
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao obter status de saúde');
+        throw new Error(errorData.error || "Erro ao obter status de saúde");
       }
     } catch (err) {
       setError(err.message);
@@ -225,16 +244,16 @@ const useAIConfig = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
-      if (days) params.append('days', days);
-      if (provider) params.append('provider', provider);
-      
+      if (days) params.append("days", days);
+      if (provider) params.append("provider", provider);
+
       const response = await fetch(`/api/admin/ai/usage-stats?${params}`, {
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${getAuthToken()}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -242,7 +261,7 @@ const useAIConfig = () => {
         return data.data;
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao obter estatísticas');
+        throw new Error(errorData.error || "Erro ao obter estatísticas");
       }
     } catch (err) {
       setError(err.message);
@@ -268,7 +287,7 @@ const useAIConfig = () => {
     deleteConfig,
     testConfig,
     getHealthStatus,
-    getUsageStats
+    getUsageStats,
   };
 };
 

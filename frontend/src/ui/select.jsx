@@ -1,31 +1,21 @@
-import React from 'react';
+import React from "react";
 
 export const Select = ({ children, ...props }) => (
-  <select {...props}>
-    {children}
-  </select>
+  <select {...props}>{children}</select>
 );
 
 export const SelectTrigger = ({ children, ...props }) => (
-  <div {...props}>
-    {children}
-  </div>
+  <div {...props}>{children}</div>
 );
 
 export const SelectValue = ({ children, ...props }) => (
-  <span {...props}>
-    {children}
-  </span>
+  <span {...props}>{children}</span>
 );
 
 export const SelectContent = ({ children, ...props }) => (
-  <div {...props}>
-    {children}
-  </div>
+  <div {...props}>{children}</div>
 );
 
 export const SelectItem = ({ children, ...props }) => (
-  <option {...props}>
-    {children}
-  </option>
+  <option {...props}>{children}</option>
 );

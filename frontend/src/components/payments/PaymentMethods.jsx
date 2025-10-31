@@ -1,11 +1,28 @@
-import React, { useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { useApi } from '../../lib/api';
-import { CreditCard, Smartphone, Barcode, QrCode, Shield } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { useApi } from "../../lib/api";
+import { CreditCard, Smartphone, Barcode, QrCode, Shield } from "lucide-react";
+import { toast } from "sonner";
 
-export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, onSuccess, onError }) => {
+/**
+ * Seleção de métodos de pagamento.
+ * - Carrega métodos da API e valida seleção
+ * - Emite toasts e chama callbacks de sucesso/erro
+ */
+export const PaymentMethods = ({
+  amount,
+  onPaymentMethodSelect,
+  selectedMethod,
+  onSuccess,
+  onError,
+}) => {
   const { request } = useApi();
   const [paymentMethods, setPaymentMethods] = React.useState({});
   const [isLoading, setIsLoading] = React.useState(false);
@@ -16,66 +33,67 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
 
   const loadPaymentMethods = useCallback(async () => {
     try {
-      const response = await request(() => 
-        fetch('/api/payments/methods')
-      );
+      const response = await request(() => fetch("/api/payments/methods"));
 
       if (response.ok) {
         const methods = await response.json();
         setPaymentMethods(methods);
+      } else {
+        toast.error("Não foi possível carregar métodos de pagamento.");
       }
     } catch (error) {
-      console.error('Erro ao carregar métodos de pagamento:', error);
+      console.error("Erro ao carregar métodos de pagamento:", error);
       if (onError) {
         onError(error);
       }
+      toast.error("Erro ao carregar métodos de pagamento.");
     }
   }, [request, onError]);
 
   const handlePaymentMethodClick = async (method) => {
     setIsLoading(true);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        throw new Error('Token de autenticação não encontrado');
+        throw new Error("Token de autenticação não encontrado");
       }
 
       // Validar método de pagamento via API
-      const response = await request(() => 
-        fetch('/api/payments/validate-method', {
-          method: 'POST',
+      const response = await request(() =>
+        fetch("/api/payments/validate-method", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             method: method.id,
-            amount: amount
-          })
-        })
+            amount: amount,
+          }),
+        }),
       );
 
       if (response.ok) {
         const validation = await response.json();
-        
+
         if (validation.valid) {
           onPaymentMethodSelect && onPaymentMethodSelect(method);
-          toast.success('Método de pagamento selecionado com sucesso!');
+          toast.success("Método de pagamento selecionado com sucesso!");
           if (onSuccess) {
             onSuccess(method);
           }
         } else {
-          throw new Error(validation.error || 'Método de pagamento inválido');
+          throw new Error(validation.error || "Método de pagamento inválido");
         }
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao validar método de pagamento');
+        throw new Error(error.error || "Erro ao validar método de pagamento");
       }
     } catch (error) {
-      console.error('Erro ao selecionar método de pagamento:', error);
-      toast.error(error.message || 'Erro ao selecionar método de pagamento');
+      console.error("Erro ao selecionar método de pagamento:", error);
+      toast.error(error.message || "Erro ao selecionar método de pagamento");
       if (onError) {
         onError(error);
       }
@@ -86,13 +104,13 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
 
   const getMethodIcon = (method) => {
     switch (method) {
-      case 'card':
+      case "card":
         return <CreditCard className="w-5 h-5" />;
-      case 'pix':
+      case "pix":
         return <QrCode className="w-5 h-5" />;
-      case 'boleto':
+      case "boleto":
         return <Barcode className="w-5 h-5" />;
-      case 'debit':
+      case "debit":
         return <Smartphone className="w-5 h-5" />;
       default:
         return <CreditCard className="w-5 h-5" />;
@@ -101,14 +119,14 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
 
   const getMethodName = (method) => {
     switch (method) {
-      case 'card':
-        return 'Cartão de Crédito';
-      case 'pix':
-        return 'PIX';
-      case 'boleto':
-        return 'Boleto Bancário';
-      case 'debit':
-        return 'Débito Online';
+      case "card":
+        return "Cartão de Crédito";
+      case "pix":
+        return "PIX";
+      case "boleto":
+        return "Boleto Bancário";
+      case "debit":
+        return "Débito Online";
       default:
         return method;
     }
@@ -116,16 +134,16 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
 
   const getMethodDescription = (method) => {
     switch (method) {
-      case 'card':
-        return 'Visa, Mastercard, Elo';
-      case 'pix':
-        return 'Aprovação imediata';
-      case 'boleto':
-        return 'Vencimento em 3 dias úteis';
-      case 'debit':
-        return 'Débito em conta';
+      case "card":
+        return "Visa, Mastercard, Elo";
+      case "pix":
+        return "Aprovação imediata";
+      case "boleto":
+        return "Vencimento em 3 dias úteis";
+      case "debit":
+        return "Débito em conta";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -161,7 +179,9 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
                   {getMethodIcon(method)}
                   <div className="text-left">
                     <div className="font-medium">{getMethodName(method)}</div>
-                    <div className="text-xs text-gray-500">{getMethodDescription(method)}</div>
+                    <div className="text-xs text-gray-500">
+                      {getMethodDescription(method)}
+                    </div>
                   </div>
                 </div>
               </Button>
@@ -191,7 +211,9 @@ export const PaymentMethods = ({ amount, onPaymentMethodSelect, selectedMethod, 
                   {getMethodIcon(method)}
                   <div className="text-left">
                     <div className="font-medium">{getMethodName(method)}</div>
-                    <div className="text-xs text-gray-500">{getMethodDescription(method)}</div>
+                    <div className="text-xs text-gray-500">
+                      {getMethodDescription(method)}
+                    </div>
                   </div>
                 </div>
               </Button>

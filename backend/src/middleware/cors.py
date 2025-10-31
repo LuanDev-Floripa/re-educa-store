@@ -1,12 +1,23 @@
 """
-Middleware CORS para RE-EDUCA Store
+Middleware CORS para RE-EDUCA Store.
+
+Configura CORS (Cross-Origin Resource Sharing) para permitir
+acesso de domínios autorizados com headers de segurança adicionais.
 """
 import os
 from flask import Flask
 from flask_cors import CORS
 
 def setup_cors(app: Flask):
-    """Configura CORS para a aplicação"""
+    """
+    Configura CORS para a aplicação.
+    
+    Configura origens permitidas, métodos HTTP, headers aceitos
+    e adiciona headers de segurança às respostas.
+    
+    Args:
+        app (Flask): Instância da aplicação Flask.
+    """
     
     # Obter origens permitidas do .env ou usar padrões
     cors_origins = os.getenv('CORS_ORIGINS', '').split(',')
@@ -32,9 +43,17 @@ def setup_cors(app: Flask):
          supports_credentials=True,
          max_age=3600)
     
-    # Headers de segurança adicionais
     @app.after_request
     def add_security_headers(response):
+        """
+        Adiciona headers de segurança às respostas.
+        
+        Args:
+            response: Objeto de resposta Flask.
+            
+        Returns:
+            Response com headers de segurança adicionados.
+        """
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['X-XSS-Protection'] = '1; mode=block'

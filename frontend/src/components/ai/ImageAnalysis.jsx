@@ -1,46 +1,61 @@
-import React, { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { 
-  Upload, 
-  Camera, 
-  Image as ImageIcon, 
+/**
+ * ImageAnalysis Component - RE-EDUCA Store
+ * 
+ * Componente de análise de imagens usando IA.
+ * 
+ * Funcionalidades:
+ * - Upload de imagens
+ * - Análise de diferentes tipos (geral, alimento, exercício)
+ * - Captura de foto via câmera
+ * - Resultados detalhados da análise
+ * 
+ * @component
+ * @returns {JSX.Element} Interface de análise de imagens
+ */
+import React, { useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import {
+  Upload,
+  Camera,
+  Image as ImageIcon,
   Loader2,
   CheckCircle,
   AlertCircle,
   Apple,
   Dumbbell,
-  Eye
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Eye,
+} from "lucide-react";
+import { toast } from "sonner";
 
 const ImageAnalysis = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [analysisType, setAnalysisType] = useState('general');
+  const [analysisType, setAnalysisType] = useState("general");
   const [loading, setLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
   const analysisTypes = [
-    { value: 'general', label: 'Geral', icon: Eye },
-    { value: 'food', label: 'Alimento', icon: Apple },
-    { value: 'exercise', label: 'Exercício', icon: Dumbbell }
+    { value: "general", label: "Geral", icon: Eye },
+    { value: "food", label: "Alimento", icon: Apple },
+    { value: "exercise", label: "Exercício", icon: Dumbbell },
   ];
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('Arquivo muito grande. Máximo 5MB.');
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        toast.error("Arquivo muito grande. Máximo 5MB.");
         return;
       }
-      
-      if (!file.type.startsWith('image/')) {
-        toast.error('Por favor, selecione uma imagem válida.');
+
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor, selecione uma imagem válida.");
         return;
       }
 
@@ -65,39 +80,39 @@ const ImageAnalysis = () => {
 
   const analyzeImage = async () => {
     if (!selectedFile) {
-      toast.error('Por favor, selecione uma imagem primeiro.');
+      toast.error("Por favor, selecione uma imagem primeiro.");
       return;
     }
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const formData = new FormData();
-      formData.append('image', selectedFile);
-      formData.append('type', analysisType);
+      formData.append("image", selectedFile);
+      formData.append("type", analysisType);
 
-      const response = await fetch('/api/ai/analyze/image', {
-        method: 'POST',
+      const response = await fetch("/api/ai/analyze/image", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
           setAnalysisResult(data.data);
-          toast.success('Análise concluída com sucesso!');
+          toast.success("Análise concluída com sucesso!");
         } else {
-          throw new Error(data.error || 'Erro na análise');
+          throw new Error(data.error || "Erro na análise");
         }
       } else {
-        throw new Error('Erro na comunicação com a IA');
+        throw new Error("Erro na comunicação com a IA");
       }
     } catch (error) {
-      console.error('Erro na análise:', error);
-      toast.error('Erro ao analisar imagem');
+      console.error("Erro na análise:", error);
+      toast.error("Erro ao analisar imagem");
     } finally {
       setLoading(false);
     }
@@ -107,8 +122,8 @@ const ImageAnalysis = () => {
     setSelectedFile(null);
     setPreview(null);
     setAnalysisResult(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   const FoodAnalysisResult = ({ result }) => (
@@ -121,10 +136,14 @@ const ImageAnalysis = () => {
           <CardContent>
             <div className="space-y-2">
               <p className="font-semibold">{result.food_name}</p>
-              <p className="text-sm text-muted-foreground">{result.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {result.description}
+              </p>
               <div className="flex gap-2">
                 <Badge variant="outline">Confiança: {result.confidence}%</Badge>
-                {result.category && <Badge variant="secondary">{result.category}</Badge>}
+                {result.category && (
+                  <Badge variant="secondary">{result.category}</Badge>
+                )}
               </div>
             </div>
           </CardContent>
@@ -136,12 +155,13 @@ const ImageAnalysis = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {result.nutritional_info && Object.entries(result.nutritional_info).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-sm">
-                  <span className="capitalize">{key.replace('_', ' ')}:</span>
-                  <span className="font-medium">{value}</span>
-                </div>
-              ))}
+              {result.nutritional_info &&
+                Object.entries(result.nutritional_info).map(([key, value]) => (
+                  <div key={key} className="flex justify-between text-sm">
+                    <span className="capitalize">{key.replace("_", " ")}:</span>
+                    <span className="font-medium">{value}</span>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -177,10 +197,14 @@ const ImageAnalysis = () => {
           <CardContent>
             <div className="space-y-2">
               <p className="font-semibold">{result.exercise_name}</p>
-              <p className="text-sm text-muted-foreground">{result.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {result.description}
+              </p>
               <div className="flex gap-2">
                 <Badge variant="outline">Confiança: {result.confidence}%</Badge>
-                {result.difficulty && <Badge variant="secondary">{result.difficulty}</Badge>}
+                {result.difficulty && (
+                  <Badge variant="secondary">{result.difficulty}</Badge>
+                )}
               </div>
             </div>
           </CardContent>
@@ -207,7 +231,9 @@ const ImageAnalysis = () => {
               {result.equipment && (
                 <div>
                   <p className="text-sm font-medium">Equipamento:</p>
-                  <p className="text-sm text-muted-foreground">{result.equipment}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {result.equipment}
+                  </p>
                 </div>
               )}
             </div>
@@ -245,9 +271,11 @@ const ImageAnalysis = () => {
           <div className="space-y-4">
             <div>
               <p className="font-semibold mb-2">Descrição:</p>
-              <p className="text-sm text-muted-foreground">{result.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {result.description}
+              </p>
             </div>
-            
+
             {result.objects && (
               <div>
                 <p className="font-semibold mb-2">Objetos Identificados:</p>
@@ -260,7 +288,7 @@ const ImageAnalysis = () => {
                 </div>
               </div>
             )}
-            
+
             {result.tags && (
               <div>
                 <p className="font-semibold mb-2">Tags:</p>
@@ -298,7 +326,11 @@ const ImageAnalysis = () => {
                 {analysisTypes.map((type) => {
                   const Icon = type.icon;
                   return (
-                    <TabsTrigger key={type.value} value={type.value} className="flex items-center gap-2">
+                    <TabsTrigger
+                      key={type.value}
+                      value={type.value}
+                      className="flex items-center gap-2"
+                    >
                       <Icon className="w-4 h-4" />
                       {type.label}
                     </TabsTrigger>
@@ -392,20 +424,29 @@ const ImageAnalysis = () => {
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <ImageIcon className="w-12 h-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  Selecione uma imagem e clique em "Analisar" para ver os resultados
+                  Selecione uma imagem e clique em "Analisar" para ver os
+                  resultados
                 </p>
               </div>
             ) : analysisResult.error ? (
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <AlertCircle className="w-12 h-12 text-destructive mb-4" />
                 <p className="text-destructive font-medium">Erro na análise</p>
-                <p className="text-sm text-muted-foreground">{analysisResult.error}</p>
+                <p className="text-sm text-muted-foreground">
+                  {analysisResult.error}
+                </p>
               </div>
             ) : (
               <div>
-                {analysisType === 'food' && <FoodAnalysisResult result={analysisResult} />}
-                {analysisType === 'exercise' && <ExerciseAnalysisResult result={analysisResult} />}
-                {analysisType === 'general' && <GeneralAnalysisResult result={analysisResult} />}
+                {analysisType === "food" && (
+                  <FoodAnalysisResult result={analysisResult} />
+                )}
+                {analysisType === "exercise" && (
+                  <ExerciseAnalysisResult result={analysisResult} />
+                )}
+                {analysisType === "general" && (
+                  <GeneralAnalysisResult result={analysisResult} />
+                )}
               </div>
             )}
           </CardContent>

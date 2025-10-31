@@ -418,7 +418,6 @@ class IntelligentBlogSystem:
 # ================================
 
 app = Flask(__name__)
-CORS(app)
 
 blog_system = IntelligentBlogSystem()
 

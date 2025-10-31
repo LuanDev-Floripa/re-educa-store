@@ -1,20 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { 
-  Download, 
-  X, 
-  Smartphone, 
+import React, { useState, useEffect } from "react";
+/**
+ * Prompt de instalação PWA e notificações de atualização.
+ * 
+ * Componente que gerencia:
+ * - Sugestão de instalação do PWA
+ * - Limpeza de cache
+ * - Aplicação de updates
+ * - Status online/offline
+ * - Badges e notificações
+ * 
+ * @component
+ * @returns {JSX.Element|null} Componente de prompt PWA ou null se não deve ser exibido
+ */
+import { Card, CardContent } from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Download,
+  X,
+  Smartphone,
   Monitor,
   Wifi,
   WifiOff,
   Bell,
   BellOff,
-  RefreshCw
-} from 'lucide-react';
-import { usePWA, useOfflineCache, useAppUpdates } from '@/hooks/usePWA';
-import { toast } from 'sonner';
+  RefreshCw,
+} from "lucide-react";
+import { usePWA, useOfflineCache, useAppUpdates } from "@/hooks/usePWA";
+import { toast } from "sonner";
 
 const InstallPrompt = () => {
   const {
@@ -25,39 +38,49 @@ const InstallPrompt = () => {
     installPWA,
     requestNotificationPermission,
     sendNotification,
-    syncOfflineData
+    syncOfflineData,
   } = usePWA();
-  
+
   const { cacheStatus, clearCache } = useOfflineCache();
-  
+
   // Usar cacheStatus e clearCache
+  /**
+   * Limpa o cache offline e registra na API.
+   */
   const handleClearCache = async () => {
     try {
       await clearCache();
-      toast.success('Cache limpo com sucesso!');
-      
+      toast.success("Cache limpo com sucesso!");
+
       // Registrar limpeza de cache na API
-      const token = localStorage.getItem('token');
+      let token = null;
+      try {
+        token = localStorage.getItem("token");
+      } catch (error) {
+        // localStorage pode não estar disponível
+        console.warn("Não foi possível obter token:", error);
+        token = null;
+      }
       if (token) {
-        await fetch('/api/analytics/cache-clear', {
-          method: 'POST',
+        await fetch("/api/analytics/cache-clear", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             timestamp: new Date().toISOString(),
-            cacheSize: cacheStatus?.size || 0
-          })
+            cacheSize: Number(cacheStatus?.size) || 0,
+          }),
         });
       }
     } catch (error) {
-      console.error('Erro ao limpar cache:', error);
-      toast.error('Erro ao limpar cache');
+      console.error("Erro ao limpar cache:", error);
+      toast.error("Erro ao limpar cache");
     }
   };
   const { updateAvailable, isUpdating, applyUpdate } = useAppUpdates();
-  
+
   const [showPrompt, setShowPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -67,75 +90,122 @@ const InstallPrompt = () => {
       const timer = setTimeout(() => {
         setShowPrompt(true);
       }, 3000); // Mostra após 3 segundos
-      
+
       return () => clearTimeout(timer);
     }
   }, [canInstall, isInstalled, dismissed]);
 
+  /**
+   * Instala o PWA e registra a instalação na API.
+   */
   const handleInstall = async () => {
     try {
-      const success = await installPWA();
+      const success = await installPWA?.();
       if (success) {
         setShowPrompt(false);
-        toast.success('App instalado com sucesso!');
-        
+        toast.success("App instalado com sucesso!");
+
         // Registrar instalação na API
-        const token = localStorage.getItem('token');
+        let token = null;
+        try {
+          token = localStorage.getItem("token");
+        } catch (error) {
+          // localStorage pode não estar disponível
+          console.warn("Não foi possível obter token:", error);
+          token = null;
+        }
         if (token) {
-          await fetch('/api/analytics/pwa-install', {
-            method: 'POST',
+          await fetch("/api/analytics/pwa-install", {
+            method: "POST",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              platform: navigator.platform,
-              userAgent: navigator.userAgent,
-              timestamp: new Date().toISOString()
-            })
+              platform: navigator?.platform || "",
+              userAgent: navigator?.userAgent || "",
+              timestamp: new Date().toISOString(),
+            }),
           });
         }
       } else {
-        toast.error('Erro ao instalar o app');
+        toast.error("Erro ao instalar o app");
       }
     } catch (error) {
-      console.error('Erro na instalação:', error);
-      toast.error('Erro ao instalar o app');
+      console.error("Erro na instalação:", error);
+      toast.error("Erro ao instalar o app");
     }
   };
 
+  /**
+   * Dispensa o prompt de instalação e salva preferência.
+   */
   const handleDismiss = () => {
     setShowPrompt(false);
     setDismissed(true);
     // Salva no localStorage para não mostrar novamente
-    localStorage.setItem('pwa-install-dismissed', 'true');
-  };
-
-  const handleNotificationToggle = async () => {
-    if (notificationPermission === 'granted') {
-      // Testa notificação
-      sendNotification('RE-EDUCA Store', {
-        body: 'Notificações funcionando perfeitamente!',
-        tag: 'test'
-      });
-    } else {
-      await requestNotificationPermission();
+    try {
+      localStorage.setItem("pwa-install-dismissed", "true");
+    } catch (error) {
+      // localStorage pode não estar disponível em modo privado ou storage cheio
+      console.warn("Não foi possível salvar preferência de instalação:", error);
     }
   };
 
+  /**
+   * Alterna permissões de notificação ou solicita permissão.
+   */
+  const handleNotificationToggle = async () => {
+    if (notificationPermission === "granted") {
+      // Testa notificação
+      sendNotification?.("RE-EDUCA Store", {
+        body: "Notificações funcionando perfeitamente!",
+        tag: "test",
+      });
+    } else {
+      await requestNotificationPermission?.();
+    }
+  };
+
+  /**
+   * Sincroniza dados offline quando voltar online.
+   */
   const handleSync = async () => {
-    await syncOfflineData();
+    try {
+      await syncOfflineData?.();
+      toast.success("Dados sincronizados!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados:", error);
+      toast.error("Erro ao sincronizar dados");
+    }
   };
 
+  /**
+   * Aplica atualização do app quando disponível.
+   */
   const handleUpdate = async () => {
-    await applyUpdate();
+    try {
+      await applyUpdate?.();
+      toast.success("Atualização aplicada! Recarregue a página.");
+    } catch (error) {
+      console.error("Erro ao aplicar atualização:", error);
+      toast.error("Erro ao aplicar atualização");
+    }
   };
 
-  // Não mostra se já foi dispensado
+  /**
+   * Verifica se o prompt já foi dispensado anteriormente.
+   * Executa apenas uma vez na montagem do componente.
+   */
   useEffect(() => {
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed === 'true') {
-      setDismissed(true);
+    try {
+      const dismissed = localStorage.getItem("pwa-install-dismissed");
+      if (dismissed === "true") {
+        setDismissed(true);
+      }
+    } catch (error) {
+      // localStorage pode não estar disponível em modo privado
+      console.warn("Não foi possível verificar preferência de instalação:", error);
     }
   }, []);
 
@@ -159,8 +229,8 @@ const InstallPrompt = () => {
                   <p className="text-sm text-muted-foreground">
                     Acesso rápido e funcionalidades offline
                   </p>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Status do Cache: {cacheStatus}
+                <div className="mt-2 text-xs text-muted-foreground">
+                    Status do Cache: {typeof cacheStatus === "string" ? cacheStatus : (cacheStatus?.status || "desconhecido")}
                   </div>
                 </div>
               </div>
@@ -173,7 +243,7 @@ const InstallPrompt = () => {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2 text-sm">
                 <Smartphone className="w-4 h-4 text-green-500" />
@@ -188,7 +258,7 @@ const InstallPrompt = () => {
                 <span>Notificações personalizadas</span>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <Button onClick={handleInstall} className="flex-1">
                 <Download className="w-4 h-4 mr-2" />
@@ -223,17 +293,17 @@ const InstallPrompt = () => {
                 </div>
               </div>
             </div>
-            
-            <Button 
-              onClick={handleUpdate} 
+
+            <Button
+              onClick={handleUpdate}
               disabled={isUpdating}
               className="w-full"
               variant="outline"
             >
               {isUpdating ? (
                 <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Atualizando...
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                  <span role="status" aria-live="polite">Atualizando...</span>
                 </>
               ) : (
                 <>
@@ -251,14 +321,16 @@ const InstallPrompt = () => {
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                isOnline ? 'bg-green-500' : 'bg-red-500'
-              }`} />
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isOnline ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
               <span className="text-sm font-medium">
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? "Online" : "Offline"}
               </span>
             </div>
-            
+
             <div className="flex items-center gap-1">
               {isInstalled && (
                 <Badge variant="secondary" className="text-xs">
@@ -266,25 +338,25 @@ const InstallPrompt = () => {
                   PWA
                 </Badge>
               )}
-              
+
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleNotificationToggle}
                 className="h-6 w-6 p-0"
                 title={
-                  notificationPermission === 'granted' 
-                    ? 'Notificações ativadas' 
-                    : 'Ativar notificações'
+                  notificationPermission === "granted"
+                    ? "Notificações ativadas"
+                    : "Ativar notificações"
                 }
               >
-                {notificationPermission === 'granted' ? (
+                {notificationPermission === "granted" ? (
                   <Bell className="w-3 h-3 text-green-500" />
                 ) : (
                   <BellOff className="w-3 h-3 text-muted-foreground" />
                 )}
               </Button>
-              
+
               {!isOnline && (
                 <Button
                   variant="ghost"

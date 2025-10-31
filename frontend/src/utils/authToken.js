@@ -8,8 +8,12 @@
  * @returns {string|null} Token ou null se não encontrado
  */
 export const getAuthToken = () => {
-  // Prioridade: auth_token (padrão novo) > token (legado)
-  return localStorage.getItem('auth_token') || localStorage.getItem('token');
+  try {
+    // Prioridade: auth_token (padrão novo) > token (legado)
+    return localStorage.getItem("auth_token") || localStorage.getItem("token");
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -18,14 +22,18 @@ export const getAuthToken = () => {
  * @param {boolean} useLegacyKey - Se true, também salva em 'token' (legado)
  */
 export const setAuthToken = (token, useLegacyKey = false) => {
-  if (token) {
-    localStorage.setItem('auth_token', token);
-    if (useLegacyKey) {
-      localStorage.setItem('token', token);
+  try {
+    if (token) {
+      localStorage.setItem("auth_token", token);
+      if (useLegacyKey) {
+        localStorage.setItem("token", token);
+      }
+    } else {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
     }
-  } else {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('token');
+  } catch {
+    // Ignora falhas de storage (modo privado / quotas)
   }
 };
 
@@ -33,8 +41,12 @@ export const setAuthToken = (token, useLegacyKey = false) => {
  * Remove o token de autenticação
  */
 export const removeAuthToken = () => {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('token');
+  try {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token");
+  } catch {
+    // noop
+  }
 };
 
 /**
@@ -52,14 +64,14 @@ export const isAuthenticated = () => {
  */
 export const getAuthHeaders = (includeAuth = true) => {
   const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   if (includeAuth) {
     const token = getAuthToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
   }
 

@@ -1,5 +1,13 @@
 """
-Serviço de Estoque RE-EDUCA Store
+Serviço de Estoque RE-EDUCA Store.
+
+Gerencia controle de estoque incluindo:
+- Consulta de disponibilidade
+- Atualização de estoque (adição/subtração)
+- Reserva de produtos para pedidos
+- Liberação de reservas
+- Validação de estoque disponível
+- Histórico de movimentações
 """
 import logging
 from typing import Dict, Any, List, Optional
@@ -10,11 +18,22 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 class InventoryService:
+    """Service para gestão de estoque de produtos."""
+    
     def __init__(self):
+        """Inicializa o serviço de estoque."""
         self.supabase = supabase_client
     
     def get_product_stock(self, product_id: str) -> Dict[str, Any]:
-        """Obtém estoque de um produto"""
+        """
+        Obtém estoque de um produto.
+        
+        Args:
+            product_id (str): ID do produto.
+            
+        Returns:
+            Dict[str, Any]: Quantidade em estoque e disponibilidade.
+        """
         try:
             result = self.supabase.table('products').select('stock_quantity, name').eq('id', product_id).execute()
             

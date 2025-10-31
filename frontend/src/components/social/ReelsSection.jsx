@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { 
+import React, { useState, useEffect, useRef } from "react";
+/**
+ * Seção de Reels (vídeos verticais curtos).
+ * - Player com play/pause, mute, navegação; ações e criação (placeholder)
+ * - Fallbacks e toasts em interações
+ */
+import { Card, CardContent } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import {
   Play,
   Pause,
   Volume2,
@@ -19,29 +24,33 @@ import {
   X,
   Upload,
   Video,
-  Camera
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Camera,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const ReelsSection = ({ 
-  reels, 
-  currentUser, 
+const ReelsSection = ({
+  reels,
+  // eslint-disable-next-line no-unused-vars
+  currentUser,
+  // eslint-disable-next-line no-unused-vars
   onCreateReel,
   onLikeReel,
   onCommentReel,
   onShareReel,
-  onFollowUser 
+  onFollowUser,
 }) => {
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const videoRefs = useRef([]);
 
-  const currentReel = reels[currentReelIndex];
+  const list = Array.isArray(reels) ? reels : [];
+  const currentReel = list[currentReelIndex];
 
   useEffect(() => {
     if (videoRefs.current[currentReelIndex]) {
@@ -65,7 +74,7 @@ const ReelsSection = ({
   };
 
   const handleNextReel = () => {
-    if (currentReelIndex < reels.length - 1) {
+    if (currentReelIndex < list.length - 1) {
       setCurrentReelIndex(currentReelIndex + 1);
     }
   };
@@ -79,7 +88,7 @@ const ReelsSection = ({
   const handleLikeReel = () => {
     if (currentReel) {
       onLikeReel(currentReel.id);
-      toast.success('Reel curtido!');
+      toast.success("Reel curtido!");
     }
   };
 
@@ -92,14 +101,14 @@ const ReelsSection = ({
   const handleShareReel = () => {
     if (currentReel) {
       onShareReel(currentReel.id);
-      toast.success('Reel compartilhado!');
+      toast.success("Reel compartilhado!");
     }
   };
 
   const handleFollowUser = () => {
     if (currentReel) {
       onFollowUser(currentReel.user_id);
-      toast.success('Usuário seguido!');
+      toast.success("Usuário seguido!");
     }
   };
 
@@ -115,7 +124,7 @@ const ReelsSection = ({
     handlePlayPause();
   };
 
-  if (reels.length === 0) {
+  if (list.length === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
@@ -149,7 +158,7 @@ const ReelsSection = ({
             <>
               {/* Vídeo */}
               <video
-                ref={el => videoRefs.current[currentReelIndex] = el}
+                ref={(el) => (videoRefs.current[currentReelIndex] = el)}
                 src={currentReel.video_url}
                 className="w-full h-full object-cover"
                 loop
@@ -162,7 +171,7 @@ const ReelsSection = ({
               {/* Overlay de Controles */}
               <div className="absolute inset-0 flex">
                 {/* Área de navegação anterior */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer flex items-center justify-start p-4"
                   onClick={handlePrevReel}
                 >
@@ -172,7 +181,7 @@ const ReelsSection = ({
                 </div>
 
                 {/* Área central para play/pause */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer flex items-center justify-center"
                   onClick={handlePlayPause}
                 >
@@ -188,7 +197,7 @@ const ReelsSection = ({
                 </div>
 
                 {/* Área de navegação próxima */}
-                <div 
+                <div
                   className="w-1/3 cursor-pointer flex items-center justify-end p-4"
                   onClick={handleNextReel}
                 >
@@ -207,10 +216,14 @@ const ReelsSection = ({
                     onClick={handleMuteToggle}
                     className="text-white hover:bg-white/20"
                   >
-                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    {isMuted ? (
+                      <VolumeX className="h-5 w-5" />
+                    ) : (
+                      <Volume2 className="h-5 w-5" />
+                    )}
                   </Button>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="ghost"
@@ -231,7 +244,7 @@ const ReelsSection = ({
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={currentReel.user?.avatar_url} />
                         <AvatarFallback>
-                          {currentReel.user?.name?.charAt(0) || 'U'}
+                          {currentReel.user?.name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -246,10 +259,13 @@ const ReelsSection = ({
                           )}
                         </div>
                         <p className="text-white text-xs opacity-75">
-                          {formatDistanceToNow(new Date(currentReel.created_at), { 
-                            addSuffix: true, 
-                            locale: ptBR 
-                          })}
+                          {formatDistanceToNow(
+                            new Date(currentReel.created_at),
+                            {
+                              addSuffix: true,
+                              locale: ptBR,
+                            },
+                          )}
                         </p>
                       </div>
                       <Button
@@ -268,15 +284,16 @@ const ReelsSection = ({
                     </p>
 
                     {/* Hashtags */}
-                    {currentReel.hashtags && currentReel.hashtags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {currentReel.hashtags.map((hashtag, index) => (
-                          <span key={index} className="text-blue-300 text-sm">
-                            #{hashtag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {currentReel.hashtags &&
+                      currentReel.hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {currentReel.hashtags.map((hashtag, index) => (
+                            <span key={index} className="text-blue-300 text-sm">
+                              #{hashtag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                     {/* Música */}
                     {currentReel.music && (
@@ -296,9 +313,13 @@ const ReelsSection = ({
                         onClick={handleLikeReel}
                         className="text-white hover:bg-white/20 p-2"
                       >
-                        <Heart className={`h-6 w-6 ${currentReel.is_liked ? 'fill-red-500 text-red-500' : ''}`} />
+                        <Heart
+                          className={`h-6 w-6 ${currentReel.is_liked ? "fill-red-500 text-red-500" : ""}`}
+                        />
                       </Button>
-                      <p className="text-white text-xs mt-1">{currentReel.likes_count || 0}</p>
+                      <p className="text-white text-xs mt-1">
+                        {currentReel.likes_count || 0}
+                      </p>
                     </div>
 
                     <div className="text-center">
@@ -310,7 +331,9 @@ const ReelsSection = ({
                       >
                         <MessageCircle className="h-6 w-6" />
                       </Button>
-                      <p className="text-white text-xs mt-1">{currentReel.comments_count || 0}</p>
+                      <p className="text-white text-xs mt-1">
+                        {currentReel.comments_count || 0}
+                      </p>
                     </div>
 
                     <div className="text-center">
@@ -322,7 +345,9 @@ const ReelsSection = ({
                       >
                         <Share2 className="h-6 w-6" />
                       </Button>
-                      <p className="text-white text-xs mt-1">{currentReel.shares_count || 0}</p>
+                      <p className="text-white text-xs mt-1">
+                        {currentReel.shares_count || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -334,11 +359,11 @@ const ReelsSection = ({
         {/* Indicador de Reel atual */}
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
           <div className="flex space-x-1">
-            {reels.map((_, index) => (
+            {list.map((_, index) => (
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full ${
-                  index === currentReelIndex ? 'bg-white' : 'bg-white/50'
+                  index === currentReelIndex ? "bg-white" : "bg-white/50"
                 }`}
               />
             ))}
@@ -368,7 +393,7 @@ const ReelsSection = ({
                   <Button
                     onClick={() => {
                       setShowCreateModal(false);
-                      toast.info('Funcionalidade em breve!');
+                      toast.info("Funcionalidade em breve!");
                     }}
                     className="flex-1"
                   >

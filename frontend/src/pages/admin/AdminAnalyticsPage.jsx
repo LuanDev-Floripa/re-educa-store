@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  ShoppingBag, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  ShoppingBag,
   DollarSign,
   Eye,
   Download,
@@ -14,141 +20,178 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
-  RefreshCw
-} from 'lucide-react';
-import apiClient from '@/services/apiClient';
-import { toast } from 'sonner';
+  RefreshCw,
+} from "lucide-react";
+import apiClient from "@/services/apiClient";
+import { toast } from "sonner";
 
+/**
+ * AdminAnalyticsPage
+ * Página de analytics administrativos com carregamento seguro e feedbacks.
+ * @returns {JSX.Element}
+ */
 const AdminAnalyticsPage = () => {
-  const [timeRange, setTimeRange] = useState('month');
-  const [selectedMetric, setSelectedMetric] = useState('revenue');
+  const [timeRange, setTimeRange] = useState("month");
+  const [selectedMetric, setSelectedMetric] = useState("revenue");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [analyticsData, setAnalyticsData] = useState({
     overview: {
-      totalRevenue: 125430.50,
+      totalRevenue: 125430.5,
       totalOrders: 3421,
       totalUsers: 1247,
       conversionRate: 3.2,
-      averageOrderValue: 195.20,
+      averageOrderValue: 195.2,
       revenueGrowth: 15.2,
       ordersGrowth: 8.3,
-      usersGrowth: 12.5
+      usersGrowth: 12.5,
     },
     chartData: [
-      { date: '2024-01-01', revenue: 2400, orders: 24, users: 40 },
-      { date: '2024-01-02', revenue: 1398, orders: 22, users: 30 },
-      { date: '2024-01-03', revenue: 9800, orders: 29, users: 20 },
-      { date: '2024-01-04', revenue: 3908, orders: 20, users: 27 },
-      { date: '2024-01-05', revenue: 4800, orders: 18, users: 18 },
-      { date: '2024-01-06', revenue: 3800, orders: 25, users: 23 },
-      { date: '2024-01-07', revenue: 4300, orders: 30, users: 34 }
+      { date: "2024-01-01", revenue: 2400, orders: 24, users: 40 },
+      { date: "2024-01-02", revenue: 1398, orders: 22, users: 30 },
+      { date: "2024-01-03", revenue: 9800, orders: 29, users: 20 },
+      { date: "2024-01-04", revenue: 3908, orders: 20, users: 27 },
+      { date: "2024-01-05", revenue: 4800, orders: 18, users: 18 },
+      { date: "2024-01-06", revenue: 3800, orders: 25, users: 23 },
+      { date: "2024-01-07", revenue: 4300, orders: 30, users: 34 },
     ],
     topProducts: [
-      { name: 'Whey Protein Premium', sales: 234, revenue: 21060, growth: 12.5 },
-      { name: 'Multivitamínico Completo', sales: 189, revenue: 8599.50, growth: 8.3 },
-      { name: 'Óleo de Coco Extra Virgem', sales: 156, revenue: 5132.40, growth: -2.1 },
-      { name: 'Termogênico Natural', sales: 98, revenue: 6644.40, growth: 15.7 },
-      { name: 'Chá Verde Detox', sales: 87, revenue: 2479.50, growth: 5.2 }
+      {
+        name: "Whey Protein Premium",
+        sales: 234,
+        revenue: 21060,
+        growth: 12.5,
+      },
+      {
+        name: "Multivitamínico Completo",
+        sales: 189,
+        revenue: 8599.5,
+        growth: 8.3,
+      },
+      {
+        name: "Óleo de Coco Extra Virgem",
+        sales: 156,
+        revenue: 5132.4,
+        growth: -2.1,
+      },
+      { name: "Termogênico Natural", sales: 98, revenue: 6644.4, growth: 15.7 },
+      { name: "Chá Verde Detox", sales: 87, revenue: 2479.5, growth: 5.2 },
     ],
     userMetrics: {
       newUsers: 45,
       activeUsers: 892,
       returningUsers: 355,
-      churnRate: 2.1
+      churnRate: 2.1,
     },
-    trafficSources: []
+    trafficSources: [],
   });
 
   // Converter timeRange para formato da API
   const getPeriodForAPI = (range) => {
     const map = {
-      '7d': 'week',
-      '30d': 'month',
-      '90d': 'quarter',
-      '1y': 'year'
+      "7d": "week",
+      "30d": "month",
+      "90d": "quarter",
+      "1y": "year",
     };
-    return map[range] || 'month';
+    return map[range] || "month";
   };
 
   // Carregar dados da API
-  useEffect(() => {
-    loadAnalyticsData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange]);
-
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const period = getPeriodForAPI(timeRange);
 
       // Carregar analytics de vendas
+      if (!apiClient?.getAdminSalesAnalytics) {
+        throw new Error("Serviço de analytics de vendas indisponível");
+      }
       const salesData = await apiClient.getAdminSalesAnalytics(period);
-      
+
       // Carregar analytics de usuários
+      if (!apiClient?.getAdminUsersAnalytics) {
+        throw new Error("Serviço de analytics de usuários indisponível");
+      }
       const usersData = await apiClient.getAdminUsersAnalytics(period);
-      
+
       // Carregar analytics de produtos
+      if (!apiClient?.getAdminProductsAnalytics) {
+        throw new Error("Serviço de analytics de produtos indisponível");
+      }
       const productsData = await apiClient.getAdminProductsAnalytics(period);
 
       // Formatar dados combinados
       const formattedData = {
         overview: {
-          totalRevenue: salesData.metrics?.total_revenue || 0,
-          totalOrders: salesData.metrics?.total_orders || 0,
-          totalUsers: usersData.total_users || 0,
-          conversionRate: salesData.metrics?.conversion_rate || 0,
-          averageOrderValue: salesData.metrics?.average_ticket || 0,
-          revenueGrowth: salesData.comparison?.revenue_growth || 0,
-          ordersGrowth: salesData.comparison?.orders_growth || 0,
-          usersGrowth: usersData.growth_rate || 0
+          totalRevenue: Number(salesData?.metrics?.total_revenue) || 0,
+          totalOrders: Number(salesData?.metrics?.total_orders) || 0,
+          totalUsers: Number(usersData?.total_users) || 0,
+          conversionRate: Number(salesData?.metrics?.conversion_rate) || 0,
+          averageOrderValue: Number(salesData?.metrics?.average_ticket) || 0,
+          revenueGrowth: Number(salesData?.comparison?.revenue_growth) || 0,
+          ordersGrowth: Number(salesData?.comparison?.orders_growth) || 0,
+          usersGrowth: Number(usersData?.growth_rate) || 0,
         },
-        chartData: salesData.sales_by_day?.map((item, index) => ({
-          date: item.date || item.day || new Date(Date.now() - (salesData.sales_by_day.length - index) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          revenue: item.revenue || item.total_revenue || 0,
-          orders: item.orders || item.total_orders || 0,
-          users: 0 // Pode ser calculado separadamente
-        })) || [],
-        topProducts: productsData.top_products?.map(product => ({
-          name: product.name || product.product_name,
-          sales: product.sales_count || product.total_sales || 0,
-          revenue: product.total_revenue || product.revenue || 0,
-          growth: product.growth || 0
-        })) || [],
+        chartData:
+          (Array.isArray(salesData?.sales_by_day) ? salesData.sales_by_day : [])?.map((item, index) => ({
+            date:
+              item?.date ||
+              item?.day ||
+              new Date(
+                Date.now() -
+                  ((Array.isArray(salesData?.sales_by_day) ? salesData.sales_by_day.length : 0) - index) * 24 * 60 * 60 * 1000,
+              )
+                .toISOString()
+                .split("T")[0],
+            revenue: Number(item?.revenue ?? item?.total_revenue ?? 0) || 0,
+            orders: Number(item?.orders ?? item?.total_orders ?? 0) || 0,
+            users: 0, // Pode ser calculado separadamente
+          })) || [],
+        topProducts:
+          (Array.isArray(productsData?.top_products) ? productsData.top_products : [])?.map((product) => ({
+            name: product?.name || product?.product_name || "Produto",
+            sales: Number(product?.sales_count ?? product?.total_sales ?? 0) || 0,
+            revenue: Number(product?.total_revenue ?? product?.revenue ?? 0) || 0,
+            growth: Number(product?.growth ?? 0) || 0,
+          })) || [],
         userMetrics: {
-          newUsers: usersData.new_users || 0,
-          activeUsers: usersData.active_users || 0,
-          returningUsers: usersData.returning_users || 0,
-          churnRate: usersData.churn_rate || 0
+          newUsers: Number(usersData?.new_users) || 0,
+          activeUsers: Number(usersData?.active_users) || 0,
+          returningUsers: Number(usersData?.returning_users) || 0,
+          churnRate: Number(usersData?.churn_rate) || 0,
         },
-        trafficSources: [] // Não disponível nos analytics atuais
+        trafficSources: [], // Não disponível nos analytics atuais
       };
 
       setAnalyticsData(formattedData);
-
     } catch (err) {
-      console.error('Erro ao carregar analytics:', err);
-      setError('Erro ao carregar dados de analytics');
-      toast.error('Erro ao carregar analytics');
+      console.error("Erro ao carregar analytics:", err);
+      setError(err?.message || "Erro ao carregar dados de analytics");
+      toast.error("Erro ao carregar analytics");
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    loadAnalyticsData();
+  }, [loadAnalyticsData]);
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatNumber = (value) => {
-    return new Intl.NumberFormat('pt-BR').format(value);
+    return new Intl.NumberFormat("pt-BR").format(value);
   };
 
   const formatPercentage = (value) => {
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+    return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
   };
 
   if (loading) {
@@ -157,7 +200,9 @@ const AdminAnalyticsPage = () => {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Carregando analytics...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Carregando analytics...
+            </p>
           </div>
         </div>
       </div>
@@ -169,7 +214,7 @@ const AdminAnalyticsPage = () => {
       <div className="space-y-6">
         <Card>
           <CardContent className="p-12 text-center">
-            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <p className="text-red-600 dark:text-red-400 mb-4" role="alert" aria-live="assertive">{error}</p>
             <Button onClick={loadAnalyticsData} variant="outline">
               Tentar novamente
             </Button>
@@ -192,10 +237,17 @@ const AdminAnalyticsPage = () => {
             Análise detalhada de performance e métricas
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-4">
-          <Button onClick={loadAnalyticsData} variant="outline" size="sm" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            onClick={loadAnalyticsData}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
           <div className="flex items-center space-x-2">
@@ -214,8 +266,14 @@ const AdminAnalyticsPage = () => {
               <option value="1y">Último ano</option>
             </select>
           </div>
-          
-          <Button variant="outline" size="sm" onClick={() => toast.info('Funcionalidade de exportação em desenvolvimento')}>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              toast.info("Funcionalidade de exportação em desenvolvimento")
+            }
+          >
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
@@ -230,10 +288,14 @@ const AdminAnalyticsPage = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(analyticsData.overview.totalRevenue)}</div>
+            <div className="text-2xl font-bold">
+              {formatCurrency(analyticsData.overview.totalRevenue)}
+            </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">{formatPercentage(analyticsData.overview.revenueGrowth)}</span>
+              <span className="text-green-500">
+                {formatPercentage(analyticsData.overview.revenueGrowth)}
+              </span>
               <span className="ml-1">vs período anterior</span>
             </div>
           </CardContent>
@@ -241,14 +303,20 @@ const AdminAnalyticsPage = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Pedidos
+            </CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(analyticsData.overview.totalOrders)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(analyticsData.overview.totalOrders)}
+            </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">{formatPercentage(analyticsData.overview.ordersGrowth)}</span>
+              <span className="text-green-500">
+                {formatPercentage(analyticsData.overview.ordersGrowth)}
+              </span>
               <span className="ml-1">vs período anterior</span>
             </div>
           </CardContent>
@@ -256,14 +324,20 @@ const AdminAnalyticsPage = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Usuários
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(analyticsData.overview.totalUsers)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(analyticsData.overview.totalUsers)}
+            </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">{formatPercentage(analyticsData.overview.usersGrowth)}</span>
+              <span className="text-green-500">
+                {formatPercentage(analyticsData.overview.usersGrowth)}
+              </span>
               <span className="ml-1">vs período anterior</span>
             </div>
           </CardContent>
@@ -275,7 +349,9 @@ const AdminAnalyticsPage = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(analyticsData.overview.averageOrderValue)}</div>
+            <div className="text-2xl font-bold">
+              {formatCurrency(analyticsData.overview.averageOrderValue)}
+            </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
               <span className="text-green-500">+5.2%</span>
@@ -299,8 +375,12 @@ const AdminAnalyticsPage = () => {
             <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="text-center">
                 <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 dark:text-gray-400">Gráfico de Receita</p>
-                <p className="text-sm text-gray-500">Integração com biblioteca de gráficos</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Gráfico de Receita
+                </p>
+                <p className="text-sm text-gray-500">
+                  Integração com biblioteca de gráficos
+                </p>
               </div>
             </div>
           </CardContent>
@@ -318,8 +398,12 @@ const AdminAnalyticsPage = () => {
             <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="text-center">
                 <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 dark:text-gray-400">Gráfico de Pedidos</p>
-                <p className="text-sm text-gray-500">Integração com biblioteca de gráficos</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Gráfico de Pedidos
+                </p>
+                <p className="text-sm text-gray-500">
+                  Integração com biblioteca de gráficos
+                </p>
               </div>
             </div>
           </CardContent>
@@ -337,13 +421,18 @@ const AdminAnalyticsPage = () => {
         <CardContent>
           <div className="space-y-4">
             {analyticsData.topProducts.map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+              >
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
                     {index + 1}
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white">{product.name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      {product.name}
+                    </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {product.sales} vendas
                     </p>
@@ -353,9 +442,11 @@ const AdminAnalyticsPage = () => {
                   <div className="font-bold text-gray-900 dark:text-white">
                     {formatCurrency(product.revenue)}
                   </div>
-                  <div className={`text-sm flex items-center ${
-                    product.growth > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <div
+                    className={`text-sm flex items-center ${
+                      product.growth > 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
                     {product.growth > 0 ? (
                       <ArrowUpRight className="w-3 h-3 mr-1" />
                     ) : (
@@ -377,7 +468,9 @@ const AdminAnalyticsPage = () => {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Novos Usuários</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Novos Usuários
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analyticsData.userMetrics.newUsers)}
                 </p>
@@ -391,7 +484,9 @@ const AdminAnalyticsPage = () => {
             <div className="flex items-center">
               <Eye className="h-8 w-8 text-green-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuários Ativos</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Usuários Ativos
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analyticsData.userMetrics.activeUsers)}
                 </p>
@@ -405,7 +500,9 @@ const AdminAnalyticsPage = () => {
             <div className="flex items-center">
               <TrendingUp className="h-8 w-8 text-purple-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuários Retornando</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Usuários Retornando
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analyticsData.userMetrics.returningUsers)}
                 </p>
@@ -419,7 +516,9 @@ const AdminAnalyticsPage = () => {
             <div className="flex items-center">
               <ArrowDownRight className="h-8 w-8 text-red-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Taxa de Churn</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Taxa de Churn
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {analyticsData.userMetrics.churnRate}%
                 </p>
@@ -433,9 +532,7 @@ const AdminAnalyticsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>Fontes de Tráfego</CardTitle>
-          <CardDescription>
-            Origem dos visitantes do site
-          </CardDescription>
+          <CardDescription>Origem dos visitantes do site</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -443,7 +540,9 @@ const AdminAnalyticsPage = () => {
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="font-medium text-gray-900 dark:text-white">{source.source}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {source.source}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-sm text-gray-600 dark:text-gray-400">

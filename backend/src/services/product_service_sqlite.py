@@ -1,5 +1,18 @@
 """
-Service de produtos RE-EDUCA Store - Adaptado para SQLite
+Service de produtos RE-EDUCA Store - SQLite.
+
+Implementação específica para SQLite incluindo:
+- CRUD de produtos
+- Busca e filtragem
+- Paginação
+- Compatível com schema local
+
+USO:
+- Desenvolvimento local sem Supabase
+- Testes unitários
+- Ambientes offline
+
+PRODUÇÃO: Usar product_service.py com Supabase.
 """
 import logging
 import sqlite3
@@ -11,13 +24,29 @@ from utils.helpers import generate_uuid
 logger = logging.getLogger(__name__)
 
 class ProductService:
-    """Service para operações de produtos - SQLite"""
+    """
+    Service para operações de produtos - SQLite.
+    
+    Implementação específica para banco SQLite local.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de produtos SQLite."""
         self.db_path = get_sqlite_connection()
     
     def get_products(self, page: int = 1, per_page: int = 20, category: Optional[str] = None, search: Optional[str] = None) -> Dict[str, Any]:
-        """Retorna lista de produtos"""
+        """
+        Retorna lista de produtos do SQLite.
+        
+        Args:
+            page (int): Página (padrão: 1).
+            per_page (int): Itens por página (padrão: 20).
+            category (str, optional): Filtrar por categoria.
+            search (str, optional): Busca por nome.
+            
+        Returns:
+            Dict[str, Any]: Produtos paginados.
+        """
         try:
             conn = sqlite3.connect(self.db_path)
             conn.row_factory = sqlite3.Row

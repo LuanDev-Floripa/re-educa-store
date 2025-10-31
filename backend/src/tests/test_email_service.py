@@ -1,5 +1,13 @@
 """
-Testes do Serviço de Email RE-EDUCA Store
+Testes do Serviço de Email RE-EDUCA Store.
+
+Cobre funcionalidades de email incluindo:
+- Inicialização com variáveis de ambiente
+- Conexão SMTP
+- Envio de emails (verificação, reset, boas-vindas)
+- Templates HTML responsivos
+- Acessibilidade dos templates
+- Tratamento de erros
 """
 import pytest
 import os

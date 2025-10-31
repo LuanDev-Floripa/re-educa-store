@@ -1,225 +1,317 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { useApi, apiService } from '../lib/api';
+/**
+ * PaymentSystem Component - RE-EDUCA Store
+ * 
+ * Sistema completo de pagamento com suporte a múltiplos métodos incluindo:
+ * - Cartão de crédito (Visa, Mastercard, Elo, etc.)
+ * - PIX (pagamento instantâneo com desconto)
+ * - Boleto bancário
+ * - PayPal
+ * 
+ * Funcionalidades:
+ * - Validação completa de dados do cartão e endereço de cobrança
+ * - Cálculo automático de totais com taxas e descontos
+ * - Processamento seguro via apiService
+ * - Formatação de números de cartão
+ * - Detecção automática de bandeira
+ * - Parcelamento para cartão de crédito
+ * - Tratamento robusto de erros com fallbacks
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {Object} props.order - Objeto do pedido com total/subtotal
+ * @param {Function} props.onSuccess - Callback chamado quando pagamento é bem-sucedido
+ * @param {Function} props.onCancel - Callback chamado quando pagamento é cancelado
+ * @param {boolean} props.showPaymentMethods - Se deve exibir seleção de métodos (padrão: true)
+ * @returns {JSX.Element} Componente de pagamento completo
+ */
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { useApi, apiService } from "../lib/api";
 // Função utilitária para formatação de moeda
 const formatCurrency = (value) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
   }).format(value);
 };
-import { 
-  CreditCard, 
-  Lock, 
-  Shield, 
-  CheckCircle, 
+import {
+  CreditCard,
+  Lock,
+  Shield,
+  CheckCircle,
   AlertCircle,
   ShoppingCart,
   Truck,
   Gift,
   Star,
   ArrowRight,
-  Loader2
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 
-export const PaymentSystem = ({ 
-  order, 
-  onSuccess, 
+export const PaymentSystem = ({
+  order,
+  onSuccess,
   onCancel,
-  showPaymentMethods = true 
+  showPaymentMethods = true,
 }) => {
   const { request, loading } = useApi();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState('credit_card');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    React.useState("credit_card");
   const [paymentData, setPaymentData] = React.useState({
-    cardNumber: '',
-    cardHolder: '',
-    expiryMonth: '',
-    expiryYear: '',
-    cvv: '',
-    installments: 1
+    cardNumber: "",
+    cardHolder: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+    installments: 1,
   });
   const [billingAddress, setBillingAddress] = React.useState({
-    street: '',
-    number: '',
-    complement: '',
-    neighborhood: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'Brasil'
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "Brasil",
   });
   const [showBillingForm, setShowBillingForm] = React.useState(false);
-  const [paymentStatus, setPaymentStatus] = React.useState('pending');
+  const [paymentStatus, setPaymentStatus] = React.useState("pending");
 
   const paymentMethods = [
     {
-      id: 'credit_card',
-      name: 'Cartão de Crédito',
+      id: "credit_card",
+      name: "Cartão de Crédito",
       icon: <CreditCard className="w-5 h-5" />,
-      description: 'Visa, Mastercard, Elo e outros',
+      description: "Visa, Mastercard, Elo e outros",
       processingFee: 0,
-      installments: true
+      installments: true,
     },
     {
-      id: 'pix',
-      name: 'PIX',
+      id: "pix",
+      name: "PIX",
       icon: <Gift className="w-5 h-5" />,
-      description: 'Pagamento instantâneo',
+      description: "Pagamento instantâneo",
       processingFee: 0,
       discount: 0.05, // 5% de desconto
-      installments: false
+      installments: false,
     },
     {
-      id: 'boleto',
-      name: 'Boleto Bancário',
+      id: "boleto",
+      name: "Boleto Bancário",
       icon: <Truck className="w-5 h-5" />,
-      description: 'Vencimento em 3 dias úteis',
+      description: "Vencimento em 3 dias úteis",
       processingFee: 2.99,
-      installments: false
+      installments: false,
     },
     {
-      id: 'paypal',
-      name: 'PayPal',
+      id: "paypal",
+      name: "PayPal",
       icon: <Star className="w-5 h-5" />,
-      description: 'Conta PayPal ou cartão',
+      description: "Conta PayPal ou cartão",
       processingFee: 0,
-      installments: false
-    }
+      installments: false,
+    },
   ];
 
-  const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentMethod);
+  const selectedMethod =
+    paymentMethods.find((m) => m.id === selectedPaymentMethod) ||
+    paymentMethods[0];
 
+  /**
+   * Calcula o total final do pagamento incluindo taxas e descontos.
+   * 
+   * @returns {number} Total final calculado com taxas e descontos aplicados.
+   */
   const calculateTotal = () => {
-    let total = order.total || 0;
-    
-    if (selectedMethod.processingFee > 0) {
-      total += selectedMethod.processingFee;
+    const base = Number(order?.total ?? order?.subtotal ?? 0);
+    let total = Number.isFinite(base) ? base : 0;
+
+    if (Number(selectedMethod?.processingFee) > 0) {
+      total += Number(selectedMethod.processingFee) || 0;
     }
-    
-    if (selectedMethod.discount) {
-      total = total * (1 - selectedMethod.discount);
+
+    if (Number(selectedMethod?.discount)) {
+      total = total * (1 - Number(selectedMethod.discount));
     }
-    
+
     return total;
   };
 
   const handlePaymentDataChange = (field, value) => {
-    setPaymentData(prev => ({
+    setPaymentData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleBillingAddressChange = (field, value) => {
-    setBillingAddress(prev => ({
+    setBillingAddress((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
+  /**
+   * Valida dados do pagamento antes de processar.
+   * 
+   * Valida campos obrigatórios baseado no método de pagamento:
+   * - Cartão de crédito: número, titular, validade, CVV
+   * - Endereço de cobrança se necessário
+   * 
+   * @returns {boolean} True se dados são válidos, False caso contrário.
+   */
   const validatePaymentData = () => {
-    if (selectedPaymentMethod === 'credit_card') {
+    if (selectedPaymentMethod === "credit_card") {
       if (!paymentData.cardNumber || paymentData.cardNumber.length < 16) {
-        toast.error('Número do cartão inválido');
+        toast.error("Número do cartão inválido");
         return false;
       }
       if (!paymentData.cardHolder.trim()) {
-        toast.error('Nome do titular é obrigatório');
+        toast.error("Nome do titular é obrigatório");
         return false;
       }
       if (!paymentData.expiryMonth || !paymentData.expiryYear) {
-        toast.error('Data de validade é obrigatória');
+        toast.error("Data de validade é obrigatória");
         return false;
       }
       if (!paymentData.cvv || paymentData.cvv.length < 3) {
-        toast.error('CVV é obrigatório');
+        toast.error("CVV é obrigatório");
         return false;
       }
     }
-    
+
     if (showBillingForm && !billingAddress.street.trim()) {
-      toast.error('Endereço de cobrança é obrigatório');
+      toast.error("Endereço de cobrança é obrigatório");
       return false;
     }
-    
+
     return true;
   };
 
+  /**
+   * Processa o pagamento via API.
+   * 
+   * Envia dados do pagamento para o backend e gerencia estados:
+   * - Valida dados antes de enviar
+   * - Atualiza status (processing, success, failed)
+   * - Chama callbacks onSuccess ou onCancel
+   * - Exibe mensagens de erro via toast
+   * 
+   * @async
+   * @throws {Error} Erro se serviço não disponível ou pagamento falhar.
+   */
   const processPayment = async () => {
     if (!validatePaymentData()) return;
 
-    setPaymentStatus('processing');
-    
+    setPaymentStatus("processing");
+
     try {
       const paymentPayload = {
-        order_id: order.id,
+        order_id: order?.id,
         payment_method: selectedPaymentMethod,
         amount: calculateTotal(),
-        installments: selectedMethod.installments ? paymentData.installments : 1,
-        billing_address: showBillingForm ? billingAddress : null
+        installments: selectedMethod.installments
+          ? paymentData.installments
+          : 1,
+        billing_address: showBillingForm ? billingAddress : null,
       };
 
-      if (selectedPaymentMethod === 'credit_card') {
+      if (selectedPaymentMethod === "credit_card") {
         paymentPayload.card_data = {
-          number: paymentData.cardNumber.replace(/\s/g, ''),
+          number: paymentData.cardNumber.replace(/\s/g, ""),
           holder_name: paymentData.cardHolder,
           expiry_month: paymentData.expiryMonth,
           expiry_year: paymentData.expiryYear,
-          cvv: paymentData.cvv
+          cvv: paymentData.cvv,
         };
       }
 
-      const result = await request(() => 
-        apiService.payments.processPayment(paymentPayload)
+      if (typeof request !== "function") {
+        throw new Error("Serviço de rede indisponível");
+      }
+      if (!apiService?.payments?.processPayment) {
+        throw new Error("Serviço de pagamento indisponível");
+      }
+      const result = await request(() =>
+        apiService.payments.processPayment(paymentPayload),
       );
 
-      if (result.success) {
-        setPaymentStatus('success');
-        toast.success('Pagamento processado com sucesso!');
-        
+      if (result?.success) {
+        setPaymentStatus("success");
+        toast.success("Pagamento processado com sucesso!");
+
         // Aguardar um momento para mostrar o sucesso
         setTimeout(() => {
           onSuccess && onSuccess(result);
         }, 2000);
       } else {
-        setPaymentStatus('failed');
-        toast.error(result.message || 'Erro ao processar pagamento');
+        setPaymentStatus("failed");
+        toast.error(result?.message || "Erro ao processar pagamento");
       }
     } catch (error) {
-      console.error('Erro no pagamento:', error);
-      setPaymentStatus('failed');
-      toast.error('Erro ao processar pagamento. Tente novamente.');
+      console.error("Erro no pagamento:", error);
+      setPaymentStatus("failed");
+      toast.error(error?.message || "Erro ao processar pagamento. Tente novamente.");
     }
   };
 
+  /**
+   * Formata número de cartão de crédito com espaços a cada 4 dígitos.
+   * 
+   * Remove caracteres não numéricos e adiciona espaços para melhorar
+   * legibilidade (ex: 1234 5678 9012 3456).
+   * 
+   * @param {string} value - Número de cartão sem formatação.
+   * @returns {string} Número de cartão formatado com espaços.
+   */
   const formatCardNumber = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || "";
     const parts = [];
-    
+
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
-    
+
     if (parts.length) {
-      return parts.join(' ');
+      return parts.join(" ");
     } else {
       return v;
     }
   };
 
+  /**
+   * Identifica a bandeira do cartão baseado no número.
+   * 
+   * Usa padrões de prefixo para identificar:
+   * - Visa: inicia com 4
+   * - Mastercard: inicia com 51-55
+   * - Amex: inicia com 34 ou 37
+   * - Discover: inicia com 6
+   * - JCB: inicia com 35
+   * 
+   * @param {string} number - Número do cartão (com ou sem formatação).
+   * @returns {string} Nome da bandeira ('visa', 'mastercard', 'amex', 'discover', 'jcb', 'unknown').
+   */
   const getCardBrand = (number) => {
-    const cleanNumber = number.replace(/\s/g, '');
-    if (/^4/.test(cleanNumber)) return 'visa';
-    if (/^5[1-5]/.test(cleanNumber)) return 'mastercard';
-    if (/^3[47]/.test(cleanNumber)) return 'amex';
-    if (/^6/.test(cleanNumber)) return 'discover';
-    if (/^35/.test(cleanNumber)) return 'jcb';
-    return 'unknown';
+    const cleanNumber = String(number || "").replace(/\s/g, "");
+    if (/^4/.test(cleanNumber)) return "visa";
+    if (/^5[1-5]/.test(cleanNumber)) return "mastercard";
+    if (/^3[47]/.test(cleanNumber)) return "amex";
+    if (/^6/.test(cleanNumber)) return "discover";
+    if (/^35/.test(cleanNumber)) return "jcb";
+    return "unknown";
   };
 
   const renderPaymentMethod = () => {
@@ -232,9 +324,7 @@ export const PaymentSystem = ({
             <CreditCard className="w-5 h-5" />
             Forma de Pagamento
           </CardTitle>
-          <CardDescription>
-            Escolha como deseja pagar
-          </CardDescription>
+          <CardDescription>Escolha como deseja pagar</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,14 +334,12 @@ export const PaymentSystem = ({
                 onClick={() => setSelectedPaymentMethod(method.id)}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   selectedPaymentMethod === method.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="text-blue-600">
-                    {method.icon}
-                  </div>
+                  <div className="text-blue-600">{method.icon}</div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">
                       {method.name}
@@ -285,7 +373,7 @@ export const PaymentSystem = ({
   };
 
   const renderCreditCardForm = () => {
-    if (selectedPaymentMethod !== 'credit_card') return null;
+    if (selectedPaymentMethod !== "credit_card") return null;
 
     return (
       <Card className="mb-6">
@@ -294,9 +382,7 @@ export const PaymentSystem = ({
             <CreditCard className="w-5 h-5" />
             Dados do Cartão
           </CardTitle>
-          <CardDescription>
-            Informações do cartão de crédito
-          </CardDescription>
+          <CardDescription>Informações do cartão de crédito</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -307,7 +393,12 @@ export const PaymentSystem = ({
               <Input
                 placeholder="0000 0000 0000 0000"
                 value={paymentData.cardNumber}
-                onChange={(e) => handlePaymentDataChange('cardNumber', formatCardNumber(e.target.value))}
+                onChange={(e) =>
+                  handlePaymentDataChange(
+                    "cardNumber",
+                    formatCardNumber(e.target.value),
+                  )
+                }
                 maxLength={19}
                 className="font-mono"
               />
@@ -326,7 +417,12 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="Como está no cartão"
                   value={paymentData.cardHolder}
-                  onChange={(e) => handlePaymentDataChange('cardHolder', e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handlePaymentDataChange(
+                      "cardHolder",
+                      e.target.value.toUpperCase(),
+                    )
+                  }
                 />
               </div>
               <div>
@@ -336,7 +432,12 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="123"
                   value={paymentData.cvv}
-                  onChange={(e) => handlePaymentDataChange('cvv', e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) =>
+                    handlePaymentDataChange(
+                      "cvv",
+                      e.target.value.replace(/\D/g, ""),
+                    )
+                  }
                   maxLength={4}
                   className="font-mono"
                 />
@@ -350,13 +451,15 @@ export const PaymentSystem = ({
                 </label>
                 <select
                   value={paymentData.expiryMonth}
-                  onChange={(e) => handlePaymentDataChange('expiryMonth', e.target.value)}
+                  onChange={(e) =>
+                    handlePaymentDataChange("expiryMonth", e.target.value)
+                  }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Mês</option>
                   {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
-                      {String(i + 1).padStart(2, '0')}
+                    <option key={i + 1} value={String(i + 1).padStart(2, "0")}>
+                      {String(i + 1).padStart(2, "0")}
                     </option>
                   ))}
                 </select>
@@ -367,7 +470,9 @@ export const PaymentSystem = ({
                 </label>
                 <select
                   value={paymentData.expiryYear}
-                  onChange={(e) => handlePaymentDataChange('expiryYear', e.target.value)}
+                  onChange={(e) =>
+                    handlePaymentDataChange("expiryYear", e.target.value)
+                  }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Ano</option>
@@ -390,7 +495,12 @@ export const PaymentSystem = ({
                 </label>
                 <select
                   value={paymentData.installments}
-                  onChange={(e) => handlePaymentDataChange('installments', parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handlePaymentDataChange(
+                      "installments",
+                      parseInt(e.target.value),
+                    )
+                  }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Array.from({ length: 12 }, (_, i) => {
@@ -398,7 +508,8 @@ export const PaymentSystem = ({
                     const installmentValue = calculateTotal() / installments;
                     return (
                       <option key={installments} value={installments}>
-                        {installments}x de {formatCurrency(installmentValue)} sem juros
+                        {installments}x de {formatCurrency(installmentValue)}{" "}
+                        sem juros
                       </option>
                     );
                   })}
@@ -419,9 +530,7 @@ export const PaymentSystem = ({
             <Truck className="w-5 h-5" />
             Endereço de Cobrança
           </CardTitle>
-          <CardDescription>
-            Endereço para fatura do cartão
-          </CardDescription>
+          <CardDescription>Endereço para fatura do cartão</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -433,7 +542,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="Nome da rua"
                   value={billingAddress.street}
-                  onChange={(e) => handleBillingAddressChange('street', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("street", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -443,7 +554,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="123"
                   value={billingAddress.number}
-                  onChange={(e) => handleBillingAddressChange('number', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("number", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -456,7 +569,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="Apto, bloco, etc."
                   value={billingAddress.complement}
-                  onChange={(e) => handleBillingAddressChange('complement', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("complement", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -466,7 +581,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="Nome do bairro"
                   value={billingAddress.neighborhood}
-                  onChange={(e) => handleBillingAddressChange('neighborhood', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("neighborhood", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -479,7 +596,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="Nome da cidade"
                   value={billingAddress.city}
-                  onChange={(e) => handleBillingAddressChange('city', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("city", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -489,7 +608,12 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="UF"
                   value={billingAddress.state}
-                  onChange={(e) => handleBillingAddressChange('state', e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleBillingAddressChange(
+                      "state",
+                      e.target.value.toUpperCase(),
+                    )
+                  }
                   maxLength={2}
                 />
               </div>
@@ -500,7 +624,9 @@ export const PaymentSystem = ({
                 <Input
                   placeholder="00000-000"
                   value={billingAddress.zipCode}
-                  onChange={(e) => handleBillingAddressChange('zipCode', e.target.value)}
+                  onChange={(e) =>
+                    handleBillingAddressChange("zipCode", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -521,56 +647,59 @@ export const PaymentSystem = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {order.items?.map((item, index) => (
+            {(Array.isArray(order?.items) ? order.items : []).map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    src={item.image || 'https://via.placeholder.com/40x40'}
-                    alt={item.name}
+                    src={item?.image || "https://via.placeholder.com/40x40"}
+                    alt={item?.name || "Item"}
                     className="w-10 h-10 rounded object-cover"
                   />
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {item.name}
+                      {item?.name || "Produto"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Qtd: {item.quantity}
+                      Qtd: {Number(item?.quantity) || 0}
                     </p>
                   </div>
                 </div>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {formatCurrency(item.price * item.quantity)}
+                  {formatCurrency((Number(item?.price) || 0) * (Number(item?.quantity) || 0))}
                 </p>
               </div>
             ))}
-            
+
             <div className="border-t pt-3 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Subtotal:</span>
-                <span>{formatCurrency(order.subtotal || order.total)}</span>
+                <span>{formatCurrency(Number(order?.subtotal ?? order?.total) || 0)}</span>
               </div>
-              
-              {order.shipping > 0 && (
+
+              {Number(order?.shipping) > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span>Frete:</span>
-                  <span>{formatCurrency(order.shipping)}</span>
+                  <span>{formatCurrency(Number(order?.shipping) || 0)}</span>
                 </div>
               )}
-              
-              {selectedMethod.processingFee > 0 && (
+
+              {Number(selectedMethod?.processingFee) > 0 && (
                 <div className="flex items-center justify-between text-sm text-red-600">
                   <span>Taxa de processamento:</span>
-                  <span>{formatCurrency(selectedMethod.processingFee)}</span>
+                  <span>{formatCurrency(Number(selectedMethod?.processingFee) || 0)}</span>
                 </div>
               )}
-              
-              {selectedMethod.discount && (
+
+              {Number(selectedMethod?.discount) > 0 && (
                 <div className="flex items-center justify-between text-sm text-green-600">
                   <span>Desconto ({selectedMethod.discount * 100}%):</span>
-                  <span>-{formatCurrency((order.total || 0) * selectedMethod.discount)}</span>
+                  <span>
+                    -
+                    {formatCurrency((Number(order?.total) || 0) * Number(selectedMethod?.discount || 0))}
+                  </span>
                 </div>
               )}
-              
+
               <div className="flex items-center justify-between text-lg font-bold border-t pt-2">
                 <span>Total:</span>
                 <span>{formatCurrency(calculateTotal())}</span>
@@ -583,28 +712,32 @@ export const PaymentSystem = ({
   };
 
   const renderPaymentStatus = () => {
-    if (paymentStatus === 'pending') return null;
+    if (paymentStatus === "pending") return null;
 
     return (
-      <Card className={`mb-6 border-2 ${
-        paymentStatus === 'success' ? 'border-green-200 bg-green-50' :
-        paymentStatus === 'failed' ? 'border-red-200 bg-red-50' :
-        'border-blue-200 bg-blue-50'
-      }`}>
+      <Card
+        className={`mb-6 border-2 ${
+          paymentStatus === "success"
+            ? "border-green-200 bg-green-50"
+            : paymentStatus === "failed"
+              ? "border-red-200 bg-red-50"
+              : "border-blue-200 bg-blue-50"
+        }`}
+      >
         <CardContent className="p-6 text-center">
-          {paymentStatus === 'processing' && (
+          {paymentStatus === "processing" && (
             <>
-              <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-spin" />
+              <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-spin" aria-hidden="true" />
               <h3 className="text-xl font-semibold text-blue-600 mb-2">
                 Processando Pagamento...
               </h3>
-              <p className="text-blue-600">
+              <p className="text-blue-600" role="status" aria-live="polite">
                 Aguarde enquanto processamos sua transação
               </p>
             </>
           )}
-          
-          {paymentStatus === 'success' && (
+
+          {paymentStatus === "success" && (
             <>
               <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-green-600 mb-2">
@@ -615,8 +748,8 @@ export const PaymentSystem = ({
               </p>
             </>
           )}
-          
-          {paymentStatus === 'failed' && (
+
+          {paymentStatus === "failed" && (
             <>
               <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-red-600 mb-2">
@@ -626,7 +759,7 @@ export const PaymentSystem = ({
                 Houve um problema com seu pagamento. Tente novamente.
               </p>
               <Button
-                onClick={() => setPaymentStatus('pending')}
+                onClick={() => setPaymentStatus("pending")}
                 className="mt-4 bg-red-600 hover:bg-red-700"
               >
                 Tentar Novamente
@@ -638,7 +771,7 @@ export const PaymentSystem = ({
     );
   };
 
-  if (paymentStatus === 'success') {
+  if (paymentStatus === "success") {
     return renderPaymentStatus();
   }
 
@@ -659,19 +792,19 @@ export const PaymentSystem = ({
       {renderOrderSummary()}
       {renderPaymentMethod()}
       {renderCreditCardForm()}
-      
-      {selectedPaymentMethod === 'credit_card' && (
+
+      {selectedPaymentMethod === "credit_card" && (
         <div className="mb-6">
           <Button
             variant="outline"
             onClick={() => setShowBillingForm(!showBillingForm)}
             className="w-full"
           >
-            {showBillingForm ? 'Ocultar' : 'Adicionar'} Endereço de Cobrança
+            {showBillingForm ? "Ocultar" : "Adicionar"} Endereço de Cobrança
           </Button>
         </div>
       )}
-      
+
       {showBillingForm && renderBillingAddressForm()}
 
       <div className="flex gap-4">
@@ -679,16 +812,16 @@ export const PaymentSystem = ({
           onClick={onCancel}
           variant="outline"
           className="flex-1"
-          disabled={loading || paymentStatus === 'processing'}
+          disabled={loading || paymentStatus === "processing"}
         >
           Cancelar
         </Button>
         <Button
           onClick={processPayment}
           className="flex-1 bg-blue-600 hover:bg-blue-700"
-          disabled={loading || paymentStatus === 'processing'}
+          disabled={loading || paymentStatus === "processing"}
         >
-          {loading || paymentStatus === 'processing' ? (
+          {loading || paymentStatus === "processing" ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Processando...
@@ -708,11 +841,11 @@ export const PaymentSystem = ({
           Seus dados estão protegidos com criptografia SSL
         </p>
         <p className="mt-2">
-          Ao finalizar, você concorda com nossos{' '}
+          Ao finalizar, você concorda com nossos{" "}
           <a href="/terms" className="text-blue-600 hover:underline">
             Termos de Uso
-          </a>{' '}
-          e{' '}
+          </a>{" "}
+          e{" "}
           <a href="/privacy" className="text-blue-600 hover:underline">
             Política de Privacidade
           </a>

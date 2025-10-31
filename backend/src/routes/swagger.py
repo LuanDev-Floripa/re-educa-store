@@ -1,5 +1,20 @@
 """
-Documentação Swagger/OpenAPI para RE-EDUCA Store
+Documentação Swagger/OpenAPI para RE-EDUCA Store.
+
+Fornece documentação interativa da API usando Flask-RESTX incluindo:
+- Todos os endpoints disponíveis
+- Modelos de request/response
+- Autenticação e autorização
+- Exemplos de uso
+- Try-it-out funcional
+
+Acesso: https://api.re-educa.com/api/docs/
+
+Namespaces:
+- /products: Gestão de produtos
+- /health: Ferramentas de saúde
+- /exercises: Exercícios e treinos
+- /ai: Inteligência artificial
 """
 from flask import Blueprint
 from flask_restx import Api, Resource, fields
@@ -109,7 +124,18 @@ class ProductList(Resource):
     @api.doc('list_products')
     @api.marshal_with(product_list_model)
     def get(self):
-        """Lista todos os produtos com paginação"""
+        """
+        Lista todos os produtos com paginação.
+        
+        Query Parameters:
+            page (int): Número da página (padrão: 1).
+            per_page (int): Itens por página (padrão: 20).
+            category (str): Filtrar por categoria (opcional).
+            search (str): Busca textual (opcional).
+        
+        Returns:
+            JSON: Lista de produtos com metadados de paginação.
+        """
         service = ProductService()
         page = int(api.payload.get('page', 1)) if api.payload else 1
         per_page = int(api.payload.get('per_page', 20)) if api.payload else 20
@@ -131,7 +157,12 @@ class Product(Resource):
 class ProductCategories(Resource):
     @api.doc('get_categories')
     def get(self):
-        """Retorna lista de categorias de produtos"""
+        """
+        Retorna lista de categorias de produtos.
+        
+        Returns:
+            JSON: Lista de categorias disponíveis com contagem de produtos.
+        """
         service = ProductService()
         return service.get_categories()
 
@@ -150,7 +181,16 @@ class IMCCalculate(Resource):
     @api.expect(imc_request_model)
     @api.marshal_with(imc_response_model)
     def post(self):
-        """Calcula IMC e retorna classificação"""
+        """
+        Calcula IMC e retorna classificação completa.
+        
+        Request Body:
+            height (float): Altura em metros.
+            weight (float): Peso em kg.
+        
+        Returns:
+            JSON: IMC calculado, classificação, recomendações e faixa de peso ideal.
+        """
         service = HealthService()
         data = api.payload
         # Aqui você implementaria a lógica de cálculo
@@ -168,7 +208,19 @@ class CaloriesCalculate(Resource):
     @api.expect(calories_request_model)
     @api.marshal_with(calories_response_model)
     def post(self):
-        """Calcula necessidade calórica diária"""
+        """
+        Calcula necessidade calórica diária (TDEE) e macronutrientes.
+        
+        Request Body:
+            weight (float): Peso em kg.
+            height (float): Altura em cm.
+            age (int): Idade em anos.
+            gender (str): 'male' ou 'female'.
+            activity_level (str): Nível de atividade física.
+        
+        Returns:
+            JSON: BMR, TDEE, calorias e distribuição de macronutrientes.
+        """
         # Aqui você implementaria a lógica de cálculo
         return {
             'bmr': 1800.0,
@@ -194,7 +246,12 @@ class ExerciseList(Resource):
 class ExerciseCategories(Resource):
     @api.doc('get_exercise_categories')
     def get(self):
-        """Retorna categorias de exercícios"""
+        """
+        Retorna categorias de exercícios disponíveis.
+        
+        Returns:
+            JSON: Lista de categorias com contagem de exercícios.
+        """
         service = ExerciseService()
         return service.get_categories()
 
@@ -227,7 +284,12 @@ class AIProductRecommendations(Resource):
 class APIStatus(Resource):
     @api.doc('api_status')
     def get(self):
-        """Status da API"""
+        """
+        Status da API e endpoints disponíveis.
+        
+        Returns:
+            JSON: Status online, versão, timestamp e lista de endpoints.
+        """
         return {
             'status': 'online',
             'version': '1.0',

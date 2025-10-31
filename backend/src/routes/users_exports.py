@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Rotas de exportação de dados do usuário
-CORRIGIDO: Implementação real usando Supabase
+Rotas de exportação de dados do usuário RE-EDUCA Store.
+
+Permite usuários exportarem seus dados em conformidade com LGPD/GDPR:
+- Exportação de dados pessoais
+- Histórico de atividades
+- Dados de saúde
+- Pedidos e transações
+- Formatos: JSON, CSV, PDF
+
+SEGURANÇA: Apenas o próprio usuário pode exportar seus dados.
 """
 from flask import Blueprint, request, jsonify
 from utils.decorators import token_required, handle_exceptions
@@ -18,7 +26,12 @@ exports_bp = Blueprint('exports', __name__, url_prefix='/api/users/exports')
 @token_required
 @handle_exceptions
 def get_export_history():
-    """Retorna histórico de exportações do usuário"""
+    """
+    Retorna histórico de exportações do usuário.
+    
+    Returns:
+        JSON: Lista de exportações solicitadas com status e links de download.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -66,7 +79,15 @@ def get_export_history():
 @token_required
 @handle_exceptions
 def get_scheduled_exports():
-    """Retorna exportações agendadas do usuário"""
+    """
+    Retorna exportações agendadas do usuário.
+    
+    Lista todas as exportações automáticas configuradas pelo usuário,
+    incluindo frequência e próxima execução.
+    
+    Returns:
+        JSON: Lista de exportações agendadas com frequência e next_run.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -112,7 +133,20 @@ def get_scheduled_exports():
 @token_required
 @handle_exceptions
 def create_export():
-    """Cria uma nova exportação de dados"""
+    """
+    Cria uma nova exportação de dados do usuário (LGPD/GDPR).
+    
+    Inicia processo de exportação assíncrono que coleta todos os dados
+    do usuário nos formatos solicitados (JSON, CSV, PDF).
+    
+    Request Body:
+        name (str): Nome descritivo da exportação.
+        format (str): Formato desejado ('json', 'csv', 'pdf').
+        dataTypes (list): Tipos de dados a incluir ['all'] ou específicos.
+    
+    Returns:
+        JSON: ID da exportação criada, status 'pending' e mensagem.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:

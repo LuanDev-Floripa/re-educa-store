@@ -1,14 +1,43 @@
+"""
+Testes para Sistema de IA RE-EDUCA Store.
+
+Cobre funcionalidades de chat com IA incluindo:
+- Chat básico e contextualizado
+- Histórico de conversas
+- Seleção de agentes especializados
+- Validação de mensagens e contextos
+- Tratamento de erros e rate limiting
+"""
 import pytest
 import json
 from unittest.mock import Mock, patch
 from datetime import datetime
 
 class TestAISystem:
-    """Testes para sistema de IA"""
+    """
+    Testes para sistema de IA RE-EDUCA Store.
+    
+    Suite completa de testes para todas as funcionalidades
+    relacionadas a interação com IA incluindo chat, histórico,
+    agentes e validações.
+    """
     
     @pytest.mark.ai
     def test_ai_chat_success(self, client, auth_headers, mock_supabase):
-        """Testa chat com IA bem-sucedido"""
+        """
+        Testa chat com IA bem-sucedido.
+        
+        Verifica:
+        - Resposta HTTP 200
+        - Presença de campo 'response' na resposta
+        - Presença de campo 'message_id' após salvar mensagem
+        - Correta persistência no banco de dados
+        
+        Args:
+            client: Cliente Flask de teste.
+            auth_headers: Headers de autenticação.
+            mock_supabase: Mock do Supabase.
+        """
         with patch('main.supabase', mock_supabase), \
              patch('main.request') as mock_request:
             
@@ -27,14 +56,36 @@ class TestAISystem:
                                  content_type='application/json',
                                  headers=auth_headers)
             
-            assert response.status_code == 200
+            # Assert: Status HTTP deve ser 200 (sucesso)
+            assert response.status_code == 200, f"Esperado 200, recebido {response.status_code}"
+            
+            # Assert: Resposta deve conter dados JSON válidos
             response_data = json.loads(response.data)
-            assert 'response' in response_data
-            assert 'message_id' in response_data
+            assert isinstance(response_data, dict), "Resposta deve ser um objeto JSON"
+            
+            # Assert: Deve conter campo 'response' com conteúdo
+            assert 'response' in response_data, "Resposta deve conter campo 'response'"
+            assert isinstance(response_data['response'], str), "Campo 'response' deve ser string"
+            assert len(response_data['response']) > 0, "Resposta não pode estar vazia"
+            
+            # Assert: Deve conter message_id após salvar
+            assert 'message_id' in response_data, "Resposta deve conter 'message_id' após salvar"
+            assert response_data['message_id'] is not None, "message_id não pode ser None"
     
     @pytest.mark.ai
     def test_ai_chat_missing_message(self, client, auth_headers):
-        """Testa chat sem mensagem"""
+        """
+        Testa chat sem mensagem (validação de entrada).
+        
+        Verifica:
+        - Status HTTP 400 (Bad Request)
+        - Mensagem de erro apropriada
+        - Validação de campo obrigatório
+        
+        Args:
+            client: Cliente Flask de teste.
+            auth_headers: Headers de autenticação.
+        """
         chat_data = {
             'context': 'nutrition'
         }

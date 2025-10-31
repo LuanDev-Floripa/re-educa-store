@@ -1,24 +1,30 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Calculator, 
-  Apple, 
-  ShoppingBag, 
-  TrendingUp, 
+import React, { Suspense, lazy, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  Calculator,
+  Apple,
+  ShoppingBag,
+  TrendingUp,
   ArrowRight,
   CheckCircle,
   Zap,
   Heart,
   Target,
-  Users
-} from 'lucide-react';
+  Users,
+} from "lucide-react";
 
 // Lazy load do carousel para evitar erro na HomePage
-const ProductCarousel = lazy(() => import('../components/products/ProductCarousel').catch(() => ({
-  default: () => <div className="text-center py-8 text-gray-500">Carregando produtos...</div>
-})));
+const ProductCarousel = lazy(() =>
+  import("../components/products/ProductCarousel").catch(() => ({
+    default: () => (
+      <div className="text-center py-8 text-gray-500">
+        Carregando produtos...
+      </div>
+    ),
+  })),
+);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9001';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9001";
 
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -28,13 +34,15 @@ const HomePage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/products?limit=6&featured=true`);
+        const response = await fetch(
+          `${API_URL}/api/products?limit=6&featured=true`,
+        );
         if (response.ok) {
           const data = await response.json();
           setFeaturedProducts(data.products || []);
         }
       } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
+        console.error("Erro ao buscar produtos:", error);
       } finally {
         setLoadingProducts(false);
       }
@@ -46,34 +54,35 @@ const HomePage = () => {
     {
       icon: <Calculator className="w-8 h-8" />,
       title: "Calculadora de IMC",
-      description: "Calcule seu Índice de Massa Corporal e acompanhe sua evolução",
-      color: "text-blue-600"
+      description:
+        "Calcule seu Índice de Massa Corporal e acompanhe sua evolução",
+      color: "text-blue-600",
     },
     {
       icon: <Apple className="w-8 h-8" />,
       title: "Diário Alimentar",
       description: "Registre suas refeições e monitore sua nutrição diária",
-      color: "text-green-600"
+      color: "text-green-600",
     },
     {
       icon: <ShoppingBag className="w-8 h-8" />,
       title: "Loja de Produtos",
       description: "Encontre produtos de qualidade para sua saúde e bem-estar",
-      color: "text-purple-600"
+      color: "text-purple-600",
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
       title: "Análise de Dados",
       description: "Acompanhe seu progresso com relatórios detalhados",
-      color: "text-orange-600"
-    }
+      color: "text-orange-600",
+    },
   ];
 
   const benefits = [
     "Acompanhamento personalizado da sua saúde",
     "Produtos selecionados por especialistas",
     "Relatórios detalhados de progresso",
-    "Comunidade engajada e suporte 24/7"
+    "Comunidade engajada e suporte 24/7",
   ];
 
   return (
@@ -89,23 +98,24 @@ const HomePage = () => {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-              A plataforma completa para monitorar sua saúde, gerenciar sua nutrição e encontrar produtos de qualidade para seu bem-estar.
+              A plataforma completa para monitorar sua saúde, gerenciar sua
+              nutrição e encontrar produtos de qualidade para seu bem-estar.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
+              <Link
                 to="/register"
                 className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
               >
                 Começar Agora
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
-              <Link 
+              <Link
                 to="/catalog"
                 className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-lg text-blue-600 bg-white border-2 border-blue-600 hover:bg-blue-50 transition-colors"
               >
                 Ver Produtos
               </Link>
-              <Link 
+              <Link
                 to="/login"
                 className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors dark:text-gray-300 dark:hover:bg-gray-800"
               >
@@ -127,14 +137,16 @@ const HomePage = () => {
               Ferramentas poderosas para cuidar da sua saúde
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 bg-white dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600"
               >
-                <div className={`mx-auto mb-4 p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl w-fit ${feature.color}`}>
+                <div
+                  className={`mx-auto mb-4 p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl w-fit ${feature.color}`}
+                >
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -152,25 +164,29 @@ const HomePage = () => {
       {/* Featured Products Section */}
       {!loadingProducts && featuredProducts.length > 0 && (
         <section className="py-16">
-          <Suspense fallback={
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Carregando produtos...</p>
-            </div>
-          }>
-            <ProductCarousel 
-              products={featuredProducts} 
-              title="Produtos em Destaque" 
+          <Suspense
+            fallback={
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Carregando produtos...</p>
+              </div>
+            }
+          >
+            <ProductCarousel
+              products={featuredProducts}
+              title="Produtos em Destaque"
             />
           </Suspense>
         </section>
       )}
-      
+
       {loadingProducts && (
         <section className="py-16">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-300">Buscando produtos...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">
+              Buscando produtos...
+            </p>
           </div>
         </section>
       )}
@@ -185,7 +201,7 @@ const HomePage = () => {
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Estamos preparando produtos incríveis para você.
             </p>
-            <Link 
+            <Link
               to="/catalog"
               className="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
             >
@@ -246,9 +262,10 @@ const HomePage = () => {
             Pronto para começar sua jornada?
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Junte-se a milhares de pessoas que já transformaram sua saúde com a RE-EDUCA.
+            Junte-se a milhares de pessoas que já transformaram sua saúde com a
+            RE-EDUCA.
           </p>
-          <Link 
+          <Link
             to="/register"
             className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
           >

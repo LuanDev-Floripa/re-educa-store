@@ -1,3 +1,14 @@
+"""
+Testes para Rotas de Usuário RE-EDUCA Store.
+
+Cobre funcionalidades de perfil de usuário incluindo:
+- Obtenção de perfil completo
+- Atualização de dados do perfil
+- Validação de campos (altura, peso, gênero, etc.)
+- Níveis de atividade
+- Objetivos de saúde
+- Criação de novos perfis
+"""
 import pytest
 import json
 from unittest.mock import patch, Mock
@@ -6,16 +17,24 @@ app = create_app()
 
 @pytest.fixture
 def client():
+    """Cliente Flask de teste."""
     app.config['TESTING'] = True
     return app.test_client()
 
 @pytest.fixture
 def auth_headers():
-    """Headers de autenticação para testes"""
+    """Headers de autenticação para testes."""
     return {'Authorization': 'Bearer test-token'}
 
 class TestUserRoutes:
-    """Testes para as rotas de usuário"""
+    """
+    Testes para as rotas de usuário RE-EDUCA Store.
+    
+    Suite completa de testes para rotas de perfil incluindo:
+    - CRUD de perfis
+    - Validações de dados
+    - Cenários de sucesso e erro
+    """
     
     @patch('main.token_required')
     @patch('main.supabase')
@@ -56,12 +75,22 @@ class TestUserRoutes:
         
         response = client.get('/api/user/profile', headers=auth_headers)
         
-        assert response.status_code == 200
+        # Assert: Status HTTP deve ser 200 (sucesso)
+        assert response.status_code == 200, f"Esperado 200, recebido {response.status_code}"
+        
+        # Assert: Resposta deve conter dados JSON válidos
         data = json.loads(response.data)
-        assert 'user' in data
-        assert 'profile' in data
-        assert data['user']['email'] == 'test@example.com'
-        assert data['profile']['height'] == 170
+        assert isinstance(data, dict), "Resposta deve ser um objeto JSON"
+        
+        # Assert: Deve conter campos obrigatórios
+        assert 'user' in data, "Resposta deve conter campo 'user'"
+        assert 'profile' in data, "Resposta deve conter campo 'profile'"
+        assert isinstance(data['user'], dict), "Campo 'user' deve ser um dicionário"
+        assert isinstance(data['profile'], dict), "Campo 'profile' deve ser um dicionário"
+        
+        # Assert: Dados do usuário devem corresponder
+        assert data['user']['email'] == 'test@example.com', "Email deve corresponder"
+        assert data['profile']['height'] == 170, "Altura deve corresponder"
     
     @patch('main.token_required')
     @patch('main.supabase')

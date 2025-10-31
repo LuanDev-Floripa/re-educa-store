@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Configurações RE-EDUCA Store
+Módulo de Configurações RE-EDUCA Store.
+
+Centraliza todas as configurações da aplicação incluindo:
+- Database (Supabase)
+- Security (JWT, criptografia)
+- Settings (variáveis de ambiente)
+
+Importar configurações deste módulo garante consistência.
 """

@@ -1,6 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
+/**
+ * useWebSocket
+ * - Conex?o WS com backoff expo, envio e reconex?o
+ */
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'wss://api.topsupplementslab.com/ws';
+const WS_URL =
+  import.meta.env.VITE_WS_URL || "wss://api.topsupplementslab.com/ws";
 
 export const useWebSocket = (endpoint, onMessage) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -13,31 +18,32 @@ export const useWebSocket = (endpoint, onMessage) => {
   const connect = () => {
     try {
       const ws = new WebSocket(`${WS_URL}${endpoint}`);
-      
+
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log("WebSocket connected");
         setIsConnected(true);
         setError(null);
         reconnectAttempts.current = 0;
       };
-      
+
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (onMessage) {
-            onMessage(data);
-          }
+          onMessage?.(data);
         } catch (err) {
-          console.error('Error parsing WebSocket message:', err);
+          console.error("Error parsing WebSocket message:", err);
         }
       };
-      
+
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.log("WebSocket disconnected:", event.code, event.reason);
         setIsConnected(false);
-        
+
         // Attempt to reconnect if not manually closed
-        if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
+        if (
+          event.code !== 1000 &&
+          reconnectAttempts.current < maxReconnectAttempts
+        ) {
           const delay = Math.pow(2, reconnectAttempts.current) * 1000; // Exponential backoff
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttempts.current++;
@@ -45,16 +51,16 @@ export const useWebSocket = (endpoint, onMessage) => {
           }, delay);
         }
       };
-      
+
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setError('WebSocket connection error');
+        console.error("WebSocket error:", error);
+        setError("WebSocket connection error");
       };
-      
+
       wsRef.current = ws;
     } catch (err) {
-      console.error('Error creating WebSocket:', err);
-      setError('Failed to create WebSocket connection');
+      console.error("Error creating WebSocket:", err);
+      setError("Failed to create WebSocket connection");
     }
   };
 
@@ -62,12 +68,12 @@ export const useWebSocket = (endpoint, onMessage) => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-    
+
     if (wsRef.current) {
-      wsRef.current.close(1000, 'Manual disconnect');
+      wsRef.current.close(1000, "Manual disconnect");
       wsRef.current = null;
     }
-    
+
     setIsConnected(false);
   };
 
@@ -77,7 +83,7 @@ export const useWebSocket = (endpoint, onMessage) => {
         wsRef.current.send(JSON.stringify(message));
         return true;
       } catch (err) {
-        console.error('Error sending WebSocket message:', err);
+        console.error("Error sending WebSocket message:", err);
         return false;
       }
     }
@@ -86,7 +92,7 @@ export const useWebSocket = (endpoint, onMessage) => {
 
   useEffect(() => {
     connect();
-    
+
     return () => {
       disconnect();
     };
@@ -97,6 +103,6 @@ export const useWebSocket = (endpoint, onMessage) => {
     error,
     sendMessage,
     disconnect,
-    reconnect: connect
+    reconnect: connect,
   };
 };

@@ -1,5 +1,19 @@
 """
-Serviço de Análise Preditiva RE-EDUCA Store
+Serviço de Análise Preditiva RE-EDUCA Store.
+
+Implementa Machine Learning para predições de saúde incluindo:
+- Predição de métricas de saúde (peso, IMC, calorias)
+- Predição de comportamento do usuário
+- Análise de risco de churn
+- Recomendações personalizadas
+- Modelos: LinearRegression, RandomForest, LogisticRegression
+
+DEPENDÊNCIAS:
+- scikit-learn
+- pandas
+- numpy
+
+AVISO: Requer histórico mínimo de dados para predições precisas.
 """
 import logging
 import numpy as np
@@ -17,14 +31,32 @@ import json
 logger = logging.getLogger(__name__)
 
 class PredictiveAnalysisService:
+    """
+    Service para análise preditiva com Machine Learning.
+    
+    Attributes:
+        models (dict): Modelos treinados em cache.
+        scaler (StandardScaler): Normalizador de features.
+    """
+    
     def __init__(self):
+        """Inicializa o serviço de análise preditiva."""
         self.supabase = supabase_client
         self.scaler = StandardScaler()
         self.models = {}
         self.model_performance = {}
         
     def predict_health_metrics(self, user_id: str, days_ahead: int = 30) -> Dict[str, Any]:
-        """Prediz métricas de saúde futuras do usuário usando dados reais"""
+        """
+        Prediz métricas de saúde futuras do usuário.
+        
+        Args:
+            user_id (str): ID do usuário.
+            days_ahead (int): Dias à frente para predição (padrão: 30).
+            
+        Returns:
+            Dict[str, Any]: Predições de peso, IMC, calorias com intervalos de confiança.
+        """
         try:
             # Busca dados históricos reais do usuário
             health_data = self._get_user_health_history(user_id)

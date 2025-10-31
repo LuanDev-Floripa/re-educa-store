@@ -1,6 +1,22 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.jsx';
+/**
+ * AdminRoute Component - RE-EDUCA Store
+ * 
+ * Componente de rota protegida para ?rea administrativa.
+ * 
+ * Funcionalidades:
+ * - Verifica autentica??o
+ * - Verifica se usu?rio ? admin
+ * - Redireciona se n?o autorizado
+ * - Loading state durante verifica??o
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do a ser protegido
+ * @returns {JSX.Element|Navigate} Componente protegido ou redirecionamento
+ */
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth.jsx";
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -18,7 +34,7 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== 'admin') {
+  if (user.role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 

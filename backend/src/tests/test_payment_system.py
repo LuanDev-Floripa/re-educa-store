@@ -1,5 +1,12 @@
 """
-Testes do Sistema de Pagamentos RE-EDUCA Store
+Testes do Sistema de Pagamentos RE-EDUCA Store.
+
+Cobre funcionalidades de pagamento incluindo:
+- Integração com Stripe (clientes, Payment Intents, assinaturas)
+- Integração com PagSeguro
+- Webhooks e notificações
+- Gerenciamento de assinaturas
+- Tratamento de erros de pagamento
 """
 import pytest
 import json

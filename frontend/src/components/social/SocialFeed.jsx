@@ -1,15 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/Ui/avatar';
-import { Badge } from '@/components/Ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  MoreHorizontal, 
+import React, { useState, useEffect, useCallback } from "react";
+/**
+ * Feed Social - lista e cria posts.
+ * - Busca paginada com filtros e buscas
+ * - Toasts para erros e UI de carregamento
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/Ui/avatar";
+import { Badge } from "@/components/Ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
   Image as ImageIcon,
   Video,
   MapPin,
@@ -21,67 +26,65 @@ import {
   Plus,
   Smile,
   Camera,
-  Send
-} from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useApi } from '../../lib/api';
-import { toast } from 'sonner';
-import PostCard from './PostCard';
-import CreatePostModal from './CreatePostModal';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+  Send,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { useApi } from "../../lib/api";
+import { toast } from "sonner";
+import PostCard from "./PostCard";
+import CreatePostModal from "./CreatePostModal";
 
 const SocialFeed = () => {
   const { user } = useAuth();
   const { request } = useApi();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
   // Carregar posts
-  const loadPosts = async (pageNum = 1, reset = false) => {
+  const loadPosts = useCallback(async (pageNum = 1, reset = false) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: pageNum.toString(),
-        limit: '10'
+        limit: "10",
       });
 
-      if (activeTab !== 'all') {
-        params.append('type', activeTab);
+      if (activeTab !== "all") {
+        params.append("type", activeTab);
       }
 
       if (searchQuery) {
-        params.append('search', searchQuery);
+        params.append("search", searchQuery);
       }
 
-      const data = await request(() => 
+      const data = await request(() =>
         fetch(`/api/social/posts?${params}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => res.json())
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }).then((res) => res.json()),
       );
 
       if (reset) {
         setPosts(data.posts || []);
       } else {
-        setPosts(prev => [...prev, ...(data.posts || [])]);
+        setPosts((prev) => [...prev, ...(data.posts || [])]);
       }
 
       setHasMore(data.posts?.length === 10);
       setPage(pageNum);
     } catch (error) {
-      console.error('Erro ao carregar posts:', error);
-      toast.error('Erro ao carregar posts');
+      console.error("Erro ao carregar posts:", error);
+      toast.error("Erro ao carregar posts");
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, searchQuery]);
 
   // Carregar mais posts
   const loadMore = () => {
@@ -100,26 +103,26 @@ const SocialFeed = () => {
   const handleCreatePost = async (postData) => {
     try {
       const data = await request(() =>
-        fetch('/api/social/posts', {
-          method: 'POST',
+        fetch("/api/social/posts", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify(postData)
-        }).then(res => res.json())
+          body: JSON.stringify(postData),
+        }).then((res) => res.json()),
       );
 
       if (data.success) {
-        toast.success('Post criado com sucesso!');
+        toast.success("Post criado com sucesso!");
         setShowCreatePost(false);
         loadPosts(1, true); // Recarregar feed
       } else {
-        throw new Error(data.error || 'Erro ao criar post');
+        throw new Error(data.error || "Erro ao criar post");
       }
     } catch (error) {
-      console.error('Erro ao criar post:', error);
-      toast.error('Erro ao criar post');
+      console.error("Erro ao criar post:", error);
+      toast.error("Erro ao criar post");
     }
   };
 
@@ -128,30 +131,32 @@ const SocialFeed = () => {
     try {
       const data = await request(() =>
         fetch(`/api/social/posts/${postId}/reactions`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ reaction_type: reactionType })
-        }).then(res => res.json())
+          body: JSON.stringify({ reaction_type: reactionType }),
+        }).then((res) => res.json()),
       );
 
       if (data.success) {
         // Atualizar estado local
-        setPosts(prev => prev.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                user_reacted: true,
-                reaction_count: post.reaction_count + 1
-              }
-            : post
-        ));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  user_reacted: true,
+                  reaction_count: post.reaction_count + 1,
+                }
+              : post,
+          ),
+        );
       }
     } catch (error) {
-      console.error('Erro ao reagir:', error);
-      toast.error('Erro ao reagir ao post');
+      console.error("Erro ao reagir:", error);
+      toast.error("Erro ao reagir ao post");
     }
   };
 
@@ -160,28 +165,30 @@ const SocialFeed = () => {
     try {
       const data = await request(() =>
         fetch(`/api/social/posts/${postId}/reactions`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => res.json())
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }).then((res) => res.json()),
       );
 
       if (data.success) {
         // Atualizar estado local
-        setPosts(prev => prev.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                user_reacted: false,
-                reaction_count: Math.max(0, post.reaction_count - 1)
-              }
-            : post
-        ));
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  user_reacted: false,
+                  reaction_count: Math.max(0, post.reaction_count - 1),
+                }
+              : post,
+          ),
+        );
       }
     } catch (error) {
-      console.error('Erro ao remover reação:', error);
-      toast.error('Erro ao remover reação');
+      console.error("Erro ao remover reação:", error);
+      toast.error("Erro ao remover reação");
     }
   };
 
@@ -190,34 +197,34 @@ const SocialFeed = () => {
     try {
       const data = await request(() =>
         fetch(`/api/social/users/${userId}/follow`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => res.json())
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }).then((res) => res.json()),
       );
 
       if (data.success) {
-        toast.success('Usuário seguido!');
+        toast.success("Usuário seguido!");
         // Atualizar estado se necessário
       }
     } catch (error) {
-      console.error('Erro ao seguir usuário:', error);
-      toast.error('Erro ao seguir usuário');
+      console.error("Erro ao seguir usuário:", error);
+      toast.error("Erro ao seguir usuário");
     }
   };
 
   useEffect(() => {
     loadPosts(1, true);
-  }, [activeTab]);
+  }, [activeTab, loadPosts]);
 
   const tabs = [
-    { id: 'all', label: 'Todos', icon: TrendingUp },
-    { id: 'text', label: 'Textos', icon: MessageCircle },
-    { id: 'image', label: 'Imagens', icon: ImageIcon },
-    { id: 'video', label: 'Vídeos', icon: Video },
-    { id: 'achievement', label: 'Conquistas', icon: Heart },
-    { id: 'workout', label: 'Treinos', icon: Users }
+    { id: "all", label: "Todos", icon: TrendingUp },
+    { id: "text", label: "Textos", icon: MessageCircle },
+    { id: "image", label: "Imagens", icon: ImageIcon },
+    { id: "video", label: "Vídeos", icon: Video },
+    { id: "achievement", label: "Conquistas", icon: Heart },
+    { id: "workout", label: "Treinos", icon: Users },
   ];
 
   return (
@@ -232,8 +239,8 @@ const SocialFeed = () => {
             Conecte-se com a comunidade Re-Educa
           </p>
         </div>
-        
-        <Button 
+
+        <Button
           onClick={() => setShowCreatePost(true)}
           className="bg-blue-600 hover:bg-blue-700"
         >
@@ -267,7 +274,11 @@ const SocialFeed = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6">
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="flex items-center gap-2"
+            >
               <tab.icon className="w-4 h-4" />
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
@@ -301,10 +312,9 @@ const SocialFeed = () => {
                   Nenhum post encontrado
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {searchQuery 
-                    ? 'Tente ajustar sua busca'
-                    : 'Seja o primeiro a compartilhar algo!'
-                  }
+                  {searchQuery
+                    ? "Tente ajustar sua busca"
+                    : "Seja o primeiro a compartilhar algo!"}
                 </p>
                 {!searchQuery && (
                   <Button onClick={() => setShowCreatePost(true)}>
@@ -326,16 +336,16 @@ const SocialFeed = () => {
                   currentUserId={user?.id}
                 />
               ))}
-              
+
               {/* Load More */}
               {hasMore && (
                 <div className="text-center py-4">
-                  <Button 
+                  <Button
                     onClick={loadMore}
                     disabled={loading}
                     variant="outline"
                   >
-                    {loading ? 'Carregando...' : 'Carregar Mais'}
+                    {loading ? "Carregando..." : "Carregar Mais"}
                   </Button>
                 </div>
               )}

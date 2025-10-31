@@ -279,6 +279,8 @@ backup/backups/
 # Arquivos específicos que não devem ser versionados
 ngrok-v3-stable-linux-arm64.tgz
 backend/cloudflared-linux-arm64.deb
+*.pid
+backend/backend.pid
 
 # ======================================
 # Manter no Git (Código Fonte)

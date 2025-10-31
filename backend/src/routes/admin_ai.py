@@ -1,6 +1,9 @@
 """
-Rotas Administrativas para Configuração de IA
-Permite que administradores gerenciem configurações de IA de forma segura
+Rotas Administrativas para Configuração de IA.
+
+Permite que administradores gerenciem configurações de IA de forma segura,
+incluindo criação, listagem, atualização e exclusão de configurações de
+diferentes providers (Gemini, Perplexity, OpenAI, Claude).
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime
@@ -20,7 +23,15 @@ admin_ai_bp = Blueprint('admin_ai', __name__, url_prefix='/api/admin/ai')
 @rate_limit("100 per hour")
 @log_activity('admin_ai_configs_list')
 def list_ai_configs():
-    """Lista todas as configurações de IA"""
+    """
+    Lista todas as configurações de IA.
+    
+    Query Parameters:
+        include_inactive (bool): Incluir configurações inativas (padrão: false).
+        
+    Returns:
+        JSON: Lista de configurações de IA ou erro.
+    """
     try:
         include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
         
@@ -51,7 +62,17 @@ def list_ai_configs():
 @rate_limit("20 per hour")
 @log_activity('admin_ai_config_create')
 def create_ai_config():
-    """Cria nova configuração de IA"""
+    """
+    Cria nova configuração de IA.
+    
+    Request Body:
+        provider (str): Provider da IA (gemini, perplexity, openai, claude).
+        service_name (str): Nome do serviço.
+        api_key (str): Chave da API (será criptografada).
+        
+    Returns:
+        JSON: Configuração criada ou erro.
+    """
     try:
         data = request.get_json()
         

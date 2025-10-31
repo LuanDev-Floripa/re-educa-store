@@ -1,5 +1,13 @@
 """
-Serviço de Promoções e Cupons RE-EDUCA Store
+Serviço de Promoções e Cupons RE-EDUCA Store.
+
+Gerencia promoções e cupons incluindo:
+- Criação e validação de cupons
+- Cálculo de descontos (percentual e fixo)
+- Regras de aplicação (valor mínimo, limites)
+- Controle de uso por usuário
+- Datas de validade
+- Produtos/categorias aplicáveis
 """
 import logging
 import secrets
@@ -12,11 +20,22 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 class PromotionService:
+    """Service para gestão de promoções e cupons."""
+    
     def __init__(self):
+        """Inicializa o serviço de promoções."""
         self.supabase = supabase_client
     
     def create_coupon(self, coupon_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria um novo cupom"""
+        """
+        Cria um novo cupom com validação.
+        
+        Args:
+            coupon_data (Dict[str, Any]): Dados do cupom incluindo type, value, valid_until.
+            
+        Returns:
+            Dict[str, Any]: Cupom criado ou erro.
+        """
         try:
             # Gera código do cupom se não fornecido
             if not coupon_data.get('code'):

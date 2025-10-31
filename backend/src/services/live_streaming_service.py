@@ -1,431 +1,422 @@
-import psycopg2
+"""
+Serviço de Live Streaming RE-EDUCA Store.
+
+Gerencia transmissões ao vivo incluindo:
+- Criação e gerenciamento de streams
+- Controle de visualizadores
+- Chat e interações em tempo real
+- Analytics de streams
+- Moderação e relatórios
+"""
 from datetime import datetime, timedelta
-from database.connection import get_db_connection
+from config.database import supabase_client
 from utils.helpers import generate_uuid
 import logging
 
+logger = logging.getLogger(__name__)
+
 class LiveStreamingService:
+    """Service para gerenciamento de live streaming."""
+    
     def __init__(self):
-        self.conn = get_db_connection()
+        """Inicializa o serviço de live streaming."""
+        self.supabase = supabase_client
 
     def get_streams(self, category=None, limit=20, offset=0):
-        """Get all active streams"""
+        """
+        Lista todos os streams ativos.
+        
+        Args:
+            category (str, optional): Filtrar por categoria.
+            limit (int): Limite de resultados (padrão: 20).
+            offset (int): Offset para paginação (padrão: 0).
+            
+        Returns:
+            List[Dict]: Lista de streams ativos.
+        """
         try:
-            cursor = self.conn.cursor()
+            query = self.supabase.table('live_streams')\
+                .select('*, users!live_streams_user_id_fkey(id, name, username, avatar_url, is_verified)')\
+                .eq('is_live', True)
             
-            query = """
-                SELECT 
-                    s.id,
-                    s.title,
-                    s.description,
-                    s.category,
-                    s.tags,
-                    s.viewer_count,
-                    s.like_count,
-                    s.share_count,
-                    s.created_at,
-                    s.is_live,
-                    u.id as user_id,
-                    u.name as user_name,
-                    u.username,
-                    u.avatar_url,
-                    u.is_verified
-                FROM live_streams s
-                JOIN users u ON s.user_id = u.id
-                WHERE s.is_live = true
-            """
-            
-            params = []
             if category:
-                query += " AND s.category = %s"
-                params.append(category)
+                query = query.eq('category', category)
             
-            query += " ORDER BY s.created_at DESC LIMIT %s OFFSET %s"
-            params.extend([limit, offset])
+            result = query.order('created_at', desc=True)\
+                .range(offset, offset + limit - 1)\
+                .execute()
             
-            cursor.execute(query, params)
-            streams = cursor.fetchall()
+            streams = []
+            if result.data:
+                for stream in result.data:
+                    user_info = stream.get('users', {}) if isinstance(stream.get('users'), dict) else {}
+                    streams.append({
+                        'id': stream['id'],
+                        'title': stream.get('title'),
+                        'description': stream.get('description'),
+                        'category': stream.get('category'),
+                        'tags': stream.get('tags') or [],
+                        'viewer_count': stream.get('viewer_count', 0),
+                        'like_count': stream.get('like_count', 0),
+                        'share_count': stream.get('share_count', 0),
+                        'created_at': stream.get('created_at'),
+                        'is_live': stream.get('is_live', False),
+                        'user': {
+                            'id': user_info.get('id'),
+                            'name': user_info.get('name'),
+                            'username': user_info.get('username'),
+                            'avatar_url': user_info.get('avatar_url'),
+                            'is_verified': user_info.get('is_verified', False)
+                        }
+                    })
             
-            result = []
-            for stream in streams:
-                result.append({
-                    'id': stream[0],
-                    'title': stream[1],
-                    'description': stream[2],
-                    'category': stream[3],
-                    'tags': stream[4] or [],
-                    'viewer_count': stream[5],
-                    'like_count': stream[6],
-                    'share_count': stream[7],
-                    'created_at': stream[8].isoformat(),
-                    'is_live': stream[9],
-                    'user': {
-                        'id': stream[10],
-                        'name': stream[11],
-                        'username': stream[12],
-                        'avatar_url': stream[13],
-                        'is_verified': stream[14]
-                    }
-                })
-            
-            cursor.close()
-            return result
+            return streams
             
         except Exception as e:
-            logging.error(f"Error getting streams: {str(e)}")
+            logger.error(f"Error getting streams: {str(e)}", exc_info=True)
             return []
 
     def start_stream(self, user_id, title, category, description="", tags=None):
         """Start a new live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Check if user already has an active stream
-            cursor.execute("""
-                SELECT id FROM live_streams 
-                WHERE user_id = %s AND is_live = true
-            """, (user_id,))
+            existing = self.supabase.table('live_streams')\
+                .select('id')\
+                .eq('user_id', user_id)\
+                .eq('is_live', True)\
+                .execute()
             
-            if cursor.fetchone():
-                cursor.close()
+            if existing.data:
                 raise Exception("Usuário já possui um stream ativo")
             
             # Create new stream
             stream_id = generate_uuid()
-            cursor.execute("""
-                INSERT INTO live_streams (
-                    id, user_id, title, description, category, 
-                    tags, is_live, created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                stream_id, user_id, title, description, category,
-                tags or [], True, datetime.now()
-            ))
+            stream_data = {
+                'id': stream_id,
+                'user_id': user_id,
+                'title': title,
+                'description': description,
+                'category': category,
+                'tags': tags or [],
+                'is_live': True,
+                'viewer_count': 0,
+                'like_count': 0,
+                'share_count': 0
+            }
             
-            self.conn.commit()
-            cursor.close()
+            result = self.supabase.table('live_streams').insert(stream_data).execute()
             
-            # Return stream data
-            return self.get_stream_by_id(stream_id)
+            if result.data:
+                return self.get_stream_by_id(stream_id)
+            else:
+                raise Exception("Erro ao criar stream")
             
         except Exception as e:
-            logging.error(f"Error starting stream: {str(e)}")
+            logger.error(f"Error starting stream: {str(e)}", exc_info=True)
             raise e
 
     def end_stream(self, stream_id, user_id):
         """End a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Check if stream exists and belongs to user
-            cursor.execute("""
-                SELECT id FROM live_streams 
-                WHERE id = %s AND user_id = %s AND is_live = true
-            """, (stream_id, user_id))
+            existing = self.supabase.table('live_streams')\
+                .select('id')\
+                .eq('id', stream_id)\
+                .eq('user_id', user_id)\
+                .eq('is_live', True)\
+                .execute()
             
-            if not cursor.fetchone():
-                cursor.close()
+            if not existing.data:
                 return False
             
             # End stream
-            cursor.execute("""
-                UPDATE live_streams 
-                SET is_live = false, ended_at = %s
-                WHERE id = %s
-            """, (datetime.now(), stream_id))
+            self.supabase.table('live_streams')\
+                .update({
+                    'is_live': False,
+                    'ended_at': datetime.now().isoformat()
+                })\
+                .eq('id', stream_id)\
+                .execute()
             
-            self.conn.commit()
-            cursor.close()
             return True
             
         except Exception as e:
-            logging.error(f"Error ending stream: {str(e)}")
+            logger.error(f"Error ending stream: {str(e)}", exc_info=True)
             return False
 
     def join_stream(self, stream_id, user_id):
         """Join a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Get stream data
-            cursor.execute("""
-                SELECT 
-                    s.id, s.title, s.description, s.category, s.tags,
-                    s.viewer_count, s.like_count, s.share_count,
-                    s.created_at, s.is_live,
-                    u.id as user_id, u.name as user_name, 
-                    u.username, u.avatar_url, u.is_verified
-                FROM live_streams s
-                JOIN users u ON s.user_id = u.id
-                WHERE s.id = %s AND s.is_live = true
-            """, (stream_id,))
+            stream_result = self.supabase.table('live_streams')\
+                .select('*, users!live_streams_user_id_fkey(id, name, username, avatar_url, is_verified)')\
+                .eq('id', stream_id)\
+                .eq('is_live', True)\
+                .single()\
+                .execute()
             
-            stream = cursor.fetchone()
-            if not stream:
-                cursor.close()
+            if not stream_result.data:
                 return None
             
+            stream = stream_result.data
+            
             # Increment viewer count
-            cursor.execute("""
-                UPDATE live_streams 
-                SET viewer_count = viewer_count + 1
-                WHERE id = %s
-            """, (stream_id,))
+            new_viewer_count = stream.get('viewer_count', 0) + 1
+            self.supabase.table('live_streams')\
+                .update({'viewer_count': new_viewer_count})\
+                .eq('id', stream_id)\
+                .execute()
             
-            # Add viewer to stream viewers
-            cursor.execute("""
-                INSERT INTO stream_viewers (stream_id, user_id, joined_at)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (stream_id, user_id) DO NOTHING
-            """, (stream_id, user_id, datetime.now()))
+            # Add viewer to stream viewers (upsert - ignora se já existe)
+            try:
+                self.supabase.table('stream_viewers')\
+                    .insert({
+                        'stream_id': stream_id,
+                        'user_id': user_id,
+                        'joined_at': datetime.now().isoformat()
+                    })\
+                    .execute()
+            except:
+                pass  # Já existe, ignorar
             
-            self.conn.commit()
-            cursor.close()
+            user_info = stream.get('users', {}) if isinstance(stream.get('users'), dict) else {}
             
             return {
-                'id': stream[0],
-                'title': stream[1],
-                'description': stream[2],
-                'category': stream[3],
-                'tags': stream[4] or [],
-                'viewer_count': stream[5] + 1,
-                'like_count': stream[6],
-                'share_count': stream[7],
-                'created_at': stream[8].isoformat(),
-                'is_live': stream[9],
+                'id': stream['id'],
+                'title': stream.get('title'),
+                'description': stream.get('description'),
+                'category': stream.get('category'),
+                'tags': stream.get('tags') or [],
+                'viewer_count': new_viewer_count,
+                'like_count': stream.get('like_count', 0),
+                'share_count': stream.get('share_count', 0),
+                'created_at': stream.get('created_at'),
+                'is_live': stream.get('is_live', False),
                 'user': {
-                    'id': stream[10],
-                    'name': stream[11],
-                    'username': stream[12],
-                    'avatar_url': stream[13],
-                    'is_verified': stream[14]
+                    'id': user_info.get('id'),
+                    'name': user_info.get('name'),
+                    'username': user_info.get('username'),
+                    'avatar_url': user_info.get('avatar_url'),
+                    'is_verified': user_info.get('is_verified', False)
                 }
             }
             
         except Exception as e:
-            logging.error(f"Error joining stream: {str(e)}")
+            logger.error(f"Error joining stream: {str(e)}", exc_info=True)
             return None
 
     def leave_stream(self, stream_id, user_id):
         """Leave a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Remove viewer from stream viewers
-            cursor.execute("""
-                DELETE FROM stream_viewers 
-                WHERE stream_id = %s AND user_id = %s
-            """, (stream_id, user_id))
+            self.supabase.table('stream_viewers')\
+                .delete()\
+                .eq('stream_id', stream_id)\
+                .eq('user_id', user_id)\
+                .execute()
             
-            # Decrement viewer count
-            cursor.execute("""
-                UPDATE live_streams 
-                SET viewer_count = GREATEST(viewer_count - 1, 0)
-                WHERE id = %s
-            """, (stream_id,))
+            # Get current viewer count
+            stream_result = self.supabase.table('live_streams')\
+                .select('viewer_count')\
+                .eq('id', stream_id)\
+                .single()\
+                .execute()
             
-            self.conn.commit()
-            cursor.close()
+            if stream_result.data:
+                current_count = stream_result.data.get('viewer_count', 0)
+                new_count = max(current_count - 1, 0)
+                
+                # Decrement viewer count
+                self.supabase.table('live_streams')\
+                    .update({'viewer_count': new_count})\
+                    .eq('id', stream_id)\
+                    .execute()
+            
             return True
             
         except Exception as e:
-            logging.error(f"Error leaving stream: {str(e)}")
+            logger.error(f"Error leaving stream: {str(e)}", exc_info=True)
             return False
 
     def send_message(self, stream_id, user_id, message):
         """Send a message to a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Check if stream exists and is live
-            cursor.execute("""
-                SELECT id FROM live_streams 
-                WHERE id = %s AND is_live = true
-            """, (stream_id,))
+            stream_check = self.supabase.table('live_streams')\
+                .select('id')\
+                .eq('id', stream_id)\
+                .eq('is_live', True)\
+                .execute()
             
-            if not cursor.fetchone():
-                cursor.close()
+            if not stream_check.data:
                 return None
             
             # Create message
             message_id = generate_uuid()
-            cursor.execute("""
-                INSERT INTO stream_messages (
-                    id, stream_id, user_id, message, created_at
-                ) VALUES (%s, %s, %s, %s, %s)
-            """, (message_id, stream_id, user_id, message, datetime.now()))
-            
-            self.conn.commit()
-            cursor.close()
-            
-            return {
+            message_data = {
                 'id': message_id,
                 'stream_id': stream_id,
                 'user_id': user_id,
-                'message': message,
-                'created_at': datetime.now().isoformat()
+                'message': message
             }
             
+            result = self.supabase.table('stream_messages').insert(message_data).execute()
+            
+            if result.data:
+                return result.data[0]
+            return None
+            
         except Exception as e:
-            logging.error(f"Error sending message: {str(e)}")
+            logger.error(f"Error sending message: {str(e)}", exc_info=True)
             return None
 
-    def send_gift(self, stream_id, user_id, gift_id, gift_name, gift_cost):
+    def send_gift(self, stream_id, user_id, gift_type, gift_value):
         """Send a gift to a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Check if stream exists and is live
-            cursor.execute("""
-                SELECT id FROM live_streams 
-                WHERE id = %s AND is_live = true
-            """, (stream_id,))
+            stream_check = self.supabase.table('live_streams')\
+                .select('id')\
+                .eq('id', stream_id)\
+                .eq('is_live', True)\
+                .execute()
             
-            if not cursor.fetchone():
-                cursor.close()
+            if not stream_check.data:
                 return None
             
             # Create gift
             gift_id = generate_uuid()
-            cursor.execute("""
-                INSERT INTO stream_gifts (
-                    id, stream_id, user_id, gift_id, gift_name, 
-                    gift_cost, created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (gift_id, stream_id, user_id, gift_id, gift_name, gift_cost, datetime.now()))
-            
-            self.conn.commit()
-            cursor.close()
-            
-            return {
+            gift_data = {
                 'id': gift_id,
                 'stream_id': stream_id,
                 'user_id': user_id,
-                'gift_name': gift_name,
-                'gift_cost': gift_cost,
-                'created_at': datetime.now().isoformat()
+                'gift_type': gift_type,
+                'gift_value': gift_value
             }
             
+            result = self.supabase.table('stream_gifts').insert(gift_data).execute()
+            
+            if result.data:
+                return result.data[0]
+            return None
+            
         except Exception as e:
-            logging.error(f"Error sending gift: {str(e)}")
+            logger.error(f"Error sending gift: {str(e)}", exc_info=True)
             return None
 
     def report_stream(self, stream_id, user_id, reason):
         """Report a live stream"""
         try:
-            cursor = self.conn.cursor()
-            
             # Check if stream exists
-            cursor.execute("""
-                SELECT id FROM live_streams 
-                WHERE id = %s
-            """, (stream_id,))
+            stream_check = self.supabase.table('live_streams')\
+                .select('id')\
+                .eq('id', stream_id)\
+                .execute()
             
-            if not cursor.fetchone():
-                cursor.close()
+            if not stream_check.data:
                 return False
             
             # Create report
             report_id = generate_uuid()
-            cursor.execute("""
-                INSERT INTO stream_reports (
-                    id, stream_id, user_id, reason, created_at
-                ) VALUES (%s, %s, %s, %s, %s)
-            """, (report_id, stream_id, user_id, reason, datetime.now()))
+            report_data = {
+                'id': report_id,
+                'stream_id': stream_id,
+                'user_id': user_id,
+                'reason': reason
+            }
             
-            self.conn.commit()
-            cursor.close()
+            self.supabase.table('stream_reports').insert(report_data).execute()
             return True
             
         except Exception as e:
-            logging.error(f"Error reporting stream: {str(e)}")
+            logger.error(f"Error reporting stream: {str(e)}", exc_info=True)
             return False
 
     def get_stream_stats(self, stream_id):
         """Get stream statistics"""
         try:
-            cursor = self.conn.cursor()
+            # Get stream basic data
+            stream_result = self.supabase.table('live_streams')\
+                .select('viewer_count, like_count, share_count, created_at')\
+                .eq('id', stream_id)\
+                .single()\
+                .execute()
             
-            cursor.execute("""
-                SELECT 
-                    s.viewer_count,
-                    s.like_count,
-                    s.share_count,
-                    s.created_at,
-                    COUNT(DISTINCT sv.user_id) as unique_viewers,
-                    COUNT(DISTINCT sm.id) as message_count,
-                    COUNT(DISTINCT sg.id) as gift_count
-                FROM live_streams s
-                LEFT JOIN stream_viewers sv ON s.id = sv.stream_id
-                LEFT JOIN stream_messages sm ON s.id = sm.stream_id
-                LEFT JOIN stream_gifts sg ON s.id = sg.stream_id
-                WHERE s.id = %s
-                GROUP BY s.id, s.viewer_count, s.like_count, s.share_count, s.created_at
-            """, (stream_id,))
-            
-            stats = cursor.fetchone()
-            cursor.close()
-            
-            if not stats:
+            if not stream_result.data:
                 return None
             
+            stream = stream_result.data
+            
+            # Get unique viewers count
+            viewers_result = self.supabase.table('stream_viewers')\
+                .select('user_id', count='exact')\
+                .eq('stream_id', stream_id)\
+                .execute()
+            unique_viewers = viewers_result.count if hasattr(viewers_result, 'count') else 0
+            
+            # Get messages count
+            messages_result = self.supabase.table('stream_messages')\
+                .select('id', count='exact')\
+                .eq('stream_id', stream_id)\
+                .execute()
+            message_count = messages_result.count if hasattr(messages_result, 'count') else 0
+            
+            # Get gifts count
+            gifts_result = self.supabase.table('stream_gifts')\
+                .select('id', count='exact')\
+                .eq('stream_id', stream_id)\
+                .execute()
+            gift_count = gifts_result.count if hasattr(gifts_result, 'count') else 0
+            
             return {
-                'viewer_count': stats[0],
-                'like_count': stats[1],
-                'share_count': stats[2],
-                'created_at': stats[3].isoformat(),
-                'unique_viewers': stats[4],
-                'message_count': stats[5],
-                'gift_count': stats[6]
+                'viewer_count': stream.get('viewer_count', 0),
+                'like_count': stream.get('like_count', 0),
+                'share_count': stream.get('share_count', 0),
+                'created_at': stream.get('created_at'),
+                'unique_viewers': unique_viewers,
+                'message_count': message_count,
+                'gift_count': gift_count
             }
             
         except Exception as e:
-            logging.error(f"Error getting stream stats: {str(e)}")
+            logger.error(f"Error getting stream stats: {str(e)}", exc_info=True)
             return None
 
     def get_stream_by_id(self, stream_id):
         """Get stream by ID"""
         try:
-            cursor = self.conn.cursor()
+            result = self.supabase.table('live_streams')\
+                .select('*, users!live_streams_user_id_fkey(id, name, username, avatar_url, is_verified)')\
+                .eq('id', stream_id)\
+                .single()\
+                .execute()
             
-            cursor.execute("""
-                SELECT 
-                    s.id, s.title, s.description, s.category, s.tags,
-                    s.viewer_count, s.like_count, s.share_count,
-                    s.created_at, s.is_live,
-                    u.id as user_id, u.name as user_name, 
-                    u.username, u.avatar_url, u.is_verified
-                FROM live_streams s
-                JOIN users u ON s.user_id = u.id
-                WHERE s.id = %s
-            """, (stream_id,))
-            
-            stream = cursor.fetchone()
-            cursor.close()
-            
-            if not stream:
+            if not result.data:
                 return None
             
+            stream = result.data
+            user_info = stream.get('users', {}) if isinstance(stream.get('users'), dict) else {}
+            
             return {
-                'id': stream[0],
-                'title': stream[1],
-                'description': stream[2],
-                'category': stream[3],
-                'tags': stream[4] or [],
-                'viewer_count': stream[5],
-                'like_count': stream[6],
-                'share_count': stream[7],
-                'created_at': stream[8].isoformat(),
-                'is_live': stream[9],
+                'id': stream['id'],
+                'title': stream.get('title'),
+                'description': stream.get('description'),
+                'category': stream.get('category'),
+                'tags': stream.get('tags') or [],
+                'viewer_count': stream.get('viewer_count', 0),
+                'like_count': stream.get('like_count', 0),
+                'share_count': stream.get('share_count', 0),
+                'created_at': stream.get('created_at'),
+                'is_live': stream.get('is_live', False),
+                'status': 'live' if stream.get('is_live') else 'ended',
                 'user': {
-                    'id': stream[10],
-                    'name': stream[11],
-                    'username': stream[12],
-                    'avatar_url': stream[13],
-                    'is_verified': stream[14]
+                    'id': user_info.get('id'),
+                    'name': user_info.get('name'),
+                    'username': user_info.get('username'),
+                    'avatar_url': user_info.get('avatar_url'),
+                    'is_verified': user_info.get('is_verified', False)
                 }
             }
             
         except Exception as e:
-            logging.error(f"Error getting stream by ID: {str(e)}")
+            logger.error(f"Error getting stream by ID: {str(e)}", exc_info=True)
             return None

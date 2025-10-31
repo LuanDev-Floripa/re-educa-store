@@ -1,32 +1,41 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Badge } from '@/components/Ui/badge';
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ArrowLeft, 
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Badge } from "@/components/Ui/badge";
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  ArrowLeft,
   CreditCard,
   Truck,
   Shield,
   Gift,
-  Percent
-} from 'lucide-react';
-import { useCart } from '../../contexts/CartContext';
-import { Link } from 'react-router-dom';
-import apiClient from '@/services/apiClient';
-import { toast } from 'sonner';
+  Percent,
+} from "lucide-react";
+import { useCart } from "../../contexts/CartContext";
+import { Link } from "react-router-dom";
+import apiClient from "@/services/apiClient";
+import { toast } from "sonner";
 
 const CartPage = () => {
   const { items, updateQuantity, removeItem, clearCart } = useCart();
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   // Calcular totais
-  const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const subtotal = (Array.isArray(items) ? items : []).reduce(
+    (total, item) => total + Number(item?.price || 0) * Number(item?.quantity || 0),
+    0,
+  );
   const shipping = subtotal > 100 ? 0 : 15; // Frete grátis acima de R$ 100
   const discount = appliedCoupon ? subtotal * 0.1 : 0; // 10% de desconto
   const total = subtotal + shipping - discount;
@@ -41,32 +50,38 @@ const CartPage = () => {
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
-      toast.error('Digite um código de cupom');
+      toast.error("Digite um código de cupom");
       return;
     }
 
     try {
+      if (!apiClient?.validateCoupon) {
+        throw new Error("Serviço de cupom indisponível");
+      }
       // Validar cupom via API real
       const response = await apiClient.validateCoupon(couponCode.trim());
-      
-      if (response.valid || response.success) {
-        const discountValue = response.discount || response.discount_percentage || 0;
-        const discountType = response.type || response.discount_type || 'percentage';
-        
+
+      if (response?.valid || response?.success) {
+        const discountValue =
+          Number(response?.discount ?? response?.discount_percentage ?? 0) || 0;
+        const discountType =
+          response?.type || response?.discount_type || "percentage";
+
         setAppliedCoupon({
-          code: response.code || couponCode,
-          discount: discountType === 'percentage' ? discountValue / 100 : discountValue,
+          code: response?.code || couponCode,
+          discount:
+            discountType === "percentage" ? discountValue / 100 : discountValue,
           discountType: discountType,
-          discountAmount: response.discount_amount || 0
+          discountAmount: Number(response?.discount_amount || 0),
         });
-        setCouponCode('');
-        toast.success('Cupom aplicado com sucesso!');
+        setCouponCode("");
+        toast.success("Cupom aplicado com sucesso!");
       } else {
-        toast.error(response.message || 'Cupom inválido ou expirado');
+        toast.error(response?.message || "Cupom inválido ou expirado");
       }
     } catch (error) {
-      console.error('Erro ao validar cupom:', error);
-      toast.error(error.message || 'Erro ao validar cupom');
+      console.error("Erro ao validar cupom:", error);
+      toast.error(error?.message || "Erro ao validar cupom");
     }
   };
 
@@ -104,10 +119,11 @@ const CartPage = () => {
             Carrinho de Compras
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {items.length} {items.length === 1 ? 'item' : 'itens'} no seu carrinho
+            {items.length} {items.length === 1 ? "item" : "itens"} no seu
+            carrinho
           </p>
         </div>
-        
+
         <Link to="/store">
           <Button variant="outline" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -119,60 +135,65 @@ const CartPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
+          {(Array.isArray(items) ? items : []).map((item) => (
             <Card key={item.id}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item?.image}
+                      alt={item?.name || "Produto"}
                       className="w-16 h-16 object-cover rounded"
                     />
                   </div>
-                  
+
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {item.name}
+                      {item?.name || "Produto"}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {item.description}
+                      {item?.description || ""}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-lg font-bold text-blue-600">
-                        R$ {item.price.toFixed(2)}
+                        R$ {Number(item?.price || 0).toFixed(2)}
                       </span>
-                      {item.originalPrice && item.originalPrice > item.price && (
-                        <span className="text-sm text-gray-500 line-through">
-                          R$ {item.originalPrice.toFixed(2)}
-                        </span>
-                      )}
+                      {item?.originalPrice &&
+                        Number(item.originalPrice) > Number(item.price) && (
+                          <span className="text-sm text-gray-500 line-through">
+                            R$ {Number(item.originalPrice).toFixed(2)}
+                          </span>
+                        )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                      onClick={() =>
+                        handleQuantityChange(item.id, item.quantity - 1)
+                      }
                     >
                       <Minus className="w-4 h-4" />
                     </Button>
                     <span className="w-8 text-center font-medium">
-                      {item.quantity}
+                      {Number(item?.quantity) || 0}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                      onClick={() =>
+                        handleQuantityChange(item.id, item.quantity + 1)
+                      }
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="text-lg font-bold text-gray-900 dark:text-white">
-                      R$ {(item.price * item.quantity).toFixed(2)}
+                      R$ {(Number(item?.price || 0) * Number(item?.quantity || 0)).toFixed(2)}
                     </div>
                     <Button
                       variant="ghost"
@@ -187,7 +208,7 @@ const CartPage = () => {
               </CardContent>
             </Card>
           ))}
-          
+
           <div className="flex justify-between items-center pt-4">
             <Button
               variant="outline"
@@ -249,21 +270,21 @@ const CartPage = () => {
                   <span>Subtotal</span>
                   <span>R$ {subtotal.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span>Frete</span>
-                  <span className={shipping === 0 ? 'text-green-600' : ''}>
-                    {shipping === 0 ? 'Grátis' : `R$ ${shipping.toFixed(2)}`}
+                  <span className={shipping === 0 ? "text-green-600" : ""}>
+                    {shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}
                   </span>
                 </div>
-                
+
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Desconto</span>
                     <span>-R$ {discount.toFixed(2)}</span>
                   </div>
                 )}
-                
+
                 <div className="border-t pt-2">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>

@@ -1,6 +1,22 @@
 """
-Serviço de Filas Redis para Processamento Assíncrono
-RE-EDUCA - Sistema de Educação em Saúde
+Serviço de Filas Redis para Processamento Assíncrono RE-EDUCA Store.
+
+Implementa sistema de filas distribuídas com Redis incluindo:
+- Enfileiramento de tarefas assíncronas
+- Priorização (baixa, normal, alta)
+- Delay de execução
+- Processamento batch
+- Retry automático em falhas
+- Dead Letter Queue (DLQ)
+- Métricas de performance
+
+FILAS DISPONÍVEIS:
+- payments: Processamento de pagamentos
+- health_analysis: Análises de saúde
+- notifications: Envio de notificações
+- reports: Geração de relatórios
+- ai_processing: Processamento de IA
+- data_sync: Sincronização de dados
 """
 
 import redis
@@ -14,10 +30,19 @@ import time
 logger = logging.getLogger(__name__)
 
 class RedisQueueService:
-    """Serviço de filas Redis para processamento assíncrono"""
+    """
+    Serviço de filas Redis para processamento assíncrono.
+    
+    Gerencia filas distribuídas para tarefas em background.
+    """
     
     def __init__(self, redis_url: str = "redis://localhost:6379"):
-        """Inicializa o serviço de filas"""
+        """
+        Inicializa o serviço de filas.
+        
+        Args:
+            redis_url (str): URL de conexão Redis (padrão: localhost:6379).
+        """
         try:
             self.redis_client = redis.from_url(redis_url)
             self.redis_client.ping()  # Testa conexão

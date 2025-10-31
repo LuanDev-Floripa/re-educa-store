@@ -1,5 +1,11 @@
 """
-Rotas de Carrinho RE-EDUCA Store
+Rotas de Carrinho RE-EDUCA Store.
+
+Gerencia operações do carrinho de compras incluindo:
+- Visualização do carrinho
+- Adição e remoção de produtos
+- Atualização de quantidades
+- Limpeza do carrinho
 """
 from flask import Blueprint, request, jsonify
 from services.cart_service import CartService
@@ -11,7 +17,12 @@ cart_service = CartService()
 @cart_bp.route('/', methods=['GET'])
 @token_required
 def get_cart():
-    """Retorna carrinho do usuário"""
+    """
+    Retorna carrinho do usuário.
+    
+    Returns:
+        JSON: Carrinho com itens, quantidades e totais ou erro.
+    """
     try:
         user_id = request.current_user['id']
         cart = cart_service.get_cart(user_id)
@@ -24,7 +35,16 @@ def get_cart():
 @rate_limit("30 per minute")
 @log_activity('cart_add_item')
 def add_to_cart():
-    """Adiciona produto ao carrinho"""
+    """
+    Adiciona produto ao carrinho.
+    
+    Request Body:
+        product_id (str): ID do produto.
+        quantity (int): Quantidade (padrão: 1, mínimo: 1).
+        
+    Returns:
+        JSON: Carrinho atualizado ou erro.
+    """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
@@ -52,7 +72,18 @@ def add_to_cart():
 @rate_limit("30 per minute")
 @log_activity('cart_update_item')
 def update_cart_item(item_id):
-    """Atualiza quantidade de item no carrinho"""
+    """
+    Atualiza quantidade de item no carrinho.
+    
+    Args:
+        item_id (str): ID do item no carrinho.
+        
+    Request Body:
+        quantity (int): Nova quantidade (mínimo: 0).
+        
+    Returns:
+        JSON: Carrinho atualizado ou erro.
+    """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
@@ -76,7 +107,15 @@ def update_cart_item(item_id):
 @rate_limit("30 per minute")
 @log_activity('cart_remove_item')
 def remove_from_cart(item_id):
-    """Remove item do carrinho"""
+    """
+    Remove item do carrinho.
+    
+    Args:
+        item_id (str): ID do item a ser removido.
+        
+    Returns:
+        JSON: Confirmação de remoção ou erro.
+    """
     try:
         user_id = request.current_user['id']
         result = cart_service.remove_from_cart(user_id, item_id)
@@ -92,7 +131,12 @@ def remove_from_cart(item_id):
 @token_required
 @log_activity('cart_cleared')
 def clear_cart():
-    """Limpa todo o carrinho do usuário"""
+    """
+    Limpa todo o carrinho do usuário.
+    
+    Returns:
+        JSON: Confirmação de limpeza ou erro.
+    """
     try:
         user_id = request.current_user['id']
         result = cart_service.clear_cart(user_id)

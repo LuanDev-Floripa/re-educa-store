@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/Ui/button';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import CartButton from '../cart/CartButton';
-import IMCCalculatorPopup from '../tools/IMCCalculatorPopup';
-import { 
-  Heart, 
-  User, 
-  Menu, 
-  X, 
-  Bell,
-  Calculator
-} from 'lucide-react';
-import { cn } from '../../lib/utils';
+/**
+ * Header Component - RE-EDUCA Store
+ * 
+ * Cabeçalho principal do site com navegação.
+ * 
+ * Funcionalidades:
+ * - Menu de navegação responsivo
+ * - Botão de calculadora de IMC
+ * - Botão de carrinho
+ * - Autenticação e perfil
+ * - Notificações
+ * - Menu mobile
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {Function} [props.onMenuClick] - Callback para clique no menu mobile
+ * @returns {JSX.Element} Cabeçalho completo
+ */
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "@/components/Ui/button";
+import { useAuth } from "../../hooks/useAuth.jsx";
+// import CartButton from "../cart/CartButton"; // Substituído por UnifiedAIAssistant
+import IMCCalculatorPopup from "../tools/IMCCalculatorPopup";
+import { Heart, User, Menu, X, Bell, Calculator } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 export const Header = ({ onMenuClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -21,11 +32,11 @@ export const Header = ({ onMenuClick }) => {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   const navigation = [
-    { name: 'Início', href: '/' },
-    { name: 'Catálogo', href: '/catalog' },
-    { name: 'Ferramentas', href: '/tools' },
-    { name: 'Loja', href: '/store' },
-    { name: 'Sobre', href: '/about' },
+    { name: "Início", href: "/" },
+    { name: "Catálogo", href: "/catalog" },
+    { name: "Ferramentas", href: "/tools" },
+    { name: "Loja", href: "/store" },
+    { name: "Sobre", href: "/about" },
   ];
 
   const handleLogout = () => {
@@ -49,7 +60,7 @@ export const Header = ({ onMenuClick }) => {
             >
               <Calculator className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            
+
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-1 sm:space-x-2">
               <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
@@ -69,7 +80,7 @@ export const Header = ({ onMenuClick }) => {
                   "text-sm font-medium transition-colors hover:text-gray-900 dark:hover:text-white",
                   location.pathname === item.href
                     ? "text-gray-900 dark:text-white"
-                    : "text-gray-700 dark:text-gray-300"
+                    : "text-gray-700 dark:text-gray-300",
                 )}
               >
                 {item.name}
@@ -85,7 +96,7 @@ export const Header = ({ onMenuClick }) => {
             </Button>
 
             {/* Cart */}
-            <CartButton />
+            {/* <CartButton /> - Substituído por UnifiedAIAssistant (popup unificado) */}
 
             {/* User Menu */}
             {isAuthenticated ? (
@@ -109,7 +120,7 @@ export const Header = ({ onMenuClick }) => {
                         {user?.email}
                       </p>
                     </div>
-                    
+
                     <Link
                       to="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -117,7 +128,7 @@ export const Header = ({ onMenuClick }) => {
                     >
                       Perfil
                     </Link>
-                    
+
                     <Link
                       to="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -125,7 +136,7 @@ export const Header = ({ onMenuClick }) => {
                     >
                       Configurações
                     </Link>
-                    
+
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -176,15 +187,13 @@ export const Header = ({ onMenuClick }) => {
                     "block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     location.pathname === item.href
                       ? "text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700"
-                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
                   )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
-              
-
 
               {isAuthenticated ? (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -196,7 +205,7 @@ export const Header = ({ onMenuClick }) => {
                       {user?.email}
                     </p>
                   </div>
-                  
+
                   <Link
                     to="/profile"
                     className="block px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
@@ -204,7 +213,7 @@ export const Header = ({ onMenuClick }) => {
                   >
                     Perfil
                   </Link>
-                  
+
                   <Link
                     to="/settings"
                     className="block px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
@@ -212,7 +221,7 @@ export const Header = ({ onMenuClick }) => {
                   >
                     Configurações
                   </Link>
-                  
+
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
@@ -242,11 +251,11 @@ export const Header = ({ onMenuClick }) => {
           </div>
         )}
       </div>
-      
+
       {/* IMC Calculator Popup */}
-      <IMCCalculatorPopup 
-        isOpen={isCalculatorOpen} 
-        onClose={() => setIsCalculatorOpen(false)} 
+      <IMCCalculatorPopup
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
       />
     </header>
   );

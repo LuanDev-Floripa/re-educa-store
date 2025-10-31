@@ -1,23 +1,39 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Badge } from '@/components/Ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
-import { Checkbox } from '@/components/Ui/checkbox';
-import ProductCard from '../../components/products/ProductCard';
-import { useProducts } from '../../hooks/useProducts';
-import { useCart } from '../../contexts/CartContext';
-import { formatCurrency } from '../../lib/utils';
-import { toast } from 'sonner';
-import { 
-  Search, 
-  Filter, 
-  Grid, 
-  List, 
-  Star, 
-  ShoppingCart, 
-  Heart, 
+import React from "react";
+/**
+ * StorePage
+ * - Loja completa com filtros/ordenação e fallbacks seguros
+ */
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Badge } from "@/components/Ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
+import { Checkbox } from "@/components/Ui/checkbox";
+import ProductCard from "../../components/products/ProductCard";
+import { useProducts } from "../../hooks/useProducts";
+import { useCart } from "../../contexts/CartContext";
+import { formatCurrency } from "../../lib/utils";
+import { toast } from "sonner";
+import {
+  Search,
+  Filter,
+  Grid,
+  List,
+  Star,
+  ShoppingCart,
+  Heart,
   Eye,
   TrendingUp,
   Tag,
@@ -26,48 +42,57 @@ import {
   Shield,
   Award,
   SlidersHorizontal,
-  X
-} from 'lucide-react';
+  X,
+} from "lucide-react";
 
 export const StorePage = () => {
-  const { 
-    products, 
-    categories, 
-    featuredProducts, 
-    bestSellers, 
+  const {
+    products,
+    categories,
+    featuredProducts,
+    bestSellers,
     discountedProducts,
-    loading, 
-    filterProducts, 
-    sortProducts 
+    loading,
+    filterProducts,
+    sortProducts,
   } = useProducts();
-  
+
   const { addToCart } = useCart();
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState('all');
-  const [viewMode, setViewMode] = React.useState('grid');
-  const [sortBy, setSortBy] = React.useState('name');
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [viewMode, setViewMode] = React.useState("grid");
+  const [sortBy, setSortBy] = React.useState("name");
   const [showFilters, setShowFilters] = React.useState(false);
   const [priceRange, setPriceRange] = React.useState({ min: 0, max: 1000 });
   const [filters, setFilters] = React.useState({
     inStock: false,
-    freeShipping: false
+    freeShipping: false,
   });
 
   // Filtrar e ordenar produtos
   const filteredProducts = React.useMemo(() => {
-    const filtered = filterProducts({
-      category: selectedCategory,
-      search: searchQuery,
-      minPrice: priceRange.min,
-      maxPrice: priceRange.max,
-      ...filters
-    });
-    return sortProducts(filtered, sortBy);
+    const base = typeof filterProducts === "function"
+      ? filterProducts({
+          category: selectedCategory,
+          search: searchQuery,
+          minPrice: priceRange.min,
+          maxPrice: priceRange.max,
+          ...filters,
+        })
+      : (Array.isArray(products) ? products : []);
+    return typeof sortProducts === "function" ? sortProducts(base, sortBy) : base;
   }, [products, selectedCategory, searchQuery, priceRange, filters, sortBy, filterProducts, sortProducts]);
 
   const handleAddToCart = (product) => {
-    addToCart(product, 1);
-    toast.success(`${product.name} adicionado ao carrinho!`);
+    try {
+      if (typeof addToCart !== "function") {
+        throw new Error("Carrinho indisponível");
+      }
+      addToCart(product, 1);
+      toast.success(`${product?.name || "Produto"} adicionado ao carrinho!`);
+    } catch (e) {
+      toast.error(e?.message || "Erro ao adicionar ao carrinho");
+    }
   };
 
   const handleSearch = (e) => {
@@ -76,11 +101,11 @@ export const StorePage = () => {
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
+    setSearchQuery("");
+    setSelectedCategory("all");
     setPriceRange({ min: 0, max: 1000 });
     setFilters({ inStock: false, freeShipping: false });
-    setSortBy('name');
+    setSortBy("name");
   };
 
   if (loading) {
@@ -105,16 +130,16 @@ export const StorePage = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            variant={viewMode === "grid" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode('grid')}
+            onClick={() => setViewMode("grid")}
           >
             <Grid className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
+            variant={viewMode === "list" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode('list')}
+            onClick={() => setViewMode("list")}
           >
             <List className="h-4 w-4" />
           </Button>
@@ -122,7 +147,7 @@ export const StorePage = () => {
       </div>
 
       {/* Produtos em Destaque */}
-      {featuredProducts.length > 0 && (
+      {(Array.isArray(featuredProducts) && featuredProducts.length > 0) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -166,12 +191,15 @@ export const StorePage = () => {
             </form>
 
             {/* Categoria */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
+                {(Array.isArray(categories) ? categories : []).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name} ({category.count})
                   </SelectItem>
@@ -216,23 +244,35 @@ export const StorePage = () => {
                   Limpar
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Preço */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Faixa de Preço</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Faixa de Preço
+                  </label>
                   <div className="flex space-x-2">
                     <Input
                       type="number"
                       placeholder="Min"
                       value={priceRange.min}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          min: Number(e.target.value),
+                        }))
+                      }
                     />
                     <Input
                       type="number"
                       placeholder="Max"
                       value={priceRange.max}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          max: Number(e.target.value),
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -243,17 +283,28 @@ export const StorePage = () => {
                     <Checkbox
                       id="inStock"
                       checked={filters.inStock}
-                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, inStock: checked }))}
+                      onCheckedChange={(checked) =>
+                        setFilters((prev) => ({ ...prev, inStock: checked }))
+                      }
                     />
-                    <label htmlFor="inStock" className="text-sm">Apenas em estoque</label>
+                    <label htmlFor="inStock" className="text-sm">
+                      Apenas em estoque
+                    </label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="freeShipping"
                       checked={filters.freeShipping}
-                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, freeShipping: checked }))}
+                      onCheckedChange={(checked) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          freeShipping: checked,
+                        }))
+                      }
                     />
-                    <label htmlFor="freeShipping" className="text-sm">Frete grátis</label>
+                    <label htmlFor="freeShipping" className="text-sm">
+                      Frete grátis
+                    </label>
                   </div>
                 </div>
               </div>
@@ -265,21 +316,23 @@ export const StorePage = () => {
       {/* Resultados */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {filteredProducts.length} produto(s) encontrado(s)
+          {(Array.isArray(filteredProducts) ? filteredProducts.length : 0)} produto(s) encontrado(s)
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">Visualização:</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Visualização:
+          </span>
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            variant={viewMode === "grid" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode('grid')}
+            onClick={() => setViewMode("grid")}
           >
             <Grid className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
+            variant={viewMode === "list" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode('list')}
+            onClick={() => setViewMode("list")}
           >
             <List className="h-4 w-4" />
           </Button>
@@ -287,13 +340,15 @@ export const StorePage = () => {
       </div>
 
       {/* Lista de Produtos */}
-      {filteredProducts.length > 0 ? (
-        <div className={
-          viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
-        }>
-          {filteredProducts.map((product) => (
+      {(Array.isArray(filteredProducts) ? filteredProducts.length > 0 : false) ? (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "space-y-4"
+          }
+        >
+          {(Array.isArray(filteredProducts) ? filteredProducts : []).map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -312,24 +367,20 @@ export const StorePage = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Tente ajustar os filtros para encontrar mais produtos
             </p>
-            <Button onClick={clearFilters}>
-              Limpar Filtros
-            </Button>
+            <Button onClick={clearFilters}>Limpar Filtros</Button>
           </CardContent>
         </Card>
       )}
 
       {/* Produtos com Desconto */}
-      {discountedProducts.length > 0 && (
+      {(Array.isArray(discountedProducts) && discountedProducts.length > 0) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Tag className="h-5 w-5 text-red-500" />
               <span>Ofertas Especiais</span>
             </CardTitle>
-            <CardDescription>
-              Produtos com desconto imperdível
-            </CardDescription>
+            <CardDescription>Produtos com desconto imperdível</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,6 +1,18 @@
 """
-Serviço de Configuração Segura de IA
-Gerencia chaves de API de forma criptografada e segura
+Serviço de Configuração Segura de IA RE-EDUCA Store.
+
+Gerencia chaves de API de IA com segurança incluindo:
+- Armazenamento criptografado de API keys
+- CRUD de configurações por provider
+- Fallback automático entre providers
+- Controle de uso e quotas
+- Logs de acesso às chaves
+
+SEGURANÇA:
+- Chaves sempre criptografadas em repouso
+- Descriptografia apenas em memória
+- Nunca retornar chaves em logs
+- Rotação periódica recomendada (ai_key_rotation_service)
 """
 import logging
 from typing import Dict, Any, List, Optional

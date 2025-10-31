@@ -1,15 +1,21 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { DashboardLayout } from '../../components/layouts/PageLayout';
-import { useApi, apiService } from '../../lib/api';
-import { formatCurrency, formatPercentage } from '../../lib/utils';
-import { 
-  Star, 
-  ShoppingCart, 
-  Heart, 
+import React from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { DashboardLayout } from "../../components/layouts/PageLayout";
+import { useApi, apiService } from "../../lib/api";
+import { formatCurrency, formatPercentage } from "../../lib/utils";
+import {
+  Star,
+  ShoppingCart,
+  Heart,
   Share2,
   Truck,
   Shield,
@@ -20,15 +26,15 @@ import {
   Plus,
   MessageCircle,
   ThumbsUp,
-  ThumbsDown
-} from 'lucide-react';
-import { toast } from 'sonner';
+  ThumbsDown,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export const ProductDetailPage = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { request, loading } = useApi();
-  
+
   const [product, setProduct] = React.useState(null);
   const [reviews, setReviews] = React.useState([]);
   const [relatedProducts, setRelatedProducts] = React.useState([]);
@@ -38,8 +44,8 @@ export const ProductDetailPage = () => {
   const [showReviewForm, setShowReviewForm] = React.useState(false);
   const [reviewForm, setReviewForm] = React.useState({
     rating: 5,
-    title: '',
-    comment: ''
+    title: "",
+    comment: "",
   });
 
   // Carregar dados do produto
@@ -61,22 +67,22 @@ export const ProductDetailPage = () => {
       setReviews(reviewsData.reviews || []);
       setRelatedProducts(relatedData.products || []);
     } catch (error) {
-      console.error('Erro ao carregar dados do produto:', error);
-      toast.error('Erro ao carregar dados do produto. Tente novamente.');
+      console.error("Erro ao carregar dados do produto:", error);
+      toast.error("Erro ao carregar dados do produto. Tente novamente.");
     }
   };
 
   const addToCart = async () => {
     try {
-      await request(() => 
-        apiService.orders.addToCart({ 
-          product_id: productId, 
-          quantity: quantity 
-        })
+      await request(() =>
+        apiService.orders.addToCart({
+          product_id: productId,
+          quantity: quantity,
+        }),
       );
-      toast.success('Produto adicionado ao carrinho!');
+      toast.success("Produto adicionado ao carrinho!");
     } catch {
-      toast.error('Erro ao adicionar ao carrinho. Tente novamente.');
+      toast.error("Erro ao adicionar ao carrinho. Tente novamente.");
     }
   };
 
@@ -84,9 +90,11 @@ export const ProductDetailPage = () => {
     try {
       // Implementar toggle de wishlist
       setIsInWishlist(!isInWishlist);
-      toast.success(isInWishlist ? 'Removido dos favoritos!' : 'Adicionado aos favoritos!');
+      toast.success(
+        isInWishlist ? "Removido dos favoritos!" : "Adicionado aos favoritos!",
+      );
     } catch {
-      toast.error('Erro ao atualizar favoritos. Tente novamente.');
+      toast.error("Erro ao atualizar favoritos. Tente novamente.");
     }
   };
 
@@ -99,29 +107,27 @@ export const ProductDetailPage = () => {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copiado para a área de transferência!');
+      toast.success("Link copiado para a área de transferência!");
     }
   };
 
   const handleQuantityChange = (type) => {
-    if (type === 'increase') {
-      setQuantity(prev => Math.min(prev + 1, product.stock || 99));
-    } else if (type === 'decrease') {
-      setQuantity(prev => Math.max(prev - 1, 1));
+    if (type === "increase") {
+      setQuantity((prev) => Math.min(prev + 1, product.stock || 99));
+    } else if (type === "decrease") {
+      setQuantity((prev) => Math.max(prev - 1, 1));
     }
   };
 
   const submitReview = async () => {
     try {
-      await request(() => 
-        apiService.products.addReview(productId, reviewForm)
-      );
-      toast.success('Avaliação enviada com sucesso!');
+      await request(() => apiService.products.addReview(productId, reviewForm));
+      toast.success("Avaliação enviada com sucesso!");
       setShowReviewForm(false);
-      setReviewForm({ rating: 5, title: '', comment: '' });
+      setReviewForm({ rating: 5, title: "", comment: "" });
       loadProductData(); // Recarregar reviews
     } catch {
-      toast.error('Erro ao enviar avaliação. Tente novamente.');
+      toast.error("Erro ao enviar avaliação. Tente novamente.");
     }
   };
 
@@ -155,7 +161,7 @@ export const ProductDetailPage = () => {
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               O produto que você está procurando não existe ou foi removido.
             </p>
-            <Button onClick={() => navigate('/store')}>
+            <Button onClick={() => navigate("/store")}>
               Voltar para a Loja
             </Button>
           </CardContent>
@@ -164,13 +170,15 @@ export const ProductDetailPage = () => {
     );
   }
 
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length 
-    : 0;
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      : 0;
 
-  const discountPrice = product.discount_percentage > 0 
-    ? product.price * (1 - product.discount_percentage / 100)
-    : product.price;
+  const discountPrice =
+    product.discount_percentage > 0
+      ? product.price * (1 - product.discount_percentage / 100)
+      : product.price;
 
   return (
     <DashboardLayout>
@@ -180,14 +188,14 @@ export const ProductDetailPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/store')}
+            onClick={() => navigate("/store")}
             className="flex items-center space-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Voltar para a Loja</span>
           </Button>
           <span>/</span>
-          <span>{product.category?.name || 'Produto'}</span>
+          <span>{product.category?.name || "Produto"}</span>
           <span>/</span>
           <span className="text-gray-900 dark:text-white">{product.name}</span>
         </div>
@@ -197,12 +205,12 @@ export const ProductDetailPage = () => {
           <div className="space-y-4">
             <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
               <img
-                src={product.image_url || '/placeholder-product.jpg'}
+                src={product.image_url || "/placeholder-product.jpg"}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
             </div>
-            
+
             {/* Thumbnails */}
             {product.images && product.images.length > 1 && (
               <div className="flex space-x-2">
@@ -211,9 +219,9 @@ export const ProductDetailPage = () => {
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index 
-                        ? 'border-blue-500' 
-                        : 'border-gray-200 dark:border-gray-700'
+                      selectedImage === index
+                        ? "border-blue-500"
+                        : "border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <img
@@ -234,7 +242,7 @@ export const ProductDetailPage = () => {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 {product.name}
               </h1>
-              
+
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-1">
                   {[...Array(5)].map((_, i) => (
@@ -242,8 +250,8 @@ export const ProductDetailPage = () => {
                       key={i}
                       className={`h-5 w-5 ${
                         i < Math.floor(averageRating)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
                       }`}
                     />
                   ))}
@@ -251,12 +259,8 @@ export const ProductDetailPage = () => {
                     {averageRating.toFixed(1)} ({reviews.length} avaliações)
                   </span>
                 </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={shareProduct}
-                >
+
+                <Button variant="outline" size="sm" onClick={shareProduct}>
                   <Share2 className="h-4 w-4 mr-2" />
                   Compartilhar
                 </Button>
@@ -301,16 +305,21 @@ export const ProductDetailPage = () => {
                   Especificações
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {Object.entries(product.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-1 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-gray-600 dark:text-gray-400 capitalize">
-                        {key.replace(/_/g, ' ')}:
-                      </span>
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        {value}
-                      </span>
-                    </div>
-                  ))}
+                  {Object.entries(product.specifications).map(
+                    ([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex justify-between py-1 border-b border-gray-200 dark:border-gray-700"
+                      >
+                        <span className="text-gray-600 dark:text-gray-400 capitalize">
+                          {key.replace(/_/g, " ")}:
+                        </span>
+                        <span className="text-gray-900 dark:text-white font-medium">
+                          {value}
+                        </span>
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             )}
@@ -326,7 +335,7 @@ export const ProductDetailPage = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleQuantityChange('decrease')}
+                      onClick={() => handleQuantityChange("decrease")}
                       disabled={quantity <= 1}
                     >
                       <Minus className="h-4 w-4" />
@@ -337,14 +346,14 @@ export const ProductDetailPage = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleQuantityChange('increase')}
+                      onClick={() => handleQuantityChange("increase")}
                       disabled={quantity >= (product.stock || 99)}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-                
+
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {product.stock || 0} unidades disponíveis
                 </span>
@@ -359,13 +368,15 @@ export const ProductDetailPage = () => {
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Adicionar ao Carrinho
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={toggleWishlist}
                   className="px-4"
                 >
-                  <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-current text-red-500' : ''}`} />
+                  <Heart
+                    className={`h-4 w-4 ${isInWishlist ? "fill-current text-red-500" : ""}`}
+                  />
                 </Button>
               </div>
             </div>
@@ -383,7 +394,7 @@ export const ProductDetailPage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-green-500" />
                 <div>
@@ -395,7 +406,7 @@ export const ProductDetailPage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Award className="h-5 w-5 text-yellow-500" />
                 <div>
@@ -427,7 +438,7 @@ export const ProductDetailPage = () => {
               </Button>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             {/* Formulário de Avaliação */}
             {showReviewForm && (
@@ -435,7 +446,7 @@ export const ProductDetailPage = () => {
                 <h4 className="font-medium text-gray-900 dark:text-white mb-4">
                   Sua Avaliação
                 </h4>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
@@ -445,11 +456,16 @@ export const ProductDetailPage = () => {
                       {[...Array(5)].map((_, i) => (
                         <button
                           key={i}
-                          onClick={() => setReviewForm(prev => ({ ...prev, rating: i + 1 }))}
+                          onClick={() =>
+                            setReviewForm((prev) => ({
+                              ...prev,
+                              rating: i + 1,
+                            }))
+                          }
                           className={`p-1 ${
                             i < reviewForm.rating
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
+                              ? "text-yellow-400"
+                              : "text-gray-300"
                           }`}
                         >
                           <Star className="h-6 w-6 fill-current" />
@@ -457,35 +473,43 @@ export const ProductDetailPage = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                       Título
                     </label>
                     <Input
                       value={reviewForm.title}
-                      onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
+                      onChange={(e) =>
+                        setReviewForm((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
                       placeholder="Resumo da sua experiência"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                       Comentário
                     </label>
                     <textarea
                       value={reviewForm.comment}
-                      onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                      onChange={(e) =>
+                        setReviewForm((prev) => ({
+                          ...prev,
+                          comment: e.target.value,
+                        }))
+                      }
                       placeholder="Conte sua experiência com o produto..."
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
                       rows={4}
                     />
                   </div>
-                  
+
                   <div className="flex space-x-2">
-                    <Button onClick={submitReview}>
-                      Enviar Avaliação
-                    </Button>
+                    <Button onClick={submitReview}>Enviar Avaliação</Button>
                     <Button
                       variant="outline"
                       onClick={() => setShowReviewForm(false)}
@@ -501,7 +525,10 @@ export const ProductDetailPage = () => {
             <div className="space-y-4">
               {reviews.length > 0 ? (
                 reviews.map((review, index) => (
-                  <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                  <div
+                    key={index}
+                    className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0"
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h4 className="font-medium text-gray-900 dark:text-white">
@@ -514,8 +541,8 @@ export const ProductDetailPage = () => {
                                 key={i}
                                 className={`h-4 w-4 ${
                                   i < review.rating
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
+                                    ? "text-yellow-400 fill-current"
+                                    : "text-gray-300"
                                 }`}
                               />
                             ))}
@@ -524,12 +551,14 @@ export const ProductDetailPage = () => {
                             por {review.user_name}
                           </span>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                            {new Date(review.created_at).toLocaleDateString(
+                              "pt-BR",
+                            )}
                           </span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <p className="text-gray-600 dark:text-gray-400">
                       {review.comment}
                     </p>
@@ -555,10 +584,15 @@ export const ProductDetailPage = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {relatedProducts.map((relatedProduct) => (
-                <Card key={relatedProduct.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer">
+                <Card
+                  key={relatedProduct.id}
+                  className="hover:shadow-lg transition-all duration-300 cursor-pointer"
+                >
                   <div className="relative">
                     <img
-                      src={relatedProduct.image_url || '/placeholder-product.jpg'}
+                      src={
+                        relatedProduct.image_url || "/placeholder-product.jpg"
+                      }
                       alt={relatedProduct.name}
                       className="w-full h-32 object-cover rounded-t-lg"
                     />
@@ -568,20 +602,22 @@ export const ProductDetailPage = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <CardContent className="p-3">
                     <h3 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-2">
                       {relatedProduct.name}
                     </h3>
-                    
+
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-900 dark:text-white">
                         {formatCurrency(relatedProduct.price)}
                       </span>
-                      
+
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/store/product/${relatedProduct.id}`)}
+                        onClick={() =>
+                          navigate(`/store/product/${relatedProduct.id}`)
+                        }
                       >
                         Ver
                       </Button>

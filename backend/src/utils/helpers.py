@@ -1,5 +1,13 @@
 """
-Funções auxiliares para RE-EDUCA Store
+Funções auxiliares para RE-EDUCA Store.
+
+Fornece funções utilitárias incluindo:
+- Geração de UUID e hashes
+- Validação de email e senha
+- Cálculo de IMC e calorias
+- Formatação de datas e moeda
+- Paginação de dados
+- Sanitização de inputs
 """
 import re
 import hashlib
@@ -9,7 +17,12 @@ from typing import Dict, Any, List, Optional
 from utils.constants import IMC_CLASSIFICATIONS, MACRONUTRIENTS
 
 def generate_uuid() -> str:
-    """Gera um UUID único"""
+    """
+    Gera um UUID único.
+    
+    Returns:
+        str: UUID v4 como string.
+    """
     return str(uuid.uuid4())
 
 def generate_hash(data: str) -> str:
@@ -17,12 +30,28 @@ def generate_hash(data: str) -> str:
     return hashlib.sha256(data.encode()).hexdigest()
 
 def validate_email(email: str) -> bool:
-    """Valida formato de email"""
+    """
+    Valida formato de email.
+    
+    Args:
+        email (str): Email a ser validado.
+        
+    Returns:
+        bool: True se válido, False caso contrário.
+    """
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
 def validate_password(password: str) -> Dict[str, Any]:
-    """Valida força da senha"""
+    """
+    Valida força da senha.
+    
+    Args:
+        password (str): Senha a ser validada.
+        
+    Returns:
+        Dict[str, Any]: Resultado com valid, errors e strength.
+    """
     errors = []
     
     if len(password) < 8:

@@ -1,12 +1,31 @@
 """
-Middleware de Autenticação para Testes - Bypass de autenticação
+Middleware de Autenticação para Testes RE-EDUCA Store.
+
+Fornece bypass de autenticação para testes automatizados incluindo:
+- Decorators mock que simulam token_required
+- Usuários mock (user e admin)
+- Ativação via variáveis de ambiente
+
+CONFIGURAÇÃO:
+- TESTING=true para ativar modo teste
+- BYPASS_AUTH=true para bypass de autenticação
+
+AVISO IMPORTANTE:
+- NUNCA usar em produção!
+- Apenas para testes automatizados
+- Verificar env vars antes de deploy
 """
 import os
 from functools import wraps
 from flask import request, jsonify
 
 def create_test_auth_bypass():
-    """Cria um bypass de autenticação para testes"""
+    """
+    Cria um bypass de autenticação para testes.
+    
+    Returns:
+        tuple: (test_token_required, test_admin_required) decorators.
+    """
     
     # Verifica se está em modo de teste
     is_testing = os.environ.get('TESTING', 'false').lower() == 'true'

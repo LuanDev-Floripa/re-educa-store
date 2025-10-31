@@ -1,17 +1,23 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Progress } from '@/components/Ui/progress';
-import { Badge } from '@/components/Ui/badge';
-import { useApi, apiService } from '../lib/api';
-import { 
-  Trophy, 
-  Target, 
-  Star, 
-  Award, 
-  Zap, 
-  Fire, 
-  Heart, 
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Progress } from "@/components/Ui/progress";
+import { Badge } from "@/components/Ui/badge";
+import { useApi, apiService } from "../lib/api";
+import {
+  Trophy,
+  Target,
+  Star,
+  Award,
+  Zap,
+  Fire,
+  Heart,
   Brain,
   Calendar,
   Clock,
@@ -24,9 +30,9 @@ import {
   Medal,
   Flag,
   Rocket,
-  Lightbulb
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Lightbulb,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export const GamificationSystem = () => {
   const { request, loading } = useApi();
@@ -38,7 +44,7 @@ export const GamificationSystem = () => {
     streak: 0,
     achievements: [],
     challenges: [],
-    rewards: []
+    rewards: [],
   });
   const [activeChallenges, setActiveChallenges] = React.useState([]);
   const [completedChallenges, setCompletedChallenges] = React.useState([]);
@@ -65,70 +71,70 @@ export const GamificationSystem = () => {
         streak: 0,
         achievements: [],
         challenges: [],
-        rewards: []
+        rewards: [],
       };
 
       setUserStats(userStatsData);
       setActiveChallenges(challengesData.active || []);
       setCompletedChallenges(challengesData.completed || []);
-      
+
       // Definir gamificationData para uso no modal
       setGamificationData({
         user: userStatsData,
         challenges: challengesData.active || [],
         achievements: [],
-        rewards: []
+        rewards: [],
       });
     } catch (error) {
-      console.error('Erro ao carregar dados de gamificação:', error);
+      console.error("Erro ao carregar dados de gamificação:", error);
     }
   }, [request]);
 
   const startChallenge = async (challengeId) => {
     try {
-      await request(() => 
-        apiService.gamification.startChallenge(challengeId)
-      );
-      toast.success('Desafio iniciado com sucesso!');
+      await request(() => apiService.gamification.startChallenge(challengeId));
+      toast.success("Desafio iniciado com sucesso!");
       loadGamificationData();
     } catch (error) {
-      console.error('Erro ao iniciar desafio:', error);
-      toast.error('Erro ao iniciar desafio. Tente novamente.');
+      console.error("Erro ao iniciar desafio:", error);
+      toast.error("Erro ao iniciar desafio. Tente novamente.");
     }
   };
 
   const completeChallenge = async (challengeId) => {
     try {
-      const result = await request(() => 
-        apiService.gamification.completeChallenge(challengeId)
+      const result = await request(() =>
+        apiService.gamification.completeChallenge(challengeId),
       );
-      
+
       if (result.success) {
         toast.success(`Desafio completado! +${result.points} pontos ganhos!`);
         if (result.levelUp) {
-          toast.success(`Parabéns! Você subiu para o nível ${result.newLevel}!`);
+          toast.success(
+            `Parabéns! Você subiu para o nível ${result.newLevel}!`,
+          );
         }
         loadGamificationData();
       }
     } catch (error) {
-      console.error('Erro ao completar desafio:', error);
-      toast.error('Erro ao completar desafio. Tente novamente.');
+      console.error("Erro ao completar desafio:", error);
+      toast.error("Erro ao completar desafio. Tente novamente.");
     }
   };
 
   const claimReward = async (rewardId) => {
     try {
-      const result = await request(() => 
-        apiService.gamification.claimReward(rewardId)
+      const result = await request(() =>
+        apiService.gamification.claimReward(rewardId),
       );
-      
+
       if (result.success) {
         toast.success(`Recompensa resgatada: ${result.reward.name}!`);
         loadGamificationData();
       }
     } catch (error) {
-      console.error('Erro ao resgatar recompensa:', error);
-      toast.error('Erro ao resgatar recompensa. Tente novamente.');
+      console.error("Erro ao resgatar recompensa:", error);
+      toast.error("Erro ao resgatar recompensa. Tente novamente.");
     }
   };
 
@@ -137,11 +143,11 @@ export const GamificationSystem = () => {
   };
 
   const getLevelColor = (level) => {
-    if (level >= 50) return 'text-purple-600';
-    if (level >= 30) return 'text-blue-600';
-    if (level >= 20) return 'text-green-600';
-    if (level >= 10) return 'text-yellow-600';
-    return 'text-orange-600';
+    if (level >= 50) return "text-purple-600";
+    if (level >= 30) return "text-blue-600";
+    if (level >= 20) return "text-green-600";
+    if (level >= 10) return "text-yellow-600";
+    return "text-orange-600";
   };
 
   const getLevelIcon = (level) => {
@@ -153,28 +159,38 @@ export const GamificationSystem = () => {
   };
 
   const getChallengeStatus = (challenge) => {
-    if (challenge.completed) return 'completed';
-    if (challenge.active) return 'active';
-    return 'available';
+    if (challenge.completed) return "completed";
+    if (challenge.active) return "active";
+    return "available";
   };
 
   const getChallengeIcon = (challenge) => {
     switch (challenge.type) {
-      case 'daily': return <Calendar className="w-5 h-5" />;
-      case 'weekly': return <Clock className="w-5 h-5" />;
-      case 'achievement': return <Award className="w-5 h-5" />;
-      case 'streak': return <Fire className="w-5 h-5" />;
-      case 'learning': return <Brain className="w-5 h-5" />;
-      case 'health': return <Heart className="w-5 h-5" />;
-      default: return <Target className="w-5 h-5" />;
+      case "daily":
+        return <Calendar className="w-5 h-5" />;
+      case "weekly":
+        return <Clock className="w-5 h-5" />;
+      case "achievement":
+        return <Award className="w-5 h-5" />;
+      case "streak":
+        return <Fire className="w-5 h-5" />;
+      case "learning":
+        return <Brain className="w-5 h-5" />;
+      case "health":
+        return <Heart className="w-5 h-5" />;
+      default:
+        return <Target className="w-5 h-5" />;
     }
   };
 
   const getChallengeColor = (status) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 border-green-200 text-green-800';
-      case 'active': return 'bg-blue-100 border-blue-200 text-blue-800';
-      default: return 'bg-gray-100 border-gray-200 text-gray-800';
+      case "completed":
+        return "bg-green-100 border-green-200 text-green-800";
+      case "active":
+        return "bg-blue-100 border-blue-200 text-blue-800";
+      default:
+        return "bg-gray-100 border-gray-200 text-gray-800";
     }
   };
 
@@ -190,7 +206,7 @@ export const GamificationSystem = () => {
 
   // Função para marcar desafio como completo
   const handleCompleteChallenge = (challengeId) => {
-    setCompletedChallenges(prev => [...prev, challengeId]);
+    setCompletedChallenges((prev) => [...prev, challengeId]);
     // Atualizar dados
     loadGamificationData();
   };
@@ -198,7 +214,8 @@ export const GamificationSystem = () => {
   // Usar completedChallenges para mostrar progresso
   const completedCount = completedChallenges.length;
   const totalChallenges = activeChallenges.length;
-  const progressPercentage = totalChallenges > 0 ? (completedCount / totalChallenges) * 100 : 0;
+  const progressPercentage =
+    totalChallenges > 0 ? (completedCount / totalChallenges) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -207,7 +224,9 @@ export const GamificationSystem = () => {
         {/* Nível do Usuário */}
         <Card className="shadow-lg border-0">
           <CardContent className="p-6 text-center">
-            <div className={`text-4xl font-bold mb-2 ${getLevelColor(userStats.level)}`}>
+            <div
+              className={`text-4xl font-bold mb-2 ${getLevelColor(userStats.level)}`}
+            >
               {getLevelIcon(userStats.level)}
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -277,7 +296,8 @@ export const GamificationSystem = () => {
             Complete desafios para ganhar experiência e pontos
             <br />
             <span className="text-sm font-medium text-blue-600">
-              Progresso: {completedCount}/{totalChallenges} completados ({Math.round(progressPercentage)}%)
+              Progresso: {completedCount}/{totalChallenges} completados (
+              {Math.round(progressPercentage)}%)
             </span>
           </CardDescription>
           <Button onClick={handleShowRewards} size="sm" variant="outline">
@@ -290,17 +310,27 @@ export const GamificationSystem = () => {
             <div className="text-center py-8">
               <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">Nenhum desafio ativo</p>
-              <p className="text-gray-400">Complete tarefas para desbloquear novos desafios!</p>
+              <p className="text-gray-400">
+                Complete tarefas para desbloquear novos desafios!
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeChallenges.map((challenge) => (
-                <Card key={challenge.id} className="border-2 border-blue-200 bg-blue-50">
+                <Card
+                  key={challenge.id}
+                  className="border-2 border-blue-200 bg-blue-50"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getChallengeIcon(challenge)}
-                        <Badge variant="secondary" className={getChallengeColor(getChallengeStatus(challenge))}>
+                        <Badge
+                          variant="secondary"
+                          className={getChallengeColor(
+                            getChallengeStatus(challenge),
+                          )}
+                        >
                           {challenge.type}
                         </Badge>
                       </div>
@@ -321,11 +351,11 @@ export const GamificationSystem = () => {
                           {challenge.current} / {challenge.target}
                         </span>
                       </div>
-                      <Progress 
-                        value={(challenge.current / challenge.target) * 100} 
+                      <Progress
+                        value={(challenge.current / challenge.target) * 100}
                         className="h-2"
                       />
-                      
+
                       {challenge.current >= challenge.target ? (
                         <Button
                           onClick={() => {
@@ -351,7 +381,9 @@ export const GamificationSystem = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {/* Implementar pausar */}}
+                            onClick={() => {
+                              /* Implementar pausar */
+                            }}
                           >
                             <Pause className="w-4 h-4" />
                           </Button>
@@ -380,7 +412,7 @@ export const GamificationSystem = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userStats.challenges
-              .filter(challenge => !challenge.active && !challenge.completed)
+              .filter((challenge) => !challenge.active && !challenge.completed)
               .slice(0, 6)
               .map((challenge) => (
                 <Card key={challenge.id} className="border border-gray-200">
@@ -388,9 +420,7 @@ export const GamificationSystem = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getChallengeIcon(challenge)}
-                        <Badge variant="outline">
-                          {challenge.type}
-                        </Badge>
+                        <Badge variant="outline">{challenge.type}</Badge>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-gray-600">
@@ -407,14 +437,14 @@ export const GamificationSystem = () => {
                         <p>Requisito: {challenge.requirement}</p>
                         <p>Prazo: {challenge.deadline}</p>
                       </div>
-                      
+
                       <Button
                         onClick={() => startChallenge(challenge.id)}
                         className="w-full"
                         disabled={loading || !challenge.available}
                       >
                         <Play className="w-4 h-4 mr-2" />
-                        {challenge.available ? 'Iniciar' : 'Bloqueado'}
+                        {challenge.available ? "Iniciar" : "Bloqueado"}
                       </Button>
                     </div>
                   </CardContent>
@@ -431,17 +461,18 @@ export const GamificationSystem = () => {
             <Trophy className="w-6 h-6 text-yellow-600" />
             Conquistas
           </CardTitle>
-          <CardDescription>
-            Suas conquistas e medalhas
-          </CardDescription>
+          <CardDescription>Suas conquistas e medalhas</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {userStats.achievements.map((achievement) => (
-              <Card key={achievement.id} className="text-center border-2 border-yellow-200 bg-yellow-50">
+              <Card
+                key={achievement.id}
+                className="text-center border-2 border-yellow-200 bg-yellow-50"
+              >
                 <CardContent className="p-4">
                   <div className="text-4xl mb-2">
-                    {achievement.icon || '🏆'}
+                    {achievement.icon || "🏆"}
                   </div>
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
                     {achievement.name}
@@ -449,7 +480,10 @@ export const GamificationSystem = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     {achievement.description}
                   </p>
-                  <Badge variant="secondary" className="bg-yellow-200 text-yellow-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-yellow-200 text-yellow-800"
+                  >
                     +{achievement.points} XP
                   </Badge>
                 </CardContent>
@@ -466,20 +500,24 @@ export const GamificationSystem = () => {
             <Gift className="w-6 h-6 text-green-600" />
             Recompensas Disponíveis
           </CardTitle>
-          <CardDescription>
-            Resgate suas recompensas por pontos
-          </CardDescription>
+          <CardDescription>Resgate suas recompensas por pontos</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userStats.rewards
-              .filter(reward => reward.available && userStats.totalPoints >= reward.cost)
+              .filter(
+                (reward) =>
+                  reward.available && userStats.totalPoints >= reward.cost,
+              )
               .map((reward) => (
                 <Card key={reward.id} className="border border-green-200">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl">{reward.icon || '🎁'}</div>
-                      <Badge variant="outline" className="bg-green-100 text-green-800">
+                      <div className="text-2xl">{reward.icon || "🎁"}</div>
+                      <Badge
+                        variant="outline"
+                        className="bg-green-100 text-green-800"
+                      >
                         {reward.cost} pts
                       </Badge>
                     </div>
@@ -509,29 +547,38 @@ export const GamificationSystem = () => {
             <Crown className="w-6 h-6 text-purple-600" />
             Ranking da Semana
           </CardTitle>
-          <CardDescription>
-            Compita com outros usuários
-          </CardDescription>
+          <CardDescription>Compita com outros usuários</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3].map((position) => (
-              <div key={position} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={position}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                    position === 1 ? 'bg-yellow-400 text-yellow-900' :
-                    position === 2 ? 'bg-gray-300 text-gray-700' :
-                    'bg-orange-400 text-orange-900'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      position === 1
+                        ? "bg-yellow-400 text-yellow-900"
+                        : position === 2
+                          ? "bg-gray-300 text-gray-700"
+                          : "bg-orange-400 text-orange-900"
+                    }`}
+                  >
                     {position}
                   </div>
                   <div>
                     <p className="font-medium">Usuário {position}</p>
-                    <p className="text-sm text-gray-600">Nível {10 + position}</p>
+                    <p className="text-sm text-gray-600">
+                      Nível {10 + position}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-gray-900">{1000 - (position * 100)} pts</p>
+                  <p className="font-bold text-gray-900">
+                    {1000 - position * 100} pts
+                  </p>
                   <p className="text-sm text-gray-600">Esta semana</p>
                 </div>
               </div>
@@ -552,12 +599,17 @@ export const GamificationSystem = () => {
             </div>
             <div className="space-y-3">
               {gamificationData?.rewards?.map((reward) => (
-                <div key={reward.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={reward.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
                     <Gift className="w-5 h-5 text-yellow-600" />
                     <div>
                       <p className="font-medium">{reward.name}</p>
-                      <p className="text-sm text-gray-600">{reward.description}</p>
+                      <p className="text-sm text-gray-600">
+                        {reward.description}
+                      </p>
                     </div>
                   </div>
                   <Button size="sm" onClick={() => claimReward(reward.id)}>

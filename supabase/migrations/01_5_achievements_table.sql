@@ -19,7 +19,16 @@ CREATE TABLE IF NOT EXISTS achievements (
 );
 
 -- Índices
-CREATE INDEX IF NOT EXISTS idx_achievements_code ON achievements(code);
+-- Verificar se a coluna code existe antes de criar índice
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'achievements' AND column_name = 'code'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_achievements_code ON achievements(code);
+    END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);
 CREATE INDEX IF NOT EXISTS idx_achievements_active ON achievements(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_achievements_rarity ON achievements(rarity);

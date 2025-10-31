@@ -1,65 +1,81 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { DashboardLayout } from '../../components/layouts/PageLayout';
-import { PaymentMethods } from '../../components/payments/PaymentMethods';
-import { StripePaymentForm } from '../../components/payments/StripePaymentForm';
-import { useApi } from '../../lib/api';
-import { ShoppingCart, ArrowLeft, CheckCircle, Package } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+/**
+ * CheckoutPage
+ * - Busca carrinho; métodos de pagamento; fallbacks e toasts
+ */
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { DashboardLayout } from "../../components/layouts/PageLayout";
+import { PaymentMethods } from "../../components/payments/PaymentMethods";
+import { StripePaymentForm } from "../../components/payments/StripePaymentForm";
+import { useApi } from "../../lib/api";
+import { ShoppingCart, ArrowLeft, CheckCircle, Package } from "lucide-react";
+import { toast } from "sonner";
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { request } = useApi();
-  
+
   const [cart, setCart] = React.useState([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    React.useState(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [orderSummary, setOrderSummary] = React.useState({
     subtotal: 0,
     discount: 0,
     shipping: 0,
-    total: 0
+    total: 0,
   });
 
   React.useEffect(() => {
     // Buscar carrinho do backend
     const fetchCart = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9001';
-        const token = localStorage.getItem('token');
-        
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9001";
+        let token = null;
+        try {
+          token = localStorage.getItem("token");
+        } catch {
+          token = null;
+        }
+
         const response = await fetch(`${API_URL}/api/cart`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
           const data = await response.json();
-          setCart(data.items || []);
-          
+          setCart(Array.isArray(data?.items) ? data.items : []);
+
           // Calcula resumo do pedido
-          const subtotal = data.total || 0;
-          const shipping = subtotal > 200 ? 0 : 15.00; // Frete grátis acima de R$ 200
+          const subtotal = Number(data?.total || 0);
+          const shipping = subtotal > 200 ? 0 : 15.0; // Frete grátis acima de R$ 200
           const discount = 0; // Cupons implementados futuramente
           const total = subtotal + shipping - discount;
-          
+
           setOrderSummary({
             subtotal,
             discount,
             shipping,
-            total
+            total,
           });
         } else {
-          toast.error('Erro ao carregar carrinho');
+          toast.error("Erro ao carregar carrinho");
         }
       } catch (error) {
-        console.error('Erro ao buscar carrinho:', error);
-        toast.error('Erro ao carregar carrinho');
+        console.error("Erro ao buscar carrinho:", error);
+        toast.error("Erro ao carregar carrinho");
       }
     };
 
@@ -71,13 +87,13 @@ export const CheckoutPage = () => {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('Pagamento realizado com sucesso!');
-    navigate('/payment/success');
+    toast.success("Pagamento realizado com sucesso!");
+    navigate("/payment/success");
   };
 
   const handlePaymentError = (error) => {
-    toast.error('Erro no pagamento. Tente novamente.');
-    console.error('Erro no pagamento:', error);
+    toast.error("Erro no pagamento. Tente novamente.");
+    console.error("Erro no pagamento:", error);
   };
 
   const renderPaymentForm = () => {
@@ -94,7 +110,7 @@ export const CheckoutPage = () => {
     }
 
     switch (selectedPaymentMethod) {
-      case 'card':
+      case "card":
         return (
           <StripePaymentForm
             amount={orderSummary.total}
@@ -102,7 +118,7 @@ export const CheckoutPage = () => {
             onError={handlePaymentError}
           />
         );
-      case 'pix':
+      case "pix":
         return (
           <Card>
             <CardHeader>
@@ -120,17 +136,14 @@ export const CheckoutPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Valor: R$ {orderSummary.total.toFixed(2)}
               </p>
-              <Button
-                onClick={handlePaymentSuccess}
-                className="w-full"
-              >
+              <Button onClick={handlePaymentSuccess} className="w-full">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Confirmar Pagamento PIX
               </Button>
             </CardContent>
           </Card>
         );
-      case 'boleto':
+      case "boleto":
         return (
           <Card>
             <CardHeader>
@@ -148,10 +161,7 @@ export const CheckoutPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Valor: R$ {orderSummary.total.toFixed(2)}
               </p>
-              <Button
-                onClick={handlePaymentSuccess}
-                className="w-full"
-              >
+              <Button onClick={handlePaymentSuccess} className="w-full">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Gerar Boleto
               </Button>
@@ -200,22 +210,25 @@ export const CheckoutPage = () => {
               <CardContent className="space-y-4">
                 {/* Itens */}
                 <div className="space-y-3">
-                  {cart.map((item) => (
+                  {(Array.isArray(cart) ? cart : []).map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                         <Package className="w-5 h-5 text-gray-400" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm">{item.name}</h4>
+                        <h4 className="font-medium text-sm">{item?.name || "Produto"}</h4>
                         <p className="text-xs text-gray-500">
-                          Qtd: {item.quantity} × R$ {item.price.toFixed(2)}
+                          Qtd: {Number(item?.quantity) || 0} × R$ {Number(item?.price || 0).toFixed(2)}
                         </p>
                       </div>
                       <div className="font-medium text-sm">
-                        R$ {(item.price * item.quantity).toFixed(2)}
+                        R$ {(Number(item?.price || 0) * Number(item?.quantity || 0)).toFixed(2)}
                       </div>
                     </div>
                   ))}
+                  {(Array.isArray(cart) && cart.length === 0) && (
+                    <p className="text-sm text-gray-500">Seu carrinho está vazio.</p>
+                  )}
                 </div>
 
                 {/* Totais */}
@@ -233,7 +246,9 @@ export const CheckoutPage = () => {
                   <div className="flex justify-between text-sm">
                     <span>Frete:</span>
                     <span>
-                      {orderSummary.shipping === 0 ? 'Grátis' : `R$ ${orderSummary.shipping.toFixed(2)}`}
+                      {orderSummary.shipping === 0
+                        ? "Grátis"
+                        : `R$ ${orderSummary.shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
@@ -246,9 +261,7 @@ export const CheckoutPage = () => {
           </div>
 
           {/* Formulário de Pagamento */}
-          <div className="lg:col-span-2">
-            {renderPaymentForm()}
-          </div>
+          <div className="lg:col-span-2">{renderPaymentForm()}</div>
         </div>
       </div>
     </DashboardLayout>

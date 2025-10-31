@@ -1,46 +1,56 @@
-import React, { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Label } from '../Ui/label';
-import { Textarea } from '../Ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Ui/select';
-import { Checkbox } from '../Ui/checkbox';
-import { Badge } from '../Ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { 
-  Image, 
-  Video, 
-  MapPin, 
-  Smile, 
-  Hash, 
-  Users, 
-  X, 
+import React, { useState, useRef } from "react";
+/**
+ * Modal de criação de post social.
+ * - Valida conteúdo/mídia, gera previews e envia via FormData
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Label } from "../Ui/label";
+import { Textarea } from "../Ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../Ui/select";
+import { Checkbox } from "../Ui/checkbox";
+import { Badge } from "../Ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import {
+  Image,
+  Video,
+  MapPin,
+  Smile,
+  Hash,
+  Users,
+  X,
   Upload,
   Camera,
   FileText,
   Trophy,
   Dumbbell,
   Utensils,
-  TrendingUp
-} from 'lucide-react';
-import { toast } from 'sonner';
+  TrendingUp,
+} from "lucide-react";
+import { toast } from "sonner";
 
-const CreatePostModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
+const CreatePostModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
   currentUser,
-  onImageUpload 
+  onImageUpload,
 }) => {
-  const [content, setContent] = useState('');
-  const [postType, setPostType] = useState('text');
+  const [content, setContent] = useState("");
+  const [postType, setPostType] = useState("text");
   const [hashtags, setHashtags] = useState([]);
-  const [hashtagInput, setHashtagInput] = useState('');
+  const [hashtagInput, setHashtagInput] = useState("");
   const [mentions, setMentions] = useState([]);
-  const [mentionInput, setMentionInput] = useState('');
-  const [mood, setMood] = useState('');
-  const [location, setLocation] = useState('');
+  const [mentionInput, setMentionInput] = useState("");
+  const [mood, setMood] = useState("");
+  const [location, setLocation] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [mediaFiles, setMediaFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -48,69 +58,104 @@ const CreatePostModal = ({
   const fileInputRef = useRef(null);
 
   const postTypes = [
-    { value: 'text', label: 'Texto', icon: FileText, color: 'bg-blue-100 text-blue-800' },
-    { value: 'image', label: 'Imagem', icon: Image, color: 'bg-green-100 text-green-800' },
-    { value: 'video', label: 'Vídeo', icon: Video, color: 'bg-purple-100 text-purple-800' },
-    { value: 'achievement', label: 'Conquista', icon: Trophy, color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'workout', label: 'Treino', icon: Dumbbell, color: 'bg-red-100 text-red-800' },
-    { value: 'meal', label: 'Refeição', icon: Utensils, color: 'bg-orange-100 text-orange-800' },
-    { value: 'progress', label: 'Progresso', icon: TrendingUp, color: 'bg-indigo-100 text-indigo-800' }
+    {
+      value: "text",
+      label: "Texto",
+      icon: FileText,
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      value: "image",
+      label: "Imagem",
+      icon: Image,
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      value: "video",
+      label: "Vídeo",
+      icon: Video,
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      value: "achievement",
+      label: "Conquista",
+      icon: Trophy,
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      value: "workout",
+      label: "Treino",
+      icon: Dumbbell,
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      value: "meal",
+      label: "Refeição",
+      icon: Utensils,
+      color: "bg-orange-100 text-orange-800",
+    },
+    {
+      value: "progress",
+      label: "Progresso",
+      icon: TrendingUp,
+      color: "bg-indigo-100 text-indigo-800",
+    },
   ];
 
   const moods = [
-    { value: 'happy', label: '😊 Feliz', color: 'text-yellow-500' },
-    { value: 'excited', label: '🤩 Empolgado', color: 'text-pink-500' },
-    { value: 'motivated', label: '💪 Motivado', color: 'text-green-500' },
-    { value: 'proud', label: '🏆 Orgulhoso', color: 'text-purple-500' },
-    { value: 'grateful', label: '🙏 Grato', color: 'text-blue-500' },
-    { value: 'focused', label: '🎯 Focado', color: 'text-indigo-500' },
-    { value: 'relaxed', label: '😌 Relaxado', color: 'text-teal-500' },
-    { value: 'determined', label: '🔥 Determinado', color: 'text-red-500' }
+    { value: "happy", label: "😊 Feliz", color: "text-yellow-500" },
+    { value: "excited", label: "🤩 Empolgado", color: "text-pink-500" },
+    { value: "motivated", label: "💪 Motivado", color: "text-green-500" },
+    { value: "proud", label: "🏆 Orgulhoso", color: "text-purple-500" },
+    { value: "grateful", label: "🙏 Grato", color: "text-blue-500" },
+    { value: "focused", label: "🎯 Focado", color: "text-indigo-500" },
+    { value: "relaxed", label: "😌 Relaxado", color: "text-teal-500" },
+    { value: "determined", label: "🔥 Determinado", color: "text-red-500" },
   ];
 
   const handleAddHashtag = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      const hashtag = hashtagInput.trim().replace('#', '');
+      const hashtag = hashtagInput.trim().replace("#", "");
       if (hashtag && !hashtags.includes(hashtag)) {
         setHashtags([...hashtags, hashtag]);
-        setHashtagInput('');
+        setHashtagInput("");
       }
     }
   };
 
   const handleRemoveHashtag = (hashtagToRemove) => {
-    setHashtags(hashtags.filter(hashtag => hashtag !== hashtagToRemove));
+    setHashtags(hashtags.filter((hashtag) => hashtag !== hashtagToRemove));
   };
 
   const handleAddMention = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      const mention = mentionInput.trim().replace('@', '');
+      const mention = mentionInput.trim().replace("@", "");
       if (mention && !mentions.includes(mention)) {
         setMentions([...mentions, mention]);
-        setMentionInput('');
+        setMentionInput("");
       }
     }
   };
 
   const handleRemoveMention = (mentionToRemove) => {
-    setMentions(mentions.filter(mention => mention !== mentionToRemove));
+    setMentions(mentions.filter((mention) => mention !== mentionToRemove));
   };
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
+    const validFiles = files.filter((file) => {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
-      
+
       if (!isImage && !isVideo) {
-        toast.error('Apenas imagens e vídeos são permitidos');
+        toast.error("Apenas imagens e vídeos são permitidos");
         return false;
       }
       if (!isValidSize) {
-        toast.error('Arquivo muito grande. Máximo 10MB');
+        toast.error("Arquivo muito grande. Máximo 10MB");
         return false;
       }
       return true;
@@ -118,12 +163,12 @@ const CreatePostModal = ({
 
     if (validFiles.length > 0) {
       setMediaFiles([...mediaFiles, ...validFiles]);
-      
+
       // Criar previews
-      const newPreviews = validFiles.map(file => ({
+      const newPreviews = validFiles.map((file) => ({
         file,
         url: URL.createObjectURL(file),
-        type: file.type.startsWith('image/') ? 'image' : 'video'
+        type: file.type.startsWith("image/") ? "image" : "video",
       }));
       setPreviewUrls([...previewUrls, ...newPreviews]);
     }
@@ -132,10 +177,10 @@ const CreatePostModal = ({
   const handleRemoveMedia = (index) => {
     const newFiles = mediaFiles.filter((_, i) => i !== index);
     const newPreviews = previewUrls.filter((_, i) => i !== index);
-    
+
     // Revogar URL do objeto para liberar memória
     URL.revokeObjectURL(previewUrls[index].url);
-    
+
     setMediaFiles(newFiles);
     setPreviewUrls(newPreviews);
   };
@@ -143,32 +188,32 @@ const CreatePostModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim() && mediaFiles.length === 0) {
-      toast.error('Escreva algo ou adicione uma mídia');
+      toast.error("Escreva algo ou adicione uma mídia");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     // Usar onImageUpload se disponível
     if (onImageUpload && mediaFiles.length > 0) {
       onImageUpload(mediaFiles[0]);
     }
-    
+
     try {
-      const token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        throw new Error('Token de autenticação não encontrado');
+        throw new Error("Token de autenticação não encontrado");
       }
 
       const formData = new FormData();
-      formData.append('content', content);
-      formData.append('post_type', postType);
-      formData.append('hashtags', JSON.stringify(hashtags));
-      formData.append('mentions', JSON.stringify(mentions));
-      formData.append('mood', mood);
-      formData.append('location', location);
-      formData.append('is_public', isPublic);
+      formData.append("content", content);
+      formData.append("post_type", postType);
+      formData.append("hashtags", JSON.stringify(hashtags));
+      formData.append("mentions", JSON.stringify(mentions));
+      formData.append("mood", mood);
+      formData.append("location", location);
+      formData.append("is_public", isPublic);
 
       // Adicionar arquivos de mídia
       mediaFiles.forEach((file, index) => {
@@ -176,42 +221,40 @@ const CreatePostModal = ({
       });
 
       // Criar post via API
-      const response = await fetch('/api/social/posts', {
-        method: 'POST',
+      const response = await fetch("/api/social/posts", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
+        // eslint-disable-next-line no-unused-vars
         const data = await response.json();
         handleClose();
-        toast.success('Post criado com sucesso!');
-        
+        toast.success("Post criado com sucesso!");
+
         if (onSubmit) {
           onSubmit(formData);
         }
+
+        // Reset form
+        setContent("");
+        setHashtags([]);
+        setMentions([]);
+        setMood("");
+        setLocation("");
+        setMediaFiles([]);
+        setPreviewUrls([]);
+        setHashtagInput("");
+        setMentionInput("");
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao criar post');
+        throw new Error(error.error || "Erro ao criar post");
       }
-      
-      // Reset form
-      setContent('');
-      setHashtags([]);
-      setMentions([]);
-      setMood('');
-      setLocation('');
-      setMediaFiles([]);
-      setPreviewUrls([]);
-      setHashtagInput('');
-      setMentionInput('');
-      
-      toast.success('Post criado com sucesso!');
-      onClose();
-    } catch (error) {
-      toast.error('Erro ao criar post');
+    } catch {
+      toast.error("Erro ao criar post");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,7 +262,7 @@ const CreatePostModal = ({
 
   const handleClose = () => {
     // Limpar previews ao fechar
-    previewUrls.forEach(preview => URL.revokeObjectURL(preview.url));
+    previewUrls.forEach((preview) => URL.revokeObjectURL(preview.url));
     setPreviewUrls([]);
     onClose();
   };
@@ -230,25 +273,27 @@ const CreatePostModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-xl font-semibold">Criar Nova Postagem</CardTitle>
+          <CardTitle className="text-xl font-semibold">
+            Criar Nova Postagem
+          </CardTitle>
           <Button variant="ghost" size="sm" onClick={handleClose}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* User info */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={currentUser?.avatar_url} />
               <AvatarFallback>
-                {currentUser?.name?.charAt(0) || 'U'}
+                {currentUser?.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{currentUser?.name || 'Usuário'}</p>
+              <p className="font-medium">{currentUser?.name || "Usuário"}</p>
               <p className="text-sm text-gray-500">
-                {isPublic ? 'Público' : 'Apenas amigos'}
+                {isPublic ? "Público" : "Apenas amigos"}
               </p>
             </div>
           </div>
@@ -256,7 +301,9 @@ const CreatePostModal = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Tipo de post */}
             <div>
-              <Label className="text-sm font-medium mb-2 block">Tipo de Post</Label>
+              <Label className="text-sm font-medium mb-2 block">
+                Tipo de Post
+              </Label>
               <div className="grid grid-cols-4 gap-2">
                 {postTypes.map((type) => {
                   const Icon = type.icon;
@@ -267,7 +314,7 @@ const CreatePostModal = ({
                       variant={postType === type.value ? "default" : "outline"}
                       size="sm"
                       onClick={() => setPostType(type.value)}
-                      className={`justify-start ${postType === type.value ? type.color : ''}`}
+                      className={`justify-start ${postType === type.value ? type.color : ""}`}
                     >
                       <Icon className="h-4 w-4 mr-2" />
                       {type.label}
@@ -279,7 +326,10 @@ const CreatePostModal = ({
 
             {/* Conteúdo */}
             <div>
-              <Label htmlFor="content" className="text-sm font-medium mb-2 block">
+              <Label
+                htmlFor="content"
+                className="text-sm font-medium mb-2 block"
+              >
                 O que você está pensando?
               </Label>
               <Textarea
@@ -320,13 +370,13 @@ const CreatePostModal = ({
                     className="hidden"
                   />
                 </div>
-                
+
                 {/* Preview das mídias */}
                 {previewUrls.length > 0 && (
                   <div className="grid grid-cols-2 gap-2">
                     {previewUrls.map((preview, index) => (
                       <div key={index} className="relative group">
-                        {preview.type === 'image' ? (
+                        {preview.type === "image" ? (
                           <img
                             src={preview.url}
                             alt={`Preview ${index + 1}`}
@@ -369,7 +419,11 @@ const CreatePostModal = ({
                 {hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {hashtags.map((hashtag) => (
-                      <Badge key={hashtag} variant="secondary" className="text-xs">
+                      <Badge
+                        key={hashtag}
+                        variant="secondary"
+                        className="text-xs"
+                      >
                         #{hashtag}
                         <Button
                           type="button"
@@ -401,7 +455,11 @@ const CreatePostModal = ({
                 {mentions.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {mentions.map((mention) => (
-                      <Badge key={mention} variant="outline" className="text-xs">
+                      <Badge
+                        key={mention}
+                        variant="outline"
+                        className="text-xs"
+                      >
                         @{mention}
                         <Button
                           type="button"
@@ -429,7 +487,10 @@ const CreatePostModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     {moods.map((moodOption) => (
-                      <SelectItem key={moodOption.value} value={moodOption.value}>
+                      <SelectItem
+                        key={moodOption.value}
+                        value={moodOption.value}
+                      >
                         <span className={moodOption.color}>
                           {moodOption.label}
                         </span>
@@ -438,9 +499,11 @@ const CreatePostModal = ({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Localização</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  Localização
+                </Label>
                 <Input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
@@ -467,11 +530,13 @@ const CreatePostModal = ({
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0)}
+              <Button
+                type="submit"
+                disabled={
+                  isSubmitting || (!content.trim() && mediaFiles.length === 0)
+                }
               >
-                {isSubmitting ? 'Criando...' : 'Publicar'}
+                {isSubmitting ? "Criando..." : "Publicar"}
               </Button>
             </div>
           </form>

@@ -1,15 +1,24 @@
-import React from 'react';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import AdminSidebar from './AdminSidebar';
-import { Button } from '@/components/Ui/button';
-import { 
-  Bell, 
-  User, 
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react';
-import { useState } from 'react';
+/**
+ * AdminLayout Component - RE-EDUCA Store
+ * 
+ * Layout administrativo com sidebar e header.
+ * 
+ * Funcionalidades:
+ * - Sidebar responsiva (mobile/desktop)
+ * - Header com notifica??es e perfil
+ * - Integra??o com autentica??o
+ * - Toggle de sidebar mobile
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do a ser renderizado
+ * @returns {JSX.Element} Layout administrativo completo
+ */
+import React, { useState } from "react";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import AdminSidebar from "./AdminSidebar";
+import { Button } from "@/components/Ui/button";
+import { Bell, User, LogOut, Menu, X } from "lucide-react";
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -23,7 +32,7 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         >
@@ -32,9 +41,11 @@ const AdminLayout = ({ children }) => {
       )}
 
       {/* Mobile sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <AdminSidebar />
       </div>
 
@@ -78,10 +89,10 @@ const AdminLayout = ({ children }) => {
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.name || 'Administrador'}
+                    {user?.name || "Administrador"}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.email || 'admin@re-educa.com'}
+                    {user?.email || "admin@re-educa.com"}
                   </div>
                 </div>
                 <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">

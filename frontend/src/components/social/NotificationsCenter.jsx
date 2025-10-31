@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Badge } from '../Ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { 
+import React, { useState, useEffect } from "react";
+/**
+ * Centro de Notificações do Social.
+ * - Filtro e busca; ações por tipo; toasts em interações
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Badge } from "../Ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import {
   Bell,
   Heart,
   MessageCircle,
@@ -15,66 +19,67 @@ import {
   X,
   MoreHorizontal,
   Filter,
-  Search
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Search,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const NotificationsCenter = ({ 
-  notifications, 
-  onMarkAsRead, 
+const NotificationsCenter = ({
+  notifications,
+  onMarkAsRead,
   onMarkAllAsRead,
   onDeleteNotification,
   onFollowUser,
   onLikePost,
-  onCommentPost 
+  onCommentPost,
 }) => {
-  const [filter, setFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
   const notificationTypes = {
     like: {
       icon: Heart,
-      color: 'text-red-500',
-      bgColor: 'bg-red-50',
-      label: 'Curtida'
+      color: "text-red-500",
+      bgColor: "bg-red-50",
+      label: "Curtida",
     },
     comment: {
       icon: MessageCircle,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-50',
-      label: 'Comentário'
+      color: "text-blue-500",
+      bgColor: "bg-blue-50",
+      label: "Comentário",
     },
     follow: {
       icon: UserPlus,
-      color: 'text-green-500',
-      bgColor: 'bg-green-50',
-      label: 'Seguiu você'
+      color: "text-green-500",
+      bgColor: "bg-green-50",
+      label: "Seguiu você",
     },
     share: {
       icon: Share2,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-50',
-      label: 'Compartilhou'
+      color: "text-purple-500",
+      bgColor: "bg-purple-50",
+      label: "Compartilhou",
     },
     achievement: {
       icon: Award,
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-50',
-      label: 'Conquista'
-    }
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-50",
+      label: "Conquista",
+    },
   };
 
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesFilter = filter === 'all' || notification.type === filter;
-    const matchesSearch = notification.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         notification.user?.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredNotifications = (Array.isArray(notifications) ? notifications : []).filter((notification) => {
+    const matchesFilter = filter === "all" || notification.type === filter;
+    const matchesSearch =
+      notification.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.user?.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = (Array.isArray(notifications) ? notifications : []).filter((n) => !n.is_read).length;
 
   const handleNotificationClick = (notification) => {
     if (!notification.is_read) {
@@ -83,15 +88,15 @@ const NotificationsCenter = ({
 
     // Navegar para o conteúdo relacionado
     switch (notification.type) {
-      case 'like':
-      case 'comment':
-      case 'share':
+      case "like":
+      case "comment":
+      case "share":
         if (notification.post_id) {
           // Navegar para o post
           window.location.href = `/social/post/${notification.post_id}`;
         }
         break;
-      case 'follow':
+      case "follow":
         if (notification.user_id) {
           // Navegar para o perfil do usuário
           window.location.href = `/social/profile/${notification.user_id}`;
@@ -105,13 +110,13 @@ const NotificationsCenter = ({
   const handleFollowUser = (e, userId) => {
     e.stopPropagation();
     onFollowUser(userId);
-    toast.success('Usuário seguido!');
+    toast.success("Usuário seguido!");
   };
 
   const handleLikePost = (e, postId) => {
     e.stopPropagation();
     onLikePost(postId);
-    toast.success('Post curtido!');
+    toast.success("Post curtido!");
   };
 
   const handleCommentPost = (e, postId) => {
@@ -147,7 +152,7 @@ const NotificationsCenter = ({
             </Badge>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
@@ -157,11 +162,7 @@ const NotificationsCenter = ({
             <Settings className="h-4 w-4" />
           </Button>
           {unreadCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onMarkAllAsRead}
-            >
+            <Button variant="outline" size="sm" onClick={onMarkAllAsRead}>
               <Check className="h-4 w-4 mr-2" />
               Marcar todas como lidas
             </Button>
@@ -188,30 +189,30 @@ const NotificationsCenter = ({
             {/* Filtros */}
             <div className="flex space-x-2">
               <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
+                variant={filter === "all" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilter('all')}
+                onClick={() => setFilter("all")}
               >
                 Todas
               </Button>
               <Button
-                variant={filter === 'like' ? 'default' : 'outline'}
+                variant={filter === "like" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilter('like')}
+                onClick={() => setFilter("like")}
               >
                 Curtidas
               </Button>
               <Button
-                variant={filter === 'comment' ? 'default' : 'outline'}
+                variant={filter === "comment" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilter('comment')}
+                onClick={() => setFilter("comment")}
               >
                 Comentários
               </Button>
               <Button
-                variant={filter === 'follow' ? 'default' : 'outline'}
+                variant={filter === "follow" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilter('follow')}
+                onClick={() => setFilter("follow")}
               >
                 Seguidores
               </Button>
@@ -235,7 +236,9 @@ const NotificationsCenter = ({
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                    !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    !notification.is_read
+                      ? "bg-blue-50 border-l-4 border-l-blue-500"
+                      : ""
                   }`}
                 >
                   <div className="flex items-start space-x-3">
@@ -244,7 +247,7 @@ const NotificationsCenter = ({
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={notification.user?.avatar_url} />
                         <AvatarFallback>
-                          {notification.user?.name?.charAt(0) || 'U'}
+                          {notification.user?.name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                     </div>
@@ -260,58 +263,71 @@ const NotificationsCenter = ({
                             <span className="text-sm text-gray-500">
                               {getNotificationLabel(notification.type)}
                             </span>
-                            <div className={`p-1 rounded-full ${getNotificationBgColor(notification.type)}`}>
+                            <div
+                              className={`p-1 rounded-full ${getNotificationBgColor(notification.type)}`}
+                            >
                               {getNotificationIcon(notification.type)}
                             </div>
                           </div>
-                          
+
                           <p className="text-sm text-gray-700 mb-2">
                             {notification.content}
                           </p>
-                          
+
                           <div className="flex items-center space-x-4">
                             <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(notification.created_at), { 
-                                addSuffix: true, 
-                                locale: ptBR 
-                              })}
+                              {formatDistanceToNow(
+                                new Date(notification.created_at),
+                                {
+                                  addSuffix: true,
+                                  locale: ptBR,
+                                },
+                              )}
                             </span>
-                            
+
                             {/* Ações baseadas no tipo */}
-                            {notification.type === 'follow' && (
+                            {notification.type === "follow" && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => handleFollowUser(e, notification.user_id)}
+                                onClick={(e) =>
+                                  handleFollowUser(e, notification.user_id)
+                                }
                                 className="text-xs"
                               >
                                 Seguir
                               </Button>
                             )}
-                            
-                            {notification.type === 'like' && notification.post_id && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => handleLikePost(e, notification.post_id)}
-                                className="text-xs"
-                              >
-                                <Heart className="h-3 w-3 mr-1" />
-                                Curtir
-                              </Button>
-                            )}
-                            
-                            {notification.type === 'comment' && notification.post_id && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => handleCommentPost(e, notification.post_id)}
-                                className="text-xs"
-                              >
-                                <MessageCircle className="h-3 w-3 mr-1" />
-                                Comentar
-                              </Button>
-                            )}
+
+                            {notification.type === "like" &&
+                              notification.post_id && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) =>
+                                    handleLikePost(e, notification.post_id)
+                                  }
+                                  className="text-xs"
+                                >
+                                  <Heart className="h-3 w-3 mr-1" />
+                                  Curtir
+                                </Button>
+                              )}
+
+                            {notification.type === "comment" &&
+                              notification.post_id && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) =>
+                                    handleCommentPost(e, notification.post_id)
+                                  }
+                                  className="text-xs"
+                                >
+                                  <MessageCircle className="h-3 w-3 mr-1" />
+                                  Comentar
+                                </Button>
+                              )}
                           </div>
                         </div>
 
@@ -320,7 +336,7 @@ const NotificationsCenter = ({
                           {!notification.is_read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full" />
                           )}
-                          
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -382,7 +398,7 @@ const NotificationsCenter = ({
                   <input type="checkbox" defaultChecked className="rounded" />
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   variant="outline"
@@ -390,9 +406,7 @@ const NotificationsCenter = ({
                 >
                   Cancelar
                 </Button>
-                <Button onClick={() => setShowSettings(false)}>
-                  Salvar
-                </Button>
+                <Button onClick={() => setShowSettings(false)}>Salvar</Button>
               </div>
             </CardContent>
           </Card>

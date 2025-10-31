@@ -1,110 +1,129 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { 
-  Brain, 
-  ShoppingCart, 
-  Dumbbell, 
-  Apple, 
+/**
+ * RecommendationsPanel Component - RE-EDUCA Store
+ * 
+ * Painel de recomendações personalizadas usando IA.
+ * 
+ * Funcionalidades:
+ * - Recomendações de produtos
+ * - Recomendações de exercícios
+ * - Recomendações nutricionais
+ * - Insights de saúde
+ * - Usuários similares
+ * 
+ * @component
+ * @returns {JSX.Element} Painel de recomendações
+ */
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import {
+  Brain,
+  ShoppingCart,
+  Dumbbell,
+  Apple,
   TrendingUp,
   Users,
   Lightbulb,
-  RefreshCw
-} from 'lucide-react';
-import { toast } from 'sonner';
+  RefreshCw,
+} from "lucide-react";
+import { toast } from "sonner";
 
 const RecommendationsPanel = () => {
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState("products");
   const [recommendations, setRecommendations] = useState({
     products: [],
     exercises: [],
     nutrition: [],
     healthTrends: null,
     similarUsers: [],
-    insights: null
+    insights: null,
   });
 
-  const fetchRecommendations = useCallback(async (type = 'all') => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
+  const fetchRecommendations = useCallback(
+    async (type = "all") => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
 
-      const requests = [];
+        const requests = [];
 
-      if (type === 'all' || type === 'products') {
-        requests.push(
-          fetch('/api/ai/recommendations/products?limit=6', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'products', data }))
-        );
-      }
-
-      if (type === 'all' || type === 'exercises') {
-        requests.push(
-          fetch('/api/ai/recommendations/exercises?limit=6', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'exercises', data }))
-        );
-      }
-
-      if (type === 'all' || type === 'nutrition') {
-        requests.push(
-          fetch('/api/ai/recommendations/nutrition?limit=6', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'nutrition', data }))
-        );
-      }
-
-      if (type === 'all' || type === 'trends') {
-        requests.push(
-          fetch('/api/ai/predictions/health-trends?days_ahead=30', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'healthTrends', data }))
-        );
-      }
-
-      if (type === 'all' || type === 'users') {
-        requests.push(
-          fetch('/api/ai/similar-users?limit=5', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'similarUsers', data }))
-        );
-      }
-
-      if (type === 'all' || type === 'insights') {
-        requests.push(
-          fetch('/api/ai/insights', { headers })
-            .then(res => res.json())
-            .then(data => ({ type: 'insights', data }))
-        );
-      }
-
-      const results = await Promise.all(requests);
-
-      const newRecommendations = { ...recommendations };
-      results.forEach(({ type, data }) => {
-        if (data.success) {
-          newRecommendations[type] = data.data || data;
+        if (type === "all" || type === "products") {
+          requests.push(
+            fetch("/api/ai/recommendations/products?limit=6", { headers })
+              .then((res) => res.json())
+              .then((data) => ({ type: "products", data })),
+          );
         }
-      });
 
-      setRecommendations(newRecommendations);
-      toast.success('Recomendações atualizadas com sucesso!');
+        if (type === "all" || type === "exercises") {
+          requests.push(
+            fetch("/api/ai/recommendations/exercises?limit=6", { headers })
+              .then((res) => res.json())
+              .then((data) => ({ type: "exercises", data })),
+          );
+        }
 
-    } catch (error) {
-      console.error('Erro ao buscar recomendações:', error);
-      toast.error('Erro ao carregar recomendações');
-    } finally {
-      setLoading(false);
-    }
-  }, [recommendations]);
+        if (type === "all" || type === "nutrition") {
+          requests.push(
+            fetch("/api/ai/recommendations/nutrition?limit=6", { headers })
+              .then((res) => res.json())
+              .then((data) => ({ type: "nutrition", data })),
+          );
+        }
+
+        if (type === "all" || type === "trends") {
+          requests.push(
+            fetch("/api/ai/predictions/health-trends?days_ahead=30", {
+              headers,
+            })
+              .then((res) => res.json())
+              .then((data) => ({ type: "healthTrends", data })),
+          );
+        }
+
+        if (type === "all" || type === "users") {
+          requests.push(
+            fetch("/api/ai/similar-users?limit=5", { headers })
+              .then((res) => res.json())
+              .then((data) => ({ type: "similarUsers", data })),
+          );
+        }
+
+        if (type === "all" || type === "insights") {
+          requests.push(
+            fetch("/api/ai/insights", { headers })
+              .then((res) => res.json())
+              .then((data) => ({ type: "insights", data })),
+          );
+        }
+
+        const results = await Promise.all(requests);
+
+        const newRecommendations = { ...recommendations };
+        results.forEach(({ type, data }) => {
+          if (data.success) {
+            newRecommendations[type] = data.data || data;
+          }
+        });
+
+        setRecommendations(newRecommendations);
+        toast.success("Recomendações atualizadas com sucesso!");
+      } catch (error) {
+        console.error("Erro ao buscar recomendações:", error);
+        toast.error("Erro ao carregar recomendações");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [recommendations],
+  );
 
   useEffect(() => {
     fetchRecommendations();
@@ -124,11 +143,11 @@ const RecommendationsPanel = () => {
         </p>
         <div className="flex items-center justify-between">
           <span className="font-bold text-primary">
-            R$ {product.price?.toFixed(2) || 'N/A'}
+            R$ {product.price?.toFixed(2) || "N/A"}
           </span>
           <div className="flex items-center text-xs text-muted-foreground">
             <TrendingUp className="w-3 h-3 mr-1" />
-            {product.relevance_score?.toFixed(1) || 'N/A'}%
+            {product.relevance_score?.toFixed(1) || "N/A"}%
           </div>
         </div>
       </CardContent>
@@ -139,7 +158,9 @@ const RecommendationsPanel = () => {
     <Card className="h-full hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h4 className="font-semibold text-sm line-clamp-2">{exercise.name}</h4>
+          <h4 className="font-semibold text-sm line-clamp-2">
+            {exercise.name}
+          </h4>
           <Badge variant="outline" className="text-xs">
             {exercise.difficulty}
           </Badge>
@@ -157,7 +178,7 @@ const RecommendationsPanel = () => {
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             <TrendingUp className="w-3 h-3 mr-1" />
-            {exercise.relevance_score?.toFixed(1) || 'N/A'}%
+            {exercise.relevance_score?.toFixed(1) || "N/A"}%
           </div>
         </div>
       </CardContent>
@@ -182,7 +203,7 @@ const RecommendationsPanel = () => {
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             <TrendingUp className="w-3 h-3 mr-1" />
-            {plan.relevance_score?.toFixed(1) || 'N/A'}%
+            {plan.relevance_score?.toFixed(1) || "N/A"}%
           </div>
         </div>
       </CardContent>
@@ -200,7 +221,10 @@ const RecommendationsPanel = () => {
       <CardContent>
         <div className="space-y-3">
           {trends?.predictions?.map((prediction, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div
+              key={idx}
+              className="flex items-center justify-between p-3 bg-muted rounded-lg"
+            >
               <div>
                 <p className="font-medium text-sm">{prediction.metric}</p>
                 <p className="text-xs text-muted-foreground">
@@ -233,11 +257,16 @@ const RecommendationsPanel = () => {
       <CardContent>
         <div className="space-y-3">
           {users?.map((user, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div
+              key={idx}
+              className="flex items-center justify-between p-3 bg-muted rounded-lg"
+            >
               <div>
-                <p className="font-medium text-sm">Usuário {user.user_id?.slice(-4)}</p>
+                <p className="font-medium text-sm">
+                  Usuário {user.user_id?.slice(-4)}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  {user.similarity_reasons?.join(', ')}
+                  {user.similarity_reasons?.join(", ")}
                 </p>
               </div>
               <Badge variant="outline">
@@ -268,10 +297,12 @@ const RecommendationsPanel = () => {
               </p>
             </div>
           )}
-          
+
           {insights?.improvement_opportunities && (
             <div>
-              <h4 className="font-semibold text-sm mb-2">Oportunidades de Melhoria</h4>
+              <h4 className="font-semibold text-sm mb-2">
+                Oportunidades de Melhoria
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 {insights.improvement_opportunities.map((opportunity, idx) => (
                   <li key={idx} className="flex items-start gap-2">
@@ -282,10 +313,12 @@ const RecommendationsPanel = () => {
               </ul>
             </div>
           )}
-          
+
           {insights?.personalized_tips && (
             <div>
-              <h4 className="font-semibold text-sm mb-2">Dicas Personalizadas</h4>
+              <h4 className="font-semibold text-sm mb-2">
+                Dicas Personalizadas
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 {insights.personalized_tips.map((tip, idx) => (
                   <li key={idx} className="flex items-start gap-2">
@@ -308,13 +341,15 @@ const RecommendationsPanel = () => {
           <Brain className="w-6 h-6 text-primary" />
           <h2 className="text-2xl font-bold">Recomendações Inteligentes</h2>
         </div>
-        <Button 
-          onClick={() => fetchRecommendations('all')} 
+        <Button
+          onClick={() => fetchRecommendations("all")}
           disabled={loading}
           variant="outline"
           size="sm"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
           Atualizar
         </Button>
       </div>

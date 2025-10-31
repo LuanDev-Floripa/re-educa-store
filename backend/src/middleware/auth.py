@@ -1,5 +1,8 @@
 """
-Middleware de Autenticação RE-EDUCA Store
+Middleware de Autenticação RE-EDUCA Store.
+
+Fornece decorators para autenticação JWT, autorização baseada
+em roles, rate limiting e validação de JSON schema.
 """
 import jwt
 import logging
@@ -11,7 +14,17 @@ from config.database import supabase_client
 logger = logging.getLogger(__name__)
 
 def token_required(f):
-    """Decorator para rotas que requerem autenticação"""
+    """
+    Decorator para rotas que requerem autenticação.
+    
+    Valida o token JWT e adiciona o usuário ao contexto da requisição.
+    
+    Args:
+        f (callable): Função a ser decorada.
+        
+    Returns:
+        callable: Função decorada com verificação de token.
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
@@ -52,7 +65,15 @@ def token_required(f):
     return decorated
 
 def admin_required(f):
-    """Decorator para rotas que requerem privilégios de administrador"""
+    """
+    Decorator para rotas que requerem privilégios de administrador.
+    
+    Args:
+        f (callable): Função a ser decorada.
+        
+    Returns:
+        callable: Função decorada com verificação de admin.
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         if not hasattr(request, 'current_user') or request.current_user.get('role') != 'admin':
@@ -62,7 +83,15 @@ def admin_required(f):
     return decorated
 
 def moderator_required(f):
-    """Decorator para rotas que requerem privilégios de moderador ou admin"""
+    """
+    Decorator para rotas que requerem privilégios de moderador ou admin.
+    
+    Args:
+        f (callable): Função a ser decorada.
+        
+    Returns:
+        callable: Função decorada com verificação de moderador.
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         if not hasattr(request, 'current_user'):
@@ -76,7 +105,19 @@ def moderator_required(f):
     return decorated
 
 def rate_limit(max_requests=100, window_minutes=60):
-    """Decorator para rate limiting"""
+    """
+    Decorator para rate limiting.
+    
+    Args:
+        max_requests (int): Número máximo de requisições permitidas.
+        window_minutes (int): Janela de tempo em minutos.
+        
+    Returns:
+        callable: Decorator configurado.
+        
+    Note:
+        Implementação básica. Em produção, usar Redis ou similar.
+    """
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -93,7 +134,18 @@ def rate_limit(max_requests=100, window_minutes=60):
     return decorator
 
 def validate_json_schema(schema):
-    """Decorator para validação de JSON schema"""
+    """
+    Decorator para validação de JSON schema.
+    
+    Args:
+        schema (dict): Dicionário com campos e tipos esperados.
+        
+    Returns:
+        callable: Decorator configurado.
+        
+    Note:
+        Validação básica. Em produção, usar jsonschema library.
+    """
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):

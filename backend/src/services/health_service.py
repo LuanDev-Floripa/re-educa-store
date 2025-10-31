@@ -1,5 +1,13 @@
 """
-Service de saúde RE-EDUCA Store
+Service de saúde RE-EDUCA Store.
+
+Gerencia dados de saúde do usuário incluindo:
+- Cálculos e histórico de IMC
+- Calorias e nutrição
+- Hidratação
+- Gordura corporal
+- Métricas de saúde consolidadas
+- Integrações com APIs externas
 """
 import logging
 import requests
@@ -12,14 +20,28 @@ from utils.helpers import generate_uuid, paginate_data
 logger = logging.getLogger(__name__)
 
 class HealthService:
-    """Service para operações de saúde"""
+    """
+    Service para operações de saúde.
+    
+    Centraliza lógica de negócio para dados de saúde.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de saúde."""
         self.supabase = supabase_client
         self.config = get_config()
     
     def save_imc_calculation(self, user_id: str, calculation_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Salva cálculo de IMC no banco"""
+        """
+        Salva cálculo de IMC no banco.
+        
+        Args:
+            user_id (str): ID do usuário.
+            calculation_data (Dict[str, Any]): Dados do cálculo.
+            
+        Returns:
+            Dict[str, Any]: Entrada salva ou erro.
+        """
         try:
             entry_data = {
                 'id': generate_uuid(),
@@ -177,13 +199,13 @@ class HealthService:
                 'protein': data.get('protein', 0),
                 'carbs': data.get('carbs', 0),
                 'fat': data.get('fat', 0),
-                'entry_date': data.get('entry_date', datetime.now().date().isoformat()),
+                'fiber': data.get('fiber', 0),
+                'consumed_at': data.get('entry_date', datetime.now().date().isoformat()),
                 'meal_type': data.get('meal_type', 'other'),
-                'notes': data.get('notes', ''),
                 'created_at': datetime.now().isoformat()
             }
             
-            result = self.supabase.table('food_entries').insert(entry_data).execute()
+            result = self.supabase.table('food_diary_entries').insert(entry_data).execute()
             
             if result.data:
                 return {'success': True, 'entry': result.data[0]}
@@ -197,10 +219,10 @@ class HealthService:
     def get_food_entries(self, user_id: str, date: Optional[str] = None, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
         """Retorna entradas do diário alimentar"""
         try:
-            query = self.supabase.table('food_entries').select('*').eq('user_id', user_id)
+            query = self.supabase.table('food_diary_entries').select('*').eq('user_id', user_id)
             
             if date:
-                query = query.eq('entry_date', date)
+                query = query.eq('consumed_at', date)
             
             result = query.order('created_at', desc=True).execute()
             
@@ -315,11 +337,11 @@ class HealthService:
                 .lte('created_at', end_date.isoformat())\
                 .execute()
             
-            food_result = self.supabase.table('food_entries')\
+            food_result = self.supabase.table('food_diary_entries')\
                 .select('*')\
                 .eq('user_id', user_id)\
-                .gte('entry_date', start_date.date().isoformat())\
-                .lte('entry_date', end_date.date().isoformat())\
+                .gte('consumed_at', start_date.date().isoformat())\
+                .lte('consumed_at', end_date.date().isoformat())\
                 .execute()
             
             exercise_result = self.supabase.table('exercise_entries')\

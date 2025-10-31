@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient';
-import { toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import apiClient from "@/services/apiClient";
+import { toast } from "sonner";
+import { AnimatePresence } from "framer-motion";
 import {
   BookOpen,
   TrendingUp,
@@ -30,15 +30,27 @@ import {
   MoreHorizontal,
   ExternalLink,
   Download,
-  RefreshCw
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Input } from '@/components/Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/Ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/Ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
+  RefreshCw,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Input } from "@/components/Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/Ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
 import {
   AnimatedGradient,
   FloatingElement,
@@ -48,8 +60,8 @@ import {
   GlowingBorder,
   TypingAnimation,
   RippleEffect,
-  StaggerContainer
-} from '@/components/magic-ui';
+  StaggerContainer,
+} from "@/components/magic-ui";
 
 // ================================
 // BLOG INTELIGENTE COM IA
@@ -59,8 +71,8 @@ const IntelligentBlog = () => {
   const [posts, setPosts] = useState([]);
   const [featuredPost, setFeaturedPost] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -77,47 +89,50 @@ const IntelligentBlog = () => {
     setIsLoading(true);
     try {
       // Carregar posts reais da API
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      const response = await fetch('/api/social/posts?type=blog', {
-        method: 'GET',
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("token");
+      const response = await fetch("/api/social/posts?type=blog", {
+        method: "GET",
         headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json'
-        }
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
         const postsList = data.posts || data.data || [];
-        
+
         // Gerar categorias dinamicamente
         const categoriesMap = new Map();
-        postsList.forEach(post => {
-          const cat = post.category || 'outros';
+        postsList.forEach((post) => {
+          const cat = post.category || "outros";
           const count = categoriesMap.get(cat) || 0;
           categoriesMap.set(cat, count + 1);
         });
 
         const categoriesList = [
-          { id: 'all', name: 'Todos', count: postsList.length },
+          { id: "all", name: "Todos", count: postsList.length },
           ...Array.from(categoriesMap.entries()).map(([id, count]) => ({
-            id: id.toLowerCase().replace(/\s+/g, '-'),
+            id: id.toLowerCase().replace(/\s+/g, "-"),
             name: id,
-            count
-          }))
+            count,
+          })),
         ];
 
         setPosts(postsList);
-        setFeaturedPost(postsList.find(post => post.featured) || postsList[0]);
+        setFeaturedPost(
+          postsList.find((post) => post.featured) || postsList[0],
+        );
         setCategories(categoriesList);
       } else {
         // Em caso de erro, manter arrays vazios
         setPosts([]);
         setFeaturedPost(null);
-        setCategories([{ id: 'all', name: 'Todos', count: 0 }]);
+        setCategories([{ id: "all", name: "Todos", count: 0 }]);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados do blog:', error);
+      console.error("Erro ao carregar dados do blog:", error);
     } finally {
       setIsLoading(false);
     }
@@ -128,53 +143,60 @@ const IntelligentBlog = () => {
     try {
       // Gerar conteúdo com IA via API real
       const aiResponse = await apiClient.chatWithAI(
-        'Gere um artigo sobre saúde e bem-estar',
-        { type: 'blog_post', category: selectedCategory }
+        "Gere um artigo sobre saúde e bem-estar",
+        { type: "blog_post", category: selectedCategory },
       );
-      
-      if (aiResponse && (aiResponse.response || aiResponse.content || aiResponse.message)) {
-        const aiContent = aiResponse.response || aiResponse.content || aiResponse.message || '';
-        const newPost = {
-        id: Date.now(),
-        title: "Novo Artigo Gerado por IA",
-        excerpt: "Conteúdo personalizado baseado nas últimas tendências do Instagram e pesquisas científicas.",
-        content: '',
-        author: {
-          name: "IA Assistant",
-          avatar: "/api/placeholder/40/40",
-          bio: "Assistente de IA especializado em saúde"
-        },
-        category: "IA Generated",
-        tags: ["ia", "personalizado", "tendências"],
-        publishedAt: new Date().toISOString(),
-        readTime: 5,
-        views: 0,
-        likes: 0,
-        comments: 0,
-        featured: false,
-        aiGenerated: true,
-        instagramSource: "Múltiplas fontes",
-        image: "/api/placeholder/600/300"
-      };
 
-        setPosts(prev => [newPost, ...prev]);
-        toast.success('Artigo gerado por IA com sucesso!');
+      if (
+        aiResponse &&
+        (aiResponse.response || aiResponse.content || aiResponse.message)
+      ) {
+        const aiContent =
+          aiResponse.response || aiResponse.content || aiResponse.message || "";
+        const newPost = {
+          id: Date.now(),
+          title: "Novo Artigo Gerado por IA",
+          excerpt:
+            "Conteúdo personalizado baseado nas últimas tendências do Instagram e pesquisas científicas.",
+          content: aiContent,
+          author: {
+            name: "IA Assistant",
+            avatar: "/api/placeholder/40/40",
+            bio: "Assistente de IA especializado em saúde",
+          },
+          category: "IA Generated",
+          tags: ["ia", "personalizado", "tendências"],
+          publishedAt: new Date().toISOString(),
+          readTime: 5,
+          views: 0,
+          likes: 0,
+          comments: 0,
+          featured: false,
+          aiGenerated: true,
+          instagramSource: "Múltiplas fontes",
+          image: "/api/placeholder/600/300",
+        };
+
+        setPosts((prev) => [newPost, ...prev]);
+        toast.success("Artigo gerado por IA com sucesso!");
       } else {
-        throw new Error('Resposta inválida da IA');
+        throw new Error("Resposta inválida da IA");
       }
     } catch (error) {
-      console.error('Erro ao gerar conteúdo:', error);
-      toast.error('Erro ao gerar conteúdo com IA');
+      console.error("Erro ao gerar conteúdo:", error);
+      toast.error("Erro ao gerar conteúdo com IA");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-                           post.category.toLowerCase().includes(selectedCategory);
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" ||
+      post.category.toLowerCase().includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
@@ -185,10 +207,10 @@ const IntelligentBlog = () => {
   return (
     <AnimatedGradient className="min-h-screen">
       <ParticleSystem count={20} />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header do Blog */}
-        <BlogHeader 
+        <BlogHeader
           onGenerateContent={generateAIContent}
           isGenerating={isGenerating}
           searchTerm={searchTerm}
@@ -200,16 +222,20 @@ const IntelligentBlog = () => {
 
         {/* Post em Destaque */}
         {featuredPost && (
-          <FeaturedPost 
+          <FeaturedPost
             post={featuredPost}
-            onBookmark={(postId) => setBookmarkedPosts(prev => [...prev, postId])}
+            onBookmark={(postId) =>
+              setBookmarkedPosts((prev) => [...prev, postId])
+            }
           />
         )}
 
         {/* Grid de Posts */}
-        <PostGrid 
+        <PostGrid
           posts={filteredPosts}
-          onBookmark={(postId) => setBookmarkedPosts(prev => [...prev, postId])}
+          onBookmark={(postId) =>
+            setBookmarkedPosts((prev) => [...prev, postId])
+          }
           bookmarkedPosts={bookmarkedPosts}
         />
 
@@ -238,14 +264,14 @@ const BlogSkeleton = () => (
   </div>
 );
 
-const BlogHeader = ({ 
-  onGenerateContent, 
-  isGenerating, 
-  searchTerm, 
-  setSearchTerm, 
-  selectedCategory, 
-  setSelectedCategory, 
-  categories 
+const BlogHeader = ({
+  onGenerateContent,
+  isGenerating,
+  searchTerm,
+  setSearchTerm,
+  selectedCategory,
+  setSelectedCategory,
+  categories,
 }) => (
   <StaggerContainer className="mb-12">
     <div className="text-center mb-8">
@@ -255,8 +281,8 @@ const BlogHeader = ({
         </h1>
       </FloatingElement>
       <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-        Conteúdo personalizado gerado por IA, baseado nas últimas tendências do Instagram 
-        e pesquisas científicas em saúde e bem-estar.
+        Conteúdo personalizado gerado por IA, baseado nas últimas tendências do
+        Instagram e pesquisas científicas em saúde e bem-estar.
       </p>
     </div>
 
@@ -272,14 +298,14 @@ const BlogHeader = ({
               className="pl-10"
             />
           </div>
-          
+
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-48">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {categories.map(category => (
+              {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name} ({category.count})
                 </SelectItem>
@@ -306,7 +332,7 @@ const BlogHeader = ({
               </>
             )}
           </MagneticButton>
-          
+
           <Button variant="outline">
             <Instagram className="w-4 h-4 mr-2" />
             Conectar Instagram
@@ -322,8 +348,8 @@ const FeaturedPost = ({ post, onBookmark }) => (
     <MorphingCard className="overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
         <div className="relative h-64 lg:h-auto">
-          <img 
-            src={post.image} 
+          <img
+            src={post.image}
             alt={post.title}
             className="w-full h-full object-cover"
           />
@@ -342,22 +368,24 @@ const FeaturedPost = ({ post, onBookmark }) => (
             </div>
           )}
         </div>
-        
+
         <div className="p-8">
           <div className="flex items-center gap-2 mb-4">
             <Badge variant="secondary">{post.category}</Badge>
             <span className="text-sm text-gray-500">•</span>
-            <span className="text-sm text-gray-500">{post.readTime} min de leitura</span>
+            <span className="text-sm text-gray-500">
+              {post.readTime} min de leitura
+            </span>
           </div>
-          
+
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 leading-tight">
             {post.title}
           </h2>
-          
+
           <p className="text-gray-600 mb-6 text-lg leading-relaxed">
             {post.excerpt}
           </p>
-          
+
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -367,11 +395,11 @@ const FeaturedPost = ({ post, onBookmark }) => (
               <div>
                 <p className="font-medium text-gray-900">{post.author.name}</p>
                 <p className="text-sm text-gray-500">
-                  {new Date(post.publishedAt).toLocaleDateString('pt-BR')}
+                  {new Date(post.publishedAt).toLocaleDateString("pt-BR")}
                 </p>
               </div>
             </div>
-            
+
             {post.instagramSource && (
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Instagram className="w-4 h-4" />
@@ -379,7 +407,7 @@ const FeaturedPost = ({ post, onBookmark }) => (
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <span className="flex items-center gap-1">
@@ -395,9 +423,13 @@ const FeaturedPost = ({ post, onBookmark }) => (
                 {post.comments}
               </span>
             </div>
-            
+
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => onBookmark(post.id)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onBookmark(post.id)}
+              >
                 <Bookmark className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="sm">
@@ -419,8 +451,8 @@ const PostGrid = ({ posts, onBookmark, bookmarkedPosts }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
     {posts.map((post, index) => (
       <FloatingElement key={post.id} delay={index * 0.1}>
-        <PostCard 
-          post={post} 
+        <PostCard
+          post={post}
           onBookmark={onBookmark}
           isBookmarked={bookmarkedPosts.includes(post.id)}
         />
@@ -432,8 +464,8 @@ const PostGrid = ({ posts, onBookmark, bookmarkedPosts }) => (
 const PostCard = ({ post, onBookmark, isBookmarked }) => (
   <MorphingCard className="overflow-hidden h-full hover-lift">
     <div className="relative">
-      <img 
-        src={post.image} 
+      <img
+        src={post.image}
         alt={post.title}
         className="w-full h-48 object-cover"
       />
@@ -451,7 +483,7 @@ const PostCard = ({ post, onBookmark, isBookmarked }) => (
         </div>
       )}
     </div>
-    
+
     <div className="p-6">
       <div className="flex items-center gap-2 mb-3">
         <Clock className="w-4 h-4 text-gray-400" />
@@ -464,30 +496,34 @@ const PostCard = ({ post, onBookmark, isBookmarked }) => (
           </>
         )}
       </div>
-      
+
       <h3 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-tight">
         {post.title}
       </h3>
-      
+
       <p className="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
         {post.excerpt}
       </p>
-      
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Avatar className="w-8 h-8">
             <AvatarImage src={post.author.avatar} alt={post.author.name} />
-            <AvatarFallback className="text-xs">{post.author.name[0]}</AvatarFallback>
+            <AvatarFallback className="text-xs">
+              {post.author.name[0]}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium text-gray-900">{post.author.name}</p>
+            <p className="text-sm font-medium text-gray-900">
+              {post.author.name}
+            </p>
             <p className="text-xs text-gray-500">
-              {new Date(post.publishedAt).toLocaleDateString('pt-BR')}
+              {new Date(post.publishedAt).toLocaleDateString("pt-BR")}
             </p>
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span className="flex items-center gap-1">
@@ -499,13 +535,13 @@ const PostCard = ({ post, onBookmark, isBookmarked }) => (
             {post.comments}
           </span>
         </div>
-        
+
         <div className="flex gap-1">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => onBookmark(post.id)}
-            className={isBookmarked ? 'text-yellow-600' : ''}
+            className={isBookmarked ? "text-yellow-600" : ""}
           >
             <Bookmark className="w-4 h-4" />
           </Button>
@@ -527,11 +563,22 @@ const BlogSidebar = () => (
         Trending Topics
       </h3>
       <div className="space-y-3">
-        {['Jejum Intermitente', 'Treino Funcional', 'Mindfulness', 'Suplementação', 'Sono Reparador'].map((topic, index) => (
-          <RippleEffect key={index} className="p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+        {[
+          "Jejum Intermitente",
+          "Treino Funcional",
+          "Mindfulness",
+          "Suplementação",
+          "Sono Reparador",
+        ].map((topic, index) => (
+          <RippleEffect
+            key={index}
+            className="p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+          >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{topic}</span>
-              <Badge variant="secondary" className="text-xs">#{index + 1}</Badge>
+              <Badge variant="secondary" className="text-xs">
+                #{index + 1}
+              </Badge>
             </div>
           </RippleEffect>
         ))}
@@ -545,13 +592,12 @@ const BlogSidebar = () => (
         Newsletter IA
       </h3>
       <p className="text-sm text-gray-600 mb-4">
-        Receba conteúdo personalizado gerado por IA baseado no seu perfil de saúde.
+        Receba conteúdo personalizado gerado por IA baseado no seu perfil de
+        saúde.
       </p>
       <div className="space-y-3">
         <Input placeholder="Seu email" />
-        <MagneticButton className="w-full">
-          Inscrever-se
-        </MagneticButton>
+        <MagneticButton className="w-full">Inscrever-se</MagneticButton>
       </div>
     </MorphingCard>
 
@@ -563,9 +609,12 @@ const BlogSidebar = () => (
       </h3>
       <div className="grid grid-cols-3 gap-2">
         {[...Array(9)].map((_, index) => (
-          <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
-            <img 
-              src={`/api/placeholder/100/100`} 
+          <div
+            key={index}
+            className="aspect-square bg-gray-200 rounded-lg overflow-hidden"
+          >
+            <img
+              src={`/api/placeholder/100/100`}
               alt={`Instagram post ${index + 1}`}
               className="w-full h-full object-cover hover:scale-110 transition-transform duration-300 cursor-pointer"
             />
@@ -587,4 +636,3 @@ const BlogSidebar = () => (
 // Função generateMockContent removida completamente - conteúdo vem da API
 
 export default IntelligentBlog;
-

@@ -32,13 +32,18 @@ class TestSecurity:
                              }),
                              content_type='application/json')
         
-        # Deve retornar erro 400, não 500 (que indicaria SQL injection)
-        assert response.status_code in [400, 401, 500]
+        # Assert: Não deve retornar 500 (que indicaria SQL injection bem-sucedida)
+        assert response.status_code != 500, "Status 500 pode indicar SQL injection bem-sucedida"
+        assert response.status_code in [400, 401, 404], \
+            f"Esperado 400/401/404 para payload malicioso, recebido {response.status_code}"
         
-        # Verifica se não há mensagens de erro SQL no response
+        # Assert: Não deve expor erros SQL na resposta
         response_data = json.loads(response.data)
-        assert 'sql' not in response_data.get('error', '').lower()
-        assert 'syntax' not in response_data.get('error', '').lower()
+        error_msg = response_data.get('error', '').lower()
+        assert 'sql' not in error_msg, "Resposta não deve expor erros SQL"
+        assert 'syntax' not in error_msg, "Resposta não deve expor sintaxe SQL"
+        assert 'database' not in error_msg or 'error' not in error_msg, \
+            "Resposta não deve expor detalhes de banco de dados"
     
     def test_xss_protection(self, client):
         """Testa proteção contra XSS"""

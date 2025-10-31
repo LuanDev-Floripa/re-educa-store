@@ -1,77 +1,116 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Ui/select';
-import { useApi, apiService } from '../../lib/api';
-import { toast } from 'sonner';
-import { 
-  Calculator, 
-  Activity, 
-  Flame, 
-  Heart,
-  Zap,
-  Info
-} from 'lucide-react';
+/**
+ * MetabolismCalculator Component - RE-EDUCA Store
+ * 
+ * Calculadora de metabolismo (TMB e taxa metabólica).
+ * 
+ * Funcionalidades:
+ * - Cálculo de Taxa Metabólica Basal (TMB)
+ * - Análise de nível de atividade
+ * - Estimativa de gasto calórico
+ * - Recomendações para acelerar metabolismo
+ * 
+ * @component
+ * @returns {JSX.Element} Calculadora de metabolismo
+ */
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Ui/select";
+import { useApi, apiService } from "../../lib/api";
+import { toast } from "sonner";
+import { Calculator, Activity, Flame, Heart, Zap, Info } from "lucide-react";
 
 export const MetabolismCalculator = () => {
   const { request, loading } = useApi();
   const [formData, setFormData] = useState({
-    age: '',
-    gender: '',
-    weight: '',
-    height: '',
-    activityLevel: ''
+    age: "",
+    gender: "",
+    weight: "",
+    height: "",
+    activityLevel: "",
   });
 
   const [results, setResults] = useState(null);
 
   const activityLevels = [
-    { value: 'sedentary', label: 'Sedentário', description: 'Pouco ou nenhum exercício' },
-    { value: 'light', label: 'Levemente Ativo', description: 'Exercício leve 1-3 dias/semana' },
-    { value: 'moderate', label: 'Moderadamente Ativo', description: 'Exercício moderado 3-5 dias/semana' },
-    { value: 'active', label: 'Muito Ativo', description: 'Exercício pesado 6-7 dias/semana' },
-    { value: 'very_active', label: 'Extremamente Ativo', description: 'Exercício muito pesado, trabalho físico' }
+    {
+      value: "sedentary",
+      label: "Sedentário",
+      description: "Pouco ou nenhum exercício",
+    },
+    {
+      value: "light",
+      label: "Levemente Ativo",
+      description: "Exercício leve 1-3 dias/semana",
+    },
+    {
+      value: "moderate",
+      label: "Moderadamente Ativo",
+      description: "Exercício moderado 3-5 dias/semana",
+    },
+    {
+      value: "active",
+      label: "Muito Ativo",
+      description: "Exercício pesado 6-7 dias/semana",
+    },
+    {
+      value: "very_active",
+      label: "Extremamente Ativo",
+      description: "Exercício muito pesado, trabalho físico",
+    },
   ];
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const calculateMetabolism = async () => {
     const { age, gender, weight, height, activityLevel } = formData;
-    
+
     if (!age || !gender || !weight || !height || !activityLevel) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     try {
-      const response = await request(() => 
+      const response = await request(() =>
         apiService.health.calculateMetabolism({
           age: parseInt(age),
           gender,
           weight: parseFloat(weight),
           height: parseFloat(height),
-          activity_level: activityLevel
-        })
+          activity_level: activityLevel,
+        }),
       );
 
       setResults({
         bmr: response.bmr,
         tdee: response.tdee,
         metabolism_type: response.metabolism_type,
-        saved: response.saved
+        saved: response.saved,
       });
 
-      toast.success('Cálculo realizado e salvo com sucesso!');
+      toast.success("Cálculo realizado e salvo com sucesso!");
     } catch (error) {
-      console.error('Erro ao calcular metabolismo:', error);
-      toast.error('Erro ao calcular metabolismo. Tente novamente.');
+      console.error("Erro ao calcular metabolismo:", error);
+      toast.error("Erro ao calcular metabolismo. Tente novamente.");
     }
   };
 
@@ -112,12 +151,15 @@ export const MetabolismCalculator = () => {
                   type="number"
                   placeholder="25"
                   value={formData.age}
-                  onChange={(e) => handleInputChange('age', e.target.value)}
+                  onChange={(e) => handleInputChange("age", e.target.value)}
                 />
               </div>
               <div>
                 <Label htmlFor="gender">Gênero *</Label>
-                <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => handleInputChange("gender", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -138,7 +180,7 @@ export const MetabolismCalculator = () => {
                   step="0.1"
                   placeholder="70.0"
                   value={formData.weight}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  onChange={(e) => handleInputChange("weight", e.target.value)}
                 />
               </div>
               <div>
@@ -148,23 +190,30 @@ export const MetabolismCalculator = () => {
                   type="number"
                   placeholder="175"
                   value={formData.height}
-                  onChange={(e) => handleInputChange('height', e.target.value)}
+                  onChange={(e) => handleInputChange("height", e.target.value)}
                 />
               </div>
             </div>
 
             <div>
               <Label htmlFor="activity">Nível de Atividade *</Label>
-              <Select value={formData.activityLevel} onValueChange={(value) => handleInputChange('activityLevel', value)}>
+              <Select
+                value={formData.activityLevel}
+                onValueChange={(value) =>
+                  handleInputChange("activityLevel", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione seu nível" />
                 </SelectTrigger>
                 <SelectContent>
-                  {activityLevels.map(level => (
+                  {activityLevels.map((level) => (
                     <SelectItem key={level.value} value={level.value}>
                       <div>
                         <div className="font-medium">{level.label}</div>
-                        <div className="text-sm text-gray-500">{level.description}</div>
+                        <div className="text-sm text-gray-500">
+                          {level.description}
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -172,7 +221,7 @@ export const MetabolismCalculator = () => {
               </Select>
             </div>
 
-            <Button 
+            <Button
               onClick={calculateMetabolism}
               className="w-full bg-purple-600 hover:bg-purple-700"
               disabled={loading}
@@ -182,7 +231,7 @@ export const MetabolismCalculator = () => {
               ) : (
                 <Calculator className="w-4 h-4 mr-2" />
               )}
-              {loading ? 'Calculando...' : 'Calcular Metabolismo'}
+              {loading ? "Calculando..." : "Calcular Metabolismo"}
             </Button>
           </CardContent>
         </Card>
@@ -191,9 +240,7 @@ export const MetabolismCalculator = () => {
         <Card>
           <CardHeader>
             <CardTitle>Resultados</CardTitle>
-            <CardDescription>
-              Seu metabolismo calculado
-            </CardDescription>
+            <CardDescription>Seu metabolismo calculado</CardDescription>
           </CardHeader>
           <CardContent>
             {results ? (
@@ -239,7 +286,9 @@ export const MetabolismCalculator = () => {
                     <li>• BMR é a energia que seu corpo gasta em repouso</li>
                     <li>• TDEE inclui todas as atividades do dia</li>
                     <li>• Use o TDEE como base para suas calorias diárias</li>
-                    <li>• Monitore seu progresso e ajuste conforme necessário</li>
+                    <li>
+                      • Monitore seu progresso e ajuste conforme necessário
+                    </li>
                   </ul>
                 </div>
               </div>

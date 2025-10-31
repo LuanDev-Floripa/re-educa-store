@@ -1,6 +1,13 @@
 """
-Serviço de Upload de Vídeo para Live Streaming
-Gerencia upload, processamento e CDN de vídeos usando Supabase Storage
+Serviço de Upload de Vídeo para Live Streaming RE-EDUCA Store.
+
+Gerencia upload de vídeos incluindo:
+- Upload para Supabase Storage
+- Processamento de vídeos
+- Geração de thumbnails
+- URLs públicas de CDN
+- Validação de formato e tamanho
+- Chunked upload para arquivos grandes
 """
 
 import os
@@ -10,14 +17,17 @@ from datetime import datetime
 from typing import Dict, Optional, List
 import requests
 from werkzeug.utils import secure_filename
-from database.connection import get_db_connection
 from config.database import supabase_client
+from utils.helpers import generate_uuid
 
 logger = logging.getLogger(__name__)
 
 class VideoUploadService:
+    """Service para upload e gerenciamento de vídeos."""
+    
     def __init__(self):
-        self.conn = get_db_connection()
+        """Inicializa o serviço de upload de vídeos."""
+        self.supabase = supabase_client
         self.supabase_url = os.environ.get('SUPABASE_URL')
         self.supabase_key = os.environ.get('SUPABASE_ANON_KEY')
         self.bucket_name = 'videos'
@@ -37,7 +47,17 @@ class VideoUploadService:
         }
     
     def upload_video(self, file, user_id: str, stream_id: str = None) -> Dict:
-        """Upload de vídeo para Supabase Storage"""
+        """
+        Upload de vídeo para Supabase Storage.
+        
+        Args:
+            file: Arquivo de vídeo.
+            user_id (str): ID do usuário.
+            stream_id (str, optional): ID do stream relacionado.
+            
+        Returns:
+            Dict: Resultado com URL pública do vídeo ou erro.
+        """
         try:
             # Gerar nome único para o arquivo
             file_extension = os.path.splitext(secure_filename(file.filename))[1]
@@ -88,98 +108,59 @@ class VideoUploadService:
                            stream_id: str = None) -> Dict:
         """Salva metadados do vídeo no banco"""
         try:
-            cursor = self.conn.cursor()
-            
-            cursor.execute("""
-                INSERT INTO video_uploads (
-                    id, user_id, filename, video_url, content_type, 
-                    file_size, stream_id, status, created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
-            """, (
-                video_id, user_id, filename, video_url, content_type,
-                file_size, stream_id, 'uploaded', datetime.utcnow()
-            ))
-            
-            result = cursor.fetchone()
-            self.conn.commit()
-            
-            return {
-                'id': result[0],
-                'user_id': result[1],
-                'filename': result[2],
-                'video_url': result[3],
-                'content_type': result[4],
-                'file_size': result[5],
-                'stream_id': result[6],
-                'status': result[7],
-                'created_at': result[8]
+            video_data = {
+                'id': video_id,
+                'user_id': user_id,
+                'filename': filename,
+                'video_url': video_url,
+                'content_type': content_type,
+                'file_size': file_size,
+                'stream_id': stream_id,
+                'status': 'uploaded'
             }
             
+            result = self.supabase.table('video_uploads').insert(video_data).execute()
+            
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            else:
+                raise Exception("Erro ao salvar metadados: nenhum dado retornado")
+            
         except Exception as e:
-            logger.error(f"Erro ao salvar metadados do vídeo: {e}")
-            self.conn.rollback()
+            logger.error(f"Erro ao salvar metadados do vídeo: {e}", exc_info=True)
             raise e
     
     def get_video_by_id(self, video_id: str) -> Optional[Dict]:
         """Obtém vídeo por ID"""
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT * FROM video_uploads 
-                WHERE id = %s
-            """, (video_id,))
+            result = self.supabase.table('video_uploads')\
+                .select('*')\
+                .eq('id', video_id)\
+                .single()\
+                .execute()
             
-            result = cursor.fetchone()
-            if result:
-                return {
-                    'id': result[0],
-                    'user_id': result[1],
-                    'filename': result[2],
-                    'video_url': result[3],
-                    'content_type': result[4],
-                    'file_size': result[5],
-                    'stream_id': result[6],
-                    'status': result[7],
-                    'created_at': result[8]
-                }
+            if result.data:
+                return result.data
             return None
             
         except Exception as e:
-            logger.error(f"Erro ao obter vídeo: {e}")
+            logger.error(f"Erro ao obter vídeo: {e}", exc_info=True)
             return None
     
     def get_user_videos(self, user_id: str, limit: int = 20, offset: int = 0) -> List[Dict]:
         """Obtém vídeos do usuário"""
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT * FROM video_uploads 
-                WHERE user_id = %s
-                ORDER BY created_at DESC
-                LIMIT %s OFFSET %s
-            """, (user_id, limit, offset))
+            result = self.supabase.table('video_uploads')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .range(offset, offset + limit - 1)\
+                .execute()
             
-            results = cursor.fetchall()
-            videos = []
-            
-            for result in results:
-                videos.append({
-                    'id': result[0],
-                    'user_id': result[1],
-                    'filename': result[2],
-                    'video_url': result[3],
-                    'content_type': result[4],
-                    'file_size': result[5],
-                    'stream_id': result[6],
-                    'status': result[7],
-                    'created_at': result[8]
-                })
-            
-            return videos
+            return result.data if result.data else []
             
         except Exception as e:
-            logger.error(f"Erro ao obter vídeos do usuário: {e}")
+            logger.error(f"Erro ao obter vídeos do usuário: {e}", exc_info=True)
             return []
     
     def delete_video(self, video_id: str, user_id: str) -> bool:
@@ -202,18 +183,16 @@ class VideoUploadService:
                 logger.warning(f"Erro ao deletar arquivo do storage: {response.text}")
             
             # Deletar do banco
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                DELETE FROM video_uploads 
-                WHERE id = %s AND user_id = %s
-            """, (video_id, user_id))
+            self.supabase.table('video_uploads')\
+                .delete()\
+                .eq('id', video_id)\
+                .eq('user_id', user_id)\
+                .execute()
             
-            self.conn.commit()
             return True
             
         except Exception as e:
-            logger.error(f"Erro ao deletar vídeo: {e}")
-            self.conn.rollback()
+            logger.error(f"Erro ao deletar vídeo: {e}", exc_info=True)
             return False
     
     def update_video_metadata(self, video_id: str, user_id: str, title: str = None, description: str = None) -> Dict:
@@ -237,64 +216,23 @@ class VideoUploadService:
             update_data['updated_at'] = datetime.utcnow().isoformat()
             
             # Atualizar via Supabase
-            try:
-                result = supabase_client.table('video_uploads').update(update_data).eq('id', video_id).eq('user_id', user_id).execute()
-                
-                if result.data and len(result.data) > 0:
-                    return {
-                        'success': True,
-                        'message': 'Metadados atualizados com sucesso',
-                        'data': result.data[0]
-                    }
-                else:
-                    return {'success': False, 'error': 'Nenhum registro atualizado'}
-            except Exception as supabase_error:
-                logger.warning(f"Erro ao atualizar via Supabase, tentando SQL direto: {str(supabase_error)}")
-                
-                # Fallback para SQL direto
-                cursor = self.conn.cursor()
-                set_clauses = []
-                values = []
-                
-                if title is not None:
-                    set_clauses.append("title = %s")
-                    values.append(title)
-                if description is not None:
-                    set_clauses.append("description = %s")
-                    values.append(description)
-                
-                set_clauses.append("updated_at = %s")
-                values.append(datetime.utcnow())
-                values.extend([video_id, user_id])
-                
-                query = f"""
-                    UPDATE video_uploads 
-                    SET {', '.join(set_clauses)}
-                    WHERE id = %s AND user_id = %s
-                    RETURNING *
-                """
-                
-                cursor.execute(query, values)
-                result = cursor.fetchone()
-                self.conn.commit()
-                
-                if result:
-                    return {
-                        'success': True,
-                        'message': 'Metadados atualizados com sucesso',
-                        'data': {
-                            'id': result[0],
-                            'title': result[9] if len(result) > 9 else title,
-                            'description': result[10] if len(result) > 10 else description
-                        }
-                    }
-                else:
-                    return {'success': False, 'error': 'Nenhum registro atualizado'}
+            result = self.supabase.table('video_uploads')\
+                .update(update_data)\
+                .eq('id', video_id)\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            if result.data and len(result.data) > 0:
+                return {
+                    'success': True,
+                    'message': 'Metadados atualizados com sucesso',
+                    'data': result.data[0]
+                }
+            else:
+                return {'success': False, 'error': 'Nenhum registro atualizado'}
                     
         except Exception as e:
-            logger.error(f"Erro ao atualizar metadados do vídeo: {e}")
-            if hasattr(self, 'conn'):
-                self.conn.rollback()
+            logger.error(f"Erro ao atualizar metadados do vídeo: {e}", exc_info=True)
             return {'success': False, 'error': str(e)}
     
     def generate_presigned_url(self, video_id: str, user_id: str, 
@@ -315,28 +253,35 @@ class VideoUploadService:
     def get_video_analytics(self, video_id: str) -> Dict:
         """Obtém analytics do vídeo"""
         try:
-            cursor = self.conn.cursor()
+            # Buscar views do vídeo
+            views_result = self.supabase.table('video_views')\
+                .select('user_id, view_duration')\
+                .eq('video_id', video_id)\
+                .execute()
             
-            # Estatísticas básicas
-            cursor.execute("""
-                SELECT 
-                    COUNT(*) as total_views,
-                    AVG(view_duration) as avg_duration,
-                    COUNT(DISTINCT user_id) as unique_viewers
-                FROM video_views 
-                WHERE video_id = %s
-            """, (video_id,))
+            if not views_result.data:
+                return {
+                    'total_views': 0,
+                    'avg_duration': 0,
+                    'unique_viewers': 0
+                }
             
-            stats = cursor.fetchone()
+            views = views_result.data
+            total_views = len(views)
+            unique_viewers = len(set(v.get('user_id') for v in views if v.get('user_id')))
+            
+            # Calcular duração média
+            durations = [v.get('view_duration', 0) for v in views if v.get('view_duration')]
+            avg_duration = sum(durations) / len(durations) if durations else 0
             
             return {
-                'total_views': stats[0] or 0,
-                'avg_duration': float(stats[1]) if stats[1] else 0,
-                'unique_viewers': stats[2] or 0
+                'total_views': total_views,
+                'avg_duration': float(avg_duration),
+                'unique_viewers': unique_viewers
             }
             
         except Exception as e:
-            logger.error(f"Erro ao obter analytics do vídeo: {e}")
+            logger.error(f"Erro ao obter analytics do vídeo: {e}", exc_info=True)
             return {
                 'total_views': 0,
                 'avg_duration': 0,

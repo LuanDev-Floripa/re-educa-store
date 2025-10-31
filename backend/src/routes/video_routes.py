@@ -6,7 +6,7 @@ Upload, download, analytics e gerenciamento de vídeos
 import os
 import logging
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from middleware.auth import token_required
 from werkzeug.utils import secure_filename
 from services.video_upload_service import VideoUploadService
 from utils.decorators import handle_exceptions
@@ -24,17 +24,36 @@ ALLOWED_EXTENSIONS = {'mp4', 'webm', 'ogg', 'avi', 'mov', '3gp'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 def allowed_file(filename):
-    """Verifica se o arquivo tem extensão permitida"""
+    """
+    Verifica se o arquivo tem extensão permitida.
+    
+    Args:
+        filename (str): Nome do arquivo.
+        
+    Returns:
+        bool: True se extensão é permitida, False caso contrário.
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @video_bp.route('/upload', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def upload_video():
-    """Upload de vídeo para Supabase Storage"""
+    """
+    Upload de vídeo para Supabase Storage.
+    
+    Form Data:
+        video (file): Arquivo de vídeo (obrigatório).
+        stream_id (str): ID do stream relacionado (opcional).
+        title (str): Título do vídeo (opcional).
+        description (str): Descrição do vídeo (opcional).
+        
+    Returns:
+        JSON: URL do vídeo uploaded ou erro.
+    """
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Verificar se arquivo foi enviado
         if 'video' not in request.files:
@@ -114,12 +133,12 @@ def upload_video():
         }), 500
 
 @video_bp.route('/<video_id>', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_video(video_id):
     """Obtém informações de um vídeo específico"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         video = video_service.get_video_by_id(video_id)
         
@@ -149,12 +168,12 @@ def get_video(video_id):
         }), 500
 
 @video_bp.route('/user/<user_id>', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_user_videos(user_id):
     """Obtém vídeos de um usuário específico"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = request.current_user.get('id')
         
         # Verificar se usuário pode acessar os vídeos
         if current_user_id != user_id:
@@ -188,12 +207,12 @@ def get_user_videos(user_id):
         }), 500
 
 @video_bp.route('/<video_id>', methods=['DELETE'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def delete_video(video_id):
     """Deleta um vídeo"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         success = video_service.delete_video(video_id, user_id)
         
@@ -216,12 +235,12 @@ def delete_video(video_id):
         }), 500
 
 @video_bp.route('/<video_id>/analytics', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_video_analytics(video_id):
     """Obtém analytics de um vídeo"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Verificar se vídeo existe e usuário tem acesso
         video = video_service.get_video_by_id(video_id)
@@ -246,12 +265,12 @@ def get_video_analytics(video_id):
         }), 500
 
 @video_bp.route('/<video_id>/url', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_video_url(video_id):
     """Obtém URL pública do vídeo"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         video = video_service.get_video_by_id(video_id)
         
@@ -286,12 +305,12 @@ def get_video_url(video_id):
         }), 500
 
 @video_bp.route('/setup-storage', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def setup_storage():
     """Configura bucket de storage (apenas para admin)"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado

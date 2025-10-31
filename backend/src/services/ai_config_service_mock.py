@@ -1,6 +1,19 @@
 """
-Serviço de Configuração de IA com Chaves Mock (Desenvolvimento)
-Versão temporária para desenvolvimento com chaves mock
+Serviço de Configuração de IA com Chaves Mock RE-EDUCA Store.
+
+AVISO: APENAS PARA DESENVOLVIMENTO!
+
+Fornece chaves mock para testar integrações de IA sem custos:
+- Gemini mock key
+- Perplexity mock key
+- OpenAI mock key (futuro)
+- Respostas simuladas
+
+IMPORTANTE:
+- NUNCA usar em produção
+- Configurar via MOCK_MODE=true no .env
+- Chaves mock não fazem chamadas reais às APIs
+- Retorna dados simulados para testes
 """
 import os
 import logging

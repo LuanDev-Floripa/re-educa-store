@@ -1,6 +1,13 @@
 """
-Serviço de Integração
-Conecta todos os serviços: Cache, Monitoring, WebSocket, Video Upload
+Serviço de Integração RE-EDUCA Store.
+
+Orquestra e integra todos os serviços do sistema incluindo:
+- Cache (Redis)
+- Monitoring (métricas e performance)
+- WebSocket (tempo real)
+- Upload de vídeos
+- Live streaming
+- Health checks centralizados
 """
 
 import logging
@@ -14,9 +21,14 @@ from services.live_streaming_service import LiveStreamingService
 logger = logging.getLogger(__name__)
 
 class IntegrationService:
-    """Serviço principal que integra todos os outros serviços"""
+    """
+    Serviço principal que integra todos os outros serviços.
+    
+    Atua como orchestrator central do sistema.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de integração com todos os subsistemas."""
         self.cache = cache_service
         self.monitoring = monitoring_service
         self.video_upload = VideoUploadService()
@@ -25,13 +37,26 @@ class IntegrationService:
         self.websocket_service = None  # Será inicializado quando necessário
         
     def initialize_websocket(self, socketio):
-        """Inicializa o serviço de WebSocket"""
+        """
+        Inicializa o serviço de WebSocket.
+        
+        Args:
+            socketio: Instância do Flask-SocketIO.
+            
+        Returns:
+            WebSocketService: Serviço WebSocket inicializado.
+        """
         self.websocket_service = WebSocketService(socketio)
         return self.websocket_service
     
     @monitor_performance("integration_health_check")
     def health_check(self) -> Dict[str, Any]:
-        """Verifica saúde de todos os serviços"""
+        """
+        Verifica saúde de todos os serviços.
+        
+        Returns:
+            Dict[str, Any]: Status de cada serviço e status geral.
+        """
         health_status = {
             'overall': 'healthy',
             'services': {},

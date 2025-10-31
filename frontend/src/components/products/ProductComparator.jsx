@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Progress } from '@/components/Ui/progress';
-import { 
-  ShoppingCart, 
-  Heart, 
-  Star, 
-  Package, 
-  Truck, 
-  Shield, 
-  Award, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Progress } from "@/components/Ui/progress";
+import {
+  ShoppingCart,
+  Heart,
+  Star,
+  Package,
+  Truck,
+  Shield,
+  Award,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -28,15 +34,20 @@ import {
   Scale,
   Droplets,
   Flame,
-  Activity
-} from 'lucide-react';
+  Activity,
+} from "lucide-react";
 
-export const ProductComparator = ({ 
-  products = [], 
-  onAddToCart, 
+/**
+ * Comparador de produtos com fallback e análise destacada.
+ * - Recebe lista opcional; busca produtos em destaque se vazia
+ * - Tabela comparativa com formatações seguras e destaques
+ */
+export const ProductComparator = ({
+  products = [],
+  onAddToCart,
   onAddToFavorites,
   onRemoveProduct,
-  maxProducts = 4 
+  maxProducts = 4,
 }) => {
   const [comparisonData, setComparisonData] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -51,7 +62,7 @@ export const ProductComparator = ({
 
   // Função para remover produto da comparação
   const handleRemoveFromComparison = (productId) => {
-    setComparisonData(comparisonData.filter(p => p.id !== productId));
+    setComparisonData(comparisonData.filter((p) => p.id !== productId));
   };
 
   // Função para alternar exibição da comparação
@@ -60,244 +71,263 @@ export const ProductComparator = ({
   };
 
   useEffect(() => {
-    if (products.length > 0) {
-      setSelectedProducts(products.slice(0, maxProducts));
+    const list = Array.isArray(products) ? products : [];
+    if (list.length > 0) {
+      setSelectedProducts(list.slice(0, maxProducts));
       setShowComparison(true);
     } else {
       // Carregar produtos da API se não foram fornecidos
       loadProductsFromAPI();
     }
-  }, [products, maxProducts]);
+  }, [products, maxProducts, loadProductsFromAPI]);
 
-  const loadProductsFromAPI = async () => {
+  const loadProductsFromAPI = useCallback(async () => {
     try {
-      const response = await fetch('/api/products?per_page=20&featured=true');
+      const response = await fetch("/api/products?per_page=20&featured=true");
       if (response.ok) {
         const data = await response.json();
         if (data.products && data.products.length > 0) {
           setSelectedProducts(data.products.slice(0, maxProducts));
           setShowComparison(true);
         }
+      } else {
+        console.error("Falha ao carregar produtos: status", response.status);
       }
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error("Erro ao carregar produtos:", error);
     }
-  };
+  }, [maxProducts]);
 
   // Dados de exemplo para comparação
   const exampleProducts = [
     {
       id: 1,
-      name: 'Whey Protein Premium',
-      brand: 'MuscleTech',
-      price: 189.90,
-      originalPrice: 229.90,
+      name: "Whey Protein Premium",
+      brand: "MuscleTech",
+      price: 189.9,
+      originalPrice: 229.9,
       discount: 17,
       rating: 4.8,
       reviews: 1247,
-      image: '/images/whey-premium.jpg',
-      category: 'Suplementos',
-      subcategory: 'Proteínas',
-      weight: '2kg',
+      image: "/images/whey-premium.jpg",
+      category: "Suplementos",
+      subcategory: "Proteínas",
+      weight: "2kg",
       servings: 66,
       proteinPerServing: 25,
       caloriesPerServing: 120,
-      flavor: 'Chocolate',
-      ingredients: ['Whey Protein Concentrate', 'Whey Protein Isolate', 'Cocoa Powder'],
-      benefits: ['Ganho de Massa', 'Recuperação', 'Conveniência'],
+      flavor: "Chocolate",
+      ingredients: [
+        "Whey Protein Concentrate",
+        "Whey Protein Isolate",
+        "Cocoa Powder",
+      ],
+      benefits: ["Ganho de Massa", "Recuperação", "Conveniência"],
       inStock: true,
       stock: 15,
-      shipping: 'Frete Grátis',
-      warranty: '30 dias',
-      origin: 'Importado',
-      certifications: ['FDA', 'GMP', 'ISO'],
-      allergens: ['Leite'],
-      shelfLife: '24 meses',
-      storage: 'Ambiente seco',
+      shipping: "Frete Grátis",
+      warranty: "30 dias",
+      origin: "Importado",
+      certifications: ["FDA", "GMP", "ISO"],
+      allergens: ["Leite"],
+      shelfLife: "24 meses",
+      storage: "Ambiente seco",
       popularity: 95,
-      trend: 'up'
+      trend: "up",
     },
     {
       id: 2,
-      name: 'Whey Protein Gold Standard',
-      brand: 'Optimum Nutrition',
-      price: 199.90,
-      originalPrice: 199.90,
+      name: "Whey Protein Gold Standard",
+      brand: "Optimum Nutrition",
+      price: 199.9,
+      originalPrice: 199.9,
       discount: 0,
       rating: 4.9,
       reviews: 2156,
-      image: '/images/whey-gold.jpg',
-      category: 'Suplementos',
-      subcategory: 'Proteínas',
-      weight: '2.27kg',
+      image: "/images/whey-gold.jpg",
+      category: "Suplementos",
+      subcategory: "Proteínas",
+      weight: "2.27kg",
       servings: 74,
       proteinPerServing: 24,
       caloriesPerServing: 130,
-      flavor: 'Baunilha',
-      ingredients: ['Whey Protein Isolate', 'Whey Protein Concentrate', 'Natural Vanilla'],
-      benefits: ['Ganho de Massa', 'Qualidade Premium', 'Sabor'],
+      flavor: "Baunilha",
+      ingredients: [
+        "Whey Protein Isolate",
+        "Whey Protein Concentrate",
+        "Natural Vanilla",
+      ],
+      benefits: ["Ganho de Massa", "Qualidade Premium", "Sabor"],
       inStock: true,
       stock: 8,
-      shipping: 'Frete Grátis',
-      warranty: '30 dias',
-      origin: 'Importado',
-      certifications: ['FDA', 'GMP', 'NSF'],
-      allergens: ['Leite'],
-      shelfLife: '24 meses',
-      storage: 'Ambiente seco',
+      shipping: "Frete Grátis",
+      warranty: "30 dias",
+      origin: "Importado",
+      certifications: ["FDA", "GMP", "NSF"],
+      allergens: ["Leite"],
+      shelfLife: "24 meses",
+      storage: "Ambiente seco",
       popularity: 98,
-      trend: 'stable'
+      trend: "stable",
     },
     {
       id: 3,
-      name: 'Whey Protein Dymatize',
-      brand: 'Dymatize',
-      price: 179.90,
-      originalPrice: 219.90,
+      name: "Whey Protein Dymatize",
+      brand: "Dymatize",
+      price: 179.9,
+      originalPrice: 219.9,
       discount: 18,
       rating: 4.7,
       reviews: 892,
-      image: '/images/whey-dymatize.jpg',
-      category: 'Suplementos',
-      subcategory: 'Proteínas',
-      weight: '2kg',
+      image: "/images/whey-dymatize.jpg",
+      category: "Suplementos",
+      subcategory: "Proteínas",
+      weight: "2kg",
       servings: 60,
       proteinPerServing: 25,
       caloriesPerServing: 110,
-      flavor: 'Cookies & Cream',
-      ingredients: ['Whey Protein Isolate', 'Whey Protein Concentrate', 'Natural Flavors'],
-      benefits: ['Absorção Rápida', 'Baixo Carboidrato', 'Sabor Único'],
+      flavor: "Cookies & Cream",
+      ingredients: [
+        "Whey Protein Isolate",
+        "Whey Protein Concentrate",
+        "Natural Flavors",
+      ],
+      benefits: ["Absorção Rápida", "Baixo Carboidrato", "Sabor Único"],
       inStock: true,
       stock: 12,
-      shipping: 'Frete Grátis',
-      warranty: '30 dias',
-      origin: 'Importado',
-      certifications: ['FDA', 'GMP'],
-      allergens: ['Leite'],
-      shelfLife: '24 meses',
-      storage: 'Ambiente seco',
+      shipping: "Frete Grátis",
+      warranty: "30 dias",
+      origin: "Importado",
+      certifications: ["FDA", "GMP"],
+      allergens: ["Leite"],
+      shelfLife: "24 meses",
+      storage: "Ambiente seco",
       popularity: 87,
-      trend: 'up'
+      trend: "up",
     },
     {
       id: 4,
-      name: 'Whey Protein BSN',
-      brand: 'BSN',
-      price: 169.90,
-      originalPrice: 199.90,
+      name: "Whey Protein BSN",
+      brand: "BSN",
+      price: 169.9,
+      originalPrice: 199.9,
       discount: 15,
       rating: 4.6,
       reviews: 634,
-      image: '/images/whey-bsn.jpg',
-      category: 'Suplementos',
-      subcategory: 'Proteínas',
-      weight: '1.8kg',
+      image: "/images/whey-bsn.jpg",
+      category: "Suplementos",
+      subcategory: "Proteínas",
+      weight: "1.8kg",
       servings: 54,
       proteinPerServing: 22,
       caloriesPerServing: 140,
-      flavor: 'Morango',
-      ingredients: ['Whey Protein Blend', 'Natural Strawberry', 'Digestive Enzymes'],
-      benefits: ['Digestão Fácil', 'Sabor Natural', 'Preço Acessível'],
+      flavor: "Morango",
+      ingredients: [
+        "Whey Protein Blend",
+        "Natural Strawberry",
+        "Digestive Enzymes",
+      ],
+      benefits: ["Digestão Fácil", "Sabor Natural", "Preço Acessível"],
       inStock: false,
       stock: 0,
-      shipping: 'Frete Grátis',
-      warranty: '30 dias',
-      origin: 'Importado',
-      certifications: ['FDA', 'GMP'],
-      allergens: ['Leite'],
-      shelfLife: '24 meses',
-      storage: 'Ambiente seco',
+      shipping: "Frete Grátis",
+      warranty: "30 dias",
+      origin: "Importado",
+      certifications: ["FDA", "GMP"],
+      allergens: ["Leite"],
+      shelfLife: "24 meses",
+      storage: "Ambiente seco",
       popularity: 78,
-      trend: 'down'
-    }
+      trend: "down",
+    },
   ];
 
   const comparisonFields = [
     {
-      key: 'price',
-      label: 'Preço',
-      type: 'currency',
+      key: "price",
+      label: "Preço",
+      type: "currency",
       icon: DollarSign,
-      better: 'lower'
+      better: "lower",
     },
     {
-      key: 'rating',
-      label: 'Avaliação',
-      type: 'rating',
+      key: "rating",
+      label: "Avaliação",
+      type: "rating",
       icon: Star,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'reviews',
-      label: 'Avaliações',
-      type: 'number',
+      key: "reviews",
+      label: "Avaliações",
+      type: "number",
       icon: Users,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'proteinPerServing',
-      label: 'Proteína por Dose (g)',
-      type: 'number',
+      key: "proteinPerServing",
+      label: "Proteína por Dose (g)",
+      type: "number",
       icon: Target,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'caloriesPerServing',
-      label: 'Calorias por Dose',
-      type: 'number',
+      key: "caloriesPerServing",
+      label: "Calorias por Dose",
+      type: "number",
       icon: Flame,
-      better: 'lower'
+      better: "lower",
     },
     {
-      key: 'servings',
-      label: 'Doses',
-      type: 'number',
+      key: "servings",
+      label: "Doses",
+      type: "number",
       icon: Package,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'weight',
-      label: 'Peso',
-      type: 'text',
+      key: "weight",
+      label: "Peso",
+      type: "text",
       icon: Scale,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'popularity',
-      label: 'Popularidade',
-      type: 'percentage',
+      key: "popularity",
+      label: "Popularidade",
+      type: "percentage",
       icon: TrendingUp,
-      better: 'higher'
+      better: "higher",
     },
     {
-      key: 'stock',
-      label: 'Estoque',
-      type: 'number',
+      key: "stock",
+      label: "Estoque",
+      type: "number",
       icon: Package,
-      better: 'higher'
-    }
+      better: "higher",
+    },
   ];
 
   const getBestValue = (field, products) => {
-    if (field.better === 'higher') {
-      return Math.max(...products.map(p => p[field.key] || 0));
-    } else if (field.better === 'lower') {
-      return Math.min(...products.map(p => p[field.key] || Infinity));
+    if (field.better === "higher") {
+      return Math.max(...products.map((p) => p[field.key] || 0));
+    } else if (field.better === "lower") {
+      return Math.min(...products.map((p) => p[field.key] || Infinity));
     }
     return null;
   };
 
   const formatValue = (value, type) => {
     switch (type) {
-      case 'currency':
-        return `R$ ${value.toFixed(2).replace('.', ',')}`;
-      case 'rating':
+      case "currency":
+        return `R$ ${value.toFixed(2).replace(".", ",")}`;
+      case "rating":
         return value.toFixed(1);
-      case 'number':
+      case "number":
         return value.toString();
-      case 'percentage':
+      case "percentage":
         return `${value}%`;
-      case 'text':
+      case "text":
         return value;
       default:
         return value;
@@ -306,39 +336,52 @@ export const ProductComparator = ({
 
   const getValueColor = (value, field, products) => {
     const bestValue = getBestValue(field, products);
-    if (bestValue === null) return 'text-gray-600';
-    
-    if (field.better === 'higher' && value === bestValue) {
-      return 'text-green-600 font-semibold';
-    } else if (field.better === 'lower' && value === bestValue) {
-      return 'text-green-600 font-semibold';
+    if (bestValue === null) return "text-gray-600";
+
+    if (field.better === "higher" && value === bestValue) {
+      return "text-green-600 font-semibold";
+    } else if (field.better === "lower" && value === bestValue) {
+      return "text-green-600 font-semibold";
     }
-    
-    return 'text-gray-600';
+
+    return "text-gray-600";
   };
 
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'up':
-        return <TrendingUp className="w-4 h-4 text-green-500" />;
-      case 'down':
-        return <TrendingDown className="w-4 h-4 text-red-500" />;
+      case "up":
+        return <TrendingUp className="w-4 h-4 text-green-500 dark:text-green-400" />;
+      case "down":
+        return <TrendingDown className="w-4 h-4 text-red-500 dark:text-red-400" />;
       default:
-        return <Minus className="w-4 h-4 text-gray-500" />;
+        return <Minus className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
     }
   };
 
   const getStockStatus = (product) => {
     if (!product.inStock) {
-      return { text: 'Fora de Estoque', color: 'text-red-600', bg: 'bg-red-50' };
+      return {
+        text: "Fora de Estoque",
+        color: "text-red-600 dark:text-red-400",
+        bg: "bg-red-50 dark:bg-red-900/20",
+      };
     } else if (product.stock <= 5) {
-      return { text: 'Estoque Baixo', color: 'text-orange-600', bg: 'bg-orange-50' };
+      return {
+        text: "Estoque Baixo",
+        color: "text-orange-600 dark:text-orange-400",
+        bg: "bg-orange-50 dark:bg-orange-900/20",
+      };
     } else {
-      return { text: 'Em Estoque', color: 'text-green-600', bg: 'bg-green-50' };
+      return { 
+        text: "Em Estoque", 
+        color: "text-green-600 dark:text-green-400", 
+        bg: "bg-green-50 dark:bg-green-900/20" 
+      };
     }
   };
 
-  const productsToCompare = selectedProducts.length > 0 ? selectedProducts : exampleProducts;
+  const productsToCompare =
+    selectedProducts.length > 0 ? selectedProducts : exampleProducts;
 
   return (
     <div className="space-y-6">
@@ -353,9 +396,7 @@ export const ProductComparator = ({
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary">
-            {productsToCompare.length} produtos
-          </Badge>
+          <Badge variant="secondary">{productsToCompare.length} produtos</Badge>
           {productsToCompare.length < maxProducts && (
             <Button variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-2" />
@@ -370,31 +411,27 @@ export const ProductComparator = ({
         <span className="text-sm text-gray-600 dark:text-gray-400">
           Produtos na comparação: {comparisonData.length}
         </span>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={toggleComparison}
-        >
-          {showComparison ? 'Ocultar' : 'Mostrar'} Comparação
+        <Button variant="outline" size="sm" onClick={toggleComparison}>
+          {showComparison ? "Ocultar" : "Mostrar"} Comparação
         </Button>
         {comparisonData.length > 0 && (
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             size="sm"
             onClick={() => setComparisonData([])}
           >
             Limpar Comparação
           </Button>
         )}
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           size="sm"
           onClick={() => handleAddToComparison(productsToCompare[0])}
         >
           Adicionar à Comparação
         </Button>
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           size="sm"
           onClick={() => handleRemoveFromComparison(productsToCompare[0]?.id)}
         >
@@ -430,7 +467,7 @@ export const ProductComparator = ({
                   )}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-3">
                 {/* Imagem do Produto */}
                 <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
@@ -441,7 +478,9 @@ export const ProductComparator = ({
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg font-bold text-green-600">
-                      R$ {product.price.toFixed(2).replace('.', ',')}
+                      {typeof product.price === "number"
+                        ? `R$ ${product.price.toFixed(2).replace(".", ",")}`
+                        : "Preço indisponível"}
                     </span>
                     {product.discount > 0 && (
                       <Badge variant="destructive" className="text-xs">
@@ -449,9 +488,11 @@ export const ProductComparator = ({
                       </Badge>
                     )}
                   </div>
-                  {product.originalPrice > product.price && (
+                  {typeof product.originalPrice === "number" &&
+                    typeof product.price === "number" &&
+                    product.originalPrice > product.price && (
                     <span className="text-sm text-gray-500 line-through">
-                      R$ {product.originalPrice.toFixed(2).replace('.', ',')}
+                      R$ {product.originalPrice.toFixed(2).replace(".", ",")}
                     </span>
                   )}
                 </div>
@@ -463,20 +504,22 @@ export const ProductComparator = ({
                       <Star
                         key={i}
                         className={`w-3 h-3 ${
-                          i < Math.floor(product.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                          i < Math.floor(Number.isFinite(product.rating) ? product.rating : 0)
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
                   <span className="text-xs text-gray-600">
-                    {product.rating} ({product.reviews})
+                    {Number.isFinite(product.rating) ? product.rating : 0} ({product.reviews ?? 0})
                   </span>
                 </div>
 
                 {/* Status do Estoque */}
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bg} ${stockStatus.color}`}>
+                <div
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bg} ${stockStatus.color}`}
+                >
                   {stockStatus.text}
                 </div>
 
@@ -502,7 +545,9 @@ export const ProductComparator = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onAddToFavorites && onAddToFavorites(product)}
+                    onClick={() =>
+                      onAddToFavorites && onAddToFavorites(product)
+                    }
                   >
                     <Heart className="w-3 h-3" />
                   </Button>
@@ -530,10 +575,17 @@ export const ProductComparator = ({
                     Característica
                   </th>
                   {productsToCompare.map((product) => (
-                    <th key={product.id} className="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]">
+                    <th
+                      key={product.id}
+                      className="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
+                    >
                       <div className="space-y-1">
-                        <div className="font-semibold text-sm">{product.name}</div>
-                        <div className="text-xs text-gray-500">{product.brand}</div>
+                        <div className="font-semibold text-sm">
+                          {product.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {product.brand}
+                        </div>
                       </div>
                     </th>
                   ))}
@@ -543,7 +595,10 @@ export const ProductComparator = ({
                 {comparisonFields.map((field) => {
                   const IconComponent = field.icon;
                   return (
-                    <tr key={field.key} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <tr
+                      key={field.key}
+                      className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-2">
                           <IconComponent className="w-4 h-4 text-gray-500" />
@@ -555,14 +610,20 @@ export const ProductComparator = ({
                       {productsToCompare.map((product) => {
                         const value = product[field.key];
                         const formattedValue = formatValue(value, field.type);
-                        const valueColor = getValueColor(value, field, productsToCompare);
-                        
+                        const valueColor = getValueColor(
+                          value,
+                          field,
+                          productsToCompare,
+                        );
+
                         return (
-                          <td key={product.id} className="py-3 px-4 text-center">
-                            <span className={valueColor}>
-                              {formattedValue}
-                            </span>
-                            {value === getBestValue(field, productsToCompare) && (
+                          <td
+                            key={product.id}
+                            className="py-3 px-4 text-center"
+                          >
+                            <span className={valueColor}>{formattedValue}</span>
+                            {value ===
+                              getBestValue(field, productsToCompare) && (
                               <Check className="w-4 h-4 text-green-600 inline-block ml-1" />
                             )}
                           </td>
@@ -591,17 +652,17 @@ export const ProductComparator = ({
               const bestProduct = productsToCompare.reduce((best, current) => {
                 const currentValue = current[field.key] || 0;
                 const bestValue = best[field.key] || 0;
-                
-                if (field.better === 'higher') {
+
+                if (field.better === "higher") {
                   return currentValue > bestValue ? current : best;
-                } else if (field.better === 'lower') {
+                } else if (field.better === "lower") {
                   return currentValue < bestValue ? current : best;
                 }
                 return best;
               });
-              
+
               const IconComponent = field.icon;
-              
+
               return (
                 <div key={field.key} className="p-4 border rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
@@ -609,7 +670,9 @@ export const ProductComparator = ({
                     <span className="font-medium text-sm">{field.label}</span>
                   </div>
                   <div className="space-y-1">
-                    <div className="font-semibold text-sm">{bestProduct.name}</div>
+                    <div className="font-semibold text-sm">
+                      {bestProduct.name}
+                    </div>
                     <div className="text-xs text-gray-600">
                       {formatValue(bestProduct[field.key], field.type)}
                     </div>
@@ -640,8 +703,8 @@ export const ProductComparator = ({
                   Melhor Custo-Benefício: {productsToCompare[0]?.name}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Este produto oferece a melhor combinação de qualidade, preço e disponibilidade 
-                  para suas necessidades.
+                  Este produto oferece a melhor combinação de qualidade, preço e
+                  disponibilidade para suas necessidades.
                 </p>
                 <div className="flex space-x-2">
                   <Button>

@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Label } from '../Ui/label';
-import { Textarea } from '../Ui/textarea';
-import { Badge } from '../Ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
-import { useAuth } from '../../hooks/useAuth';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Edit3, 
-  Save, 
-  X, 
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Label } from "../Ui/label";
+import { Textarea } from "../Ui/textarea";
+import { Badge } from "../Ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
+import { useAuth } from "../../hooks/useAuth";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Edit3,
+  Save,
+  X,
   Camera,
   Shield,
   Award,
@@ -36,63 +36,63 @@ import {
   Upload,
   Download,
   RefreshCw,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 
-const UserProfileReal = ({ 
+const UserProfileReal = ({
   onProfileUpdate,
   onPasswordChange,
   onNotificationSettings,
   onPrivacySettings,
   onDataExport,
   onAccountDelete,
-  showEditMode = true
+  showEditMode = true,
 }) => {
   const { user, updateUser, loading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    bio: '',
-    location: '',
-    birthDate: '',
-    gender: '',
-    height: '',
-    weight: '',
-    activityLevel: '',
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
+    location: "",
+    birthDate: "",
+    gender: "",
+    height: "",
+    weight: "",
+    activityLevel: "",
     goals: [],
     interests: [],
-    preferences: {}
+    preferences: {},
   });
 
   // Carrega dados do usuário
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        birthDate: user.birth_date || '',
-        gender: user.gender || '',
-        height: user.height || '',
-        weight: user.weight || '',
-        activityLevel: user.activity_level || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        birthDate: user.birth_date || "",
+        gender: user.gender || "",
+        height: user.height || "",
+        weight: user.weight || "",
+        activityLevel: user.activity_level || "",
         goals: user.goals || [],
         interests: user.interests || [],
-        preferences: user.preferences || {}
+        preferences: user.preferences || {},
       });
     }
   }, [user]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -102,7 +102,7 @@ const UserProfileReal = ({
       setError(null);
 
       const result = await updateUser(formData);
-      
+
       if (result.success) {
         setIsEditing(false);
         if (onProfileUpdate) {
@@ -112,7 +112,7 @@ const UserProfileReal = ({
         setError(result.error);
       }
     } catch {
-      setError('Erro ao salvar perfil');
+      setError("Erro ao salvar perfil");
     } finally {
       setLoading(false);
     }
@@ -121,19 +121,19 @@ const UserProfileReal = ({
   const handleCancel = () => {
     if (user) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        birthDate: user.birth_date || '',
-        gender: user.gender || '',
-        height: user.height || '',
-        weight: user.weight || '',
-        activityLevel: user.activity_level || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        birthDate: user.birth_date || "",
+        gender: user.gender || "",
+        height: user.height || "",
+        weight: user.weight || "",
+        activityLevel: user.activity_level || "",
         goals: user.goals || [],
         interests: user.interests || [],
-        preferences: user.preferences || {}
+        preferences: user.preferences || {},
       });
     }
     setIsEditing(false);
@@ -198,7 +198,7 @@ const UserProfileReal = ({
               <Avatar className="w-20 h-20">
                 <AvatarImage src={user.avatar_url} />
                 <AvatarFallback>
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -206,18 +206,22 @@ const UserProfileReal = ({
                   {isEditing ? (
                     <Input
                       value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                       className="text-2xl font-bold"
                     />
                   ) : (
-                    user.name || 'Usuário'
+                    user.name || "Usuário"
                   )}
                 </CardTitle>
                 <p className="text-gray-600">
                   {isEditing ? (
                     <Input
                       value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
                       type="email"
                     />
                   ) : (
@@ -229,7 +233,9 @@ const UserProfileReal = ({
                     {isEditing ? (
                       <Textarea
                         value={formData.bio}
-                        onChange={(e) => handleInputChange('bio', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("bio", e.target.value)
+                        }
                         placeholder="Sua biografia..."
                         rows={2}
                       />
@@ -246,7 +252,7 @@ const UserProfileReal = ({
                   <>
                     <Button onClick={handleSave} disabled={loading}>
                       <Save className="w-4 h-4 mr-2" />
-                      {loading ? 'Salvando...' : 'Salvar'}
+                      {loading ? "Salvando..." : "Salvar"}
                     </Button>
                     <Button variant="outline" onClick={handleCancel}>
                       <X className="w-4 h-4 mr-2" />
@@ -292,11 +298,15 @@ const UserProfileReal = ({
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
                       placeholder="Seu telefone"
                     />
                   ) : (
-                    <p className="text-sm text-gray-600">{user.phone || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.phone || "Não informado"}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -305,11 +315,15 @@ const UserProfileReal = ({
                     <Input
                       id="location"
                       value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("location", e.target.value)
+                      }
                       placeholder="Sua localização"
                     />
                   ) : (
-                    <p className="text-sm text-gray-600">{user.location || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.location || "Não informado"}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -319,10 +333,14 @@ const UserProfileReal = ({
                       id="birthDate"
                       type="date"
                       value={formData.birthDate}
-                      onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("birthDate", e.target.value)
+                      }
                     />
                   ) : (
-                    <p className="text-sm text-gray-600">{user.birth_date || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.birth_date || "Não informado"}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -331,7 +349,9 @@ const UserProfileReal = ({
                     <select
                       id="gender"
                       value={formData.gender}
-                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("gender", e.target.value)
+                      }
                       className="w-full p-2 border rounded-md"
                     >
                       <option value="">Selecione</option>
@@ -340,7 +360,9 @@ const UserProfileReal = ({
                       <option value="other">Outro</option>
                     </select>
                   ) : (
-                    <p className="text-sm text-gray-600">{user.gender || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.gender || "Não informado"}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -362,11 +384,15 @@ const UserProfileReal = ({
                       id="height"
                       type="number"
                       value={formData.height}
-                      onChange={(e) => handleInputChange('height', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("height", e.target.value)
+                      }
                       placeholder="Sua altura em cm"
                     />
                   ) : (
-                    <p className="text-sm text-gray-600">{user.height || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.height || "Não informado"}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -376,11 +402,15 @@ const UserProfileReal = ({
                       id="weight"
                       type="number"
                       value={formData.weight}
-                      onChange={(e) => handleInputChange('weight', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("weight", e.target.value)
+                      }
                       placeholder="Seu peso em kg"
                     />
                   ) : (
-                    <p className="text-sm text-gray-600">{user.weight || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.weight || "Não informado"}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -389,7 +419,9 @@ const UserProfileReal = ({
                     <select
                       id="activityLevel"
                       value={formData.activityLevel}
-                      onChange={(e) => handleInputChange('activityLevel', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("activityLevel", e.target.value)
+                      }
                       className="w-full p-2 border rounded-md"
                     >
                       <option value="">Selecione</option>
@@ -400,7 +432,9 @@ const UserProfileReal = ({
                       <option value="very_active">Muito Ativo</option>
                     </select>
                   ) : (
-                    <p className="text-sm text-gray-600">{user.activity_level || 'Não informado'}</p>
+                    <p className="text-sm text-gray-600">
+                      {user.activity_level || "Não informado"}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -416,8 +450,12 @@ const UserProfileReal = ({
                 <div className="flex items-center">
                   <Activity className="w-8 h-8 text-blue-500" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Exercícios</p>
-                    <p className="text-2xl font-bold">{user.stats?.exercises || 0}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Exercícios
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {user.stats?.exercises || 0}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -428,7 +466,9 @@ const UserProfileReal = ({
                   <Target className="w-8 h-8 text-green-500" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Metas</p>
-                    <p className="text-2xl font-bold">{user.stats?.goals || 0}</p>
+                    <p className="text-2xl font-bold">
+                      {user.stats?.goals || 0}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -438,8 +478,12 @@ const UserProfileReal = ({
                 <div className="flex items-center">
                   <Trophy className="w-8 h-8 text-yellow-500" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Conquistas</p>
-                    <p className="text-2xl font-bold">{user.stats?.achievements || 0}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Conquistas
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {user.stats?.achievements || 0}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -459,7 +503,9 @@ const UserProfileReal = ({
                     </div>
                     <div>
                       <h3 className="font-semibold">{achievement.name}</h3>
-                      <p className="text-sm text-gray-600">{achievement.description}</p>
+                      <p className="text-sm text-gray-600">
+                        {achievement.description}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -484,11 +530,19 @@ const UserProfileReal = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button onClick={handlePasswordChangeClick} variant="outline" className="w-full">
+                <Button
+                  onClick={handlePasswordChangeClick}
+                  variant="outline"
+                  className="w-full"
+                >
                   <Lock className="w-4 h-4 mr-2" />
                   Alterar Senha
                 </Button>
-                <Button onClick={handlePrivacySettingsClick} variant="outline" className="w-full">
+                <Button
+                  onClick={handlePrivacySettingsClick}
+                  variant="outline"
+                  className="w-full"
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Configurações de Privacidade
                 </Button>
@@ -503,7 +557,11 @@ const UserProfileReal = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button onClick={handleNotificationSettingsClick} variant="outline" className="w-full">
+                <Button
+                  onClick={handleNotificationSettingsClick}
+                  variant="outline"
+                  className="w-full"
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Configurar Notificações
                 </Button>
@@ -518,7 +576,11 @@ const UserProfileReal = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button onClick={handleDataExportClick} variant="outline" className="w-full">
+                <Button
+                  onClick={handleDataExportClick}
+                  variant="outline"
+                  className="w-full"
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Exportar Dados
                 </Button>
@@ -533,9 +595,9 @@ const UserProfileReal = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button 
-                  onClick={handleAccountDeleteClick} 
-                  variant="destructive" 
+                <Button
+                  onClick={handleAccountDeleteClick}
+                  variant="destructive"
                   className="w-full"
                 >
                   Excluir Conta

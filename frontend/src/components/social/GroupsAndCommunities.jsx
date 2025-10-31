@@ -1,32 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
+import React, { useState, useEffect } from "react";
+/**
+ * Grupos e Comunidades do Social.
+ * - Descoberta, meus grupos, trending e recomendados
+ * - Fallbacks para listas e handlers opcionais
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
 import {
-  Users, Plus, Search, Settings, Crown, Shield, Star, Heart, MessageCircle, Share2, 
-  MoreHorizontal, Eye, Clock, MapPin, Calendar, Award, Zap, TrendingUp, Filter,
-  X, Check, UserPlus, UserMinus, Lock, Unlock, Edit, Trash2, Flag, Bell, BellOff
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Users,
+  Plus,
+  Search,
+  Settings,
+  Crown,
+  Shield,
+  Star,
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  Eye,
+  Clock,
+  MapPin,
+  Calendar,
+  Award,
+  Zap,
+  TrendingUp,
+  Filter,
+  X,
+  Check,
+  UserPlus,
+  UserMinus,
+  Lock,
+  Unlock,
+  Edit,
+  Trash2,
+  Flag,
+  Bell,
+  BellOff,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const GroupsAndCommunities = ({ 
-  currentUser, 
-  onCreateGroup, 
-  onJoinGroup, 
-  onLeaveGroup, 
-  onUpdateGroup, 
+const GroupsAndCommunities = ({
+  currentUser,
+  onCreateGroup,
+  onJoinGroup,
+  onLeaveGroup,
+  onUpdateGroup,
   onDeleteGroup,
   onInviteUser,
   onRemoveUser,
   onPromoteUser,
   onDemoteUser,
-  onReportGroup
+  onReportGroup,
 }) => {
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
@@ -34,24 +66,25 @@ const GroupsAndCommunities = ({
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('popular');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("popular");
   const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: '',
-    category: 'fitness',
-    privacy: 'public',
-    rules: '',
-    tags: []
+    name: "",
+    description: "",
+    category: "fitness",
+    privacy: "public",
+    rules: "",
+    tags: [],
   });
 
   // Carregar grupos reais da API - código consolidado sem duplicação
   useEffect(() => {
     const loadGroups = async () => {
       try {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-        
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
+
         if (!token) {
           setGroups([]);
           setMyGroups([]);
@@ -60,16 +93,23 @@ const GroupsAndCommunities = ({
         }
 
         const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         };
 
         // Carregar todos os grupos, meus grupos e trending em paralelo
-        const [groupsResponse, myGroupsResponse, trendingResponse] = await Promise.all([
-          fetch('/api/social/groups', { headers }).catch(() => ({ ok: false })),
-          fetch('/api/social/groups/my', { headers }).catch(() => ({ ok: false })),
-          fetch('/api/social/groups/trending', { headers }).catch(() => ({ ok: false }))
-        ]);
+        const [groupsResponse, myGroupsResponse, trendingResponse] =
+          await Promise.all([
+            fetch("/api/social/groups", { headers }).catch(() => ({
+              ok: false,
+            })),
+            fetch("/api/social/groups/my", { headers }).catch(() => ({
+              ok: false,
+            })),
+            fetch("/api/social/groups/trending", { headers }).catch(() => ({
+              ok: false,
+            })),
+          ]);
 
         if (groupsResponse.ok) {
           const data = await groupsResponse.json();
@@ -92,7 +132,7 @@ const GroupsAndCommunities = ({
           setTrendingGroups([]);
         }
       } catch (error) {
-        console.error('Erro ao carregar grupos:', error);
+        console.error("Erro ao carregar grupos:", error);
         setGroups([]);
         setMyGroups([]);
         setTrendingGroups([]);
@@ -106,7 +146,7 @@ const GroupsAndCommunities = ({
 
   const handleCreateGroup = async () => {
     if (!newGroup.name.trim()) {
-      toast.error('Digite um nome para o grupo');
+      toast.error("Digite um nome para o grupo");
       return;
     }
 
@@ -114,26 +154,26 @@ const GroupsAndCommunities = ({
       const groupData = {
         ...newGroup,
         user: currentUser,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // Usar onCreateGroup se disponível
       if (onCreateGroup) {
         await onCreateGroup(groupData);
       }
-      
+
       setShowCreateModal(false);
       setNewGroup({
-        name: '',
-        description: '',
-        category: 'fitness',
-        privacy: 'public',
-        rules: '',
-        tags: []
+        name: "",
+        description: "",
+        category: "fitness",
+        privacy: "public",
+        rules: "",
+        tags: [],
       });
-      toast.success('Grupo criado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao criar grupo');
+      toast.success("Grupo criado com sucesso!");
+    } catch {
+      toast.error("Erro ao criar grupo");
     }
   };
 
@@ -143,13 +183,17 @@ const GroupsAndCommunities = ({
       if (onJoinGroup) {
         await onJoinGroup(groupId);
       }
-      
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, isJoined: true, members: g.members + 1 } : g
-      ));
-      toast.success('Você entrou no grupo!');
-    } catch (error) {
-      toast.error('Erro ao entrar no grupo');
+
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === groupId
+            ? { ...g, isJoined: true, members: g.members + 1 }
+            : g,
+        ),
+      );
+      toast.success("Você entrou no grupo!");
+    } catch {
+      toast.error("Erro ao entrar no grupo");
     }
   };
 
@@ -159,42 +203,48 @@ const GroupsAndCommunities = ({
       if (onLeaveGroup) {
         await onLeaveGroup(groupId);
       }
-      
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, isJoined: false, members: g.members - 1 } : g
-      ));
-      setMyGroups(prev => prev.filter(g => g.id !== groupId));
-      toast.success('Você saiu do grupo');
-    } catch (error) {
-      toast.error('Erro ao sair do grupo');
+
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === groupId
+            ? { ...g, isJoined: false, members: g.members - 1 }
+            : g,
+        ),
+      );
+      setMyGroups((prev) => prev.filter((g) => g.id !== groupId));
+      toast.success("Você saiu do grupo");
+    } catch {
+      toast.error("Erro ao sair do grupo");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleInviteUser = async (groupId, userId) => {
     try {
       // Usar onInviteUser se disponível
       if (onInviteUser) {
         await onInviteUser(groupId, userId);
       }
-      
+
       // Usar showInviteModal
       setShowInviteModal(true);
-      toast.success('Convite enviado!');
-    } catch (error) {
-      toast.error('Erro ao enviar convite');
+      toast.success("Convite enviado!");
+    } catch {
+      toast.error("Erro ao enviar convite");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleRemoveUser = async (groupId, userId) => {
     try {
       // Usar onRemoveUser se disponível
       if (onRemoveUser) {
         await onRemoveUser(groupId, userId);
       }
-      
-      toast.success('Usuário removido do grupo');
-    } catch (error) {
-      toast.error('Erro ao remover usuário');
+
+      toast.success("Usuário removido do grupo");
+    } catch {
+      toast.error("Erro ao remover usuário");
     }
   };
 
@@ -204,10 +254,10 @@ const GroupsAndCommunities = ({
       if (onPromoteUser) {
         await onPromoteUser(groupId, userId);
       }
-      
-      toast.success('Usuário promovido a moderador');
-    } catch (error) {
-      toast.error('Erro ao promover usuário');
+
+      toast.success("Usuário promovido a moderador");
+    } catch {
+      toast.error("Erro ao promover usuário");
     }
   };
 
@@ -217,49 +267,67 @@ const GroupsAndCommunities = ({
       if (onDemoteUser) {
         await onDemoteUser(groupId, userId);
       }
-      
-      toast.success('Usuário removido da moderação');
-    } catch (error) {
-      toast.error('Erro ao remover da moderação');
+
+      toast.success("Usuário removido da moderação");
+    } catch {
+      toast.error("Erro ao remover da moderação");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleReportGroup = async (groupId, reason) => {
     try {
       // Usar onReportGroup se disponível
       if (onReportGroup) {
         await onReportGroup(groupId, reason);
       }
-      
-      toast.success('Grupo reportado');
-    } catch (error) {
-      toast.error('Erro ao reportar grupo');
+
+      toast.success("Grupo reportado");
+    } catch {
+      toast.error("Erro ao reportar grupo");
     }
   };
 
-  const filteredGroups = groups.filter(group => {
-    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         group.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || group.category === filterCategory;
+  const filteredGroups = groups.filter((group) => {
+    const matchesSearch =
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || group.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
   const categories = [
-    { value: 'all', label: 'Todos', icon: '🌐' },
-    { value: 'fitness', label: 'Fitness', icon: '💪' },
-    { value: 'yoga', label: 'Yoga', icon: '🧘' },
-    { value: 'nutrition', label: 'Nutrição', icon: '🥗' },
-    { value: 'running', label: 'Corrida', icon: '🏃' },
-    { value: 'cycling', label: 'Ciclismo', icon: '🚴' },
-    { value: 'swimming', label: 'Natação', icon: '🏊' },
-    { value: 'dance', label: 'Dança', icon: '💃' },
-    { value: 'other', label: 'Outros', icon: '🎯' }
+    { value: "all", label: "Todos", icon: "🌐" },
+    { value: "fitness", label: "Fitness", icon: "💪" },
+    { value: "yoga", label: "Yoga", icon: "🧘" },
+    { value: "nutrition", label: "Nutrição", icon: "🥗" },
+    { value: "running", label: "Corrida", icon: "🏃" },
+    { value: "cycling", label: "Ciclismo", icon: "🚴" },
+    { value: "swimming", label: "Natação", icon: "🏊" },
+    { value: "dance", label: "Dança", icon: "💃" },
+    { value: "other", label: "Outros", icon: "🎯" },
   ];
 
   const privacyOptions = [
-    { value: 'public', label: 'Público', icon: '🌐', description: 'Qualquer um pode ver e entrar' },
-    { value: 'private', label: 'Privado', icon: '🔒', description: 'Apenas membros convidados' },
-    { value: 'secret', label: 'Secreto', icon: '🤫', description: 'Apenas membros podem encontrar' }
+    {
+      value: "public",
+      label: "Público",
+      icon: "🌐",
+      description: "Qualquer um pode ver e entrar",
+    },
+    {
+      value: "private",
+      label: "Privado",
+      icon: "🔒",
+      description: "Apenas membros convidados",
+    },
+    {
+      value: "secret",
+      label: "Secreto",
+      icon: "🤫",
+      description: "Apenas membros podem encontrar",
+    },
   ];
 
   return (
@@ -301,7 +369,7 @@ const GroupsAndCommunities = ({
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
               >
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.value} value={category.value}>
                     {category.icon} {category.label}
                   </option>
@@ -334,8 +402,11 @@ const GroupsAndCommunities = ({
         {/* Descobrir Grupos */}
         <TabsContent value="discover" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredGroups.map(group => (
-              <Card key={group.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            {filteredGroups.map((group) => (
+              <Card
+                key={group.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <div className="relative">
                   <img
                     src={group.cover}
@@ -343,8 +414,16 @@ const GroupsAndCommunities = ({
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute top-2 left-2">
-                    <Badge variant={group.privacy === 'public' ? 'default' : 'secondary'}>
-                      {group.privacy === 'public' ? '🌐' : group.privacy === 'private' ? '🔒' : '🤫'}
+                    <Badge
+                      variant={
+                        group.privacy === "public" ? "default" : "secondary"
+                      }
+                    >
+                      {group.privacy === "public"
+                        ? "🌐"
+                        : group.privacy === "private"
+                          ? "🔒"
+                          : "🤫"}
                     </Badge>
                   </div>
                   <div className="absolute top-2 right-2">
@@ -376,7 +455,9 @@ const GroupsAndCommunities = ({
                       {group.isAdmin && (
                         <>
                           <Button
-                            onClick={() => onUpdateGroup && onUpdateGroup(group)}
+                            onClick={() =>
+                              onUpdateGroup && onUpdateGroup(group)
+                            }
                             variant="ghost"
                             size="sm"
                             title="Editar grupo"
@@ -384,7 +465,9 @@ const GroupsAndCommunities = ({
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
-                            onClick={() => onDeleteGroup && onDeleteGroup(group.id)}
+                            onClick={() =>
+                              onDeleteGroup && onDeleteGroup(group.id)
+                            }
                             variant="ghost"
                             size="sm"
                             title="Excluir grupo"
@@ -402,19 +485,19 @@ const GroupsAndCommunities = ({
                       </Button>
                     </div>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                     {group.description}
                   </p>
-                  
+
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {group.tags.slice(0, 3).map(tag => (
+                    {(group.tags || []).slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span className="flex items-center space-x-1">
                       <MessageCircle className="w-3 h-3" />
@@ -422,10 +505,15 @@ const GroupsAndCommunities = ({
                     </span>
                     <span className="flex items-center space-x-1">
                       <Clock className="w-3 h-3" />
-                      <span>{formatDistanceToNow(group.createdAt, { addSuffix: true, locale: ptBR })}</span>
+                      <span>
+                        {formatDistanceToNow(group.createdAt, {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </span>
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {group.isJoined ? (
                       <Button
@@ -462,8 +550,11 @@ const GroupsAndCommunities = ({
         {/* Meus Grupos */}
         <TabsContent value="my-groups" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myGroups.map(group => (
-              <Card key={group.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            {myGroups.map((group) => (
+              <Card
+                key={group.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <div className="relative">
                   <img
                     src={group.cover}
@@ -471,8 +562,20 @@ const GroupsAndCommunities = ({
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute top-2 left-2">
-                    <Badge variant={group.isAdmin ? 'destructive' : group.isModerator ? 'default' : 'secondary'}>
-                      {group.isAdmin ? '👑 Admin' : group.isModerator ? '🛡️ Mod' : '👤 Membro'}
+                    <Badge
+                      variant={
+                        group.isAdmin
+                          ? "destructive"
+                          : group.isModerator
+                            ? "default"
+                            : "secondary"
+                      }
+                    >
+                      {group.isAdmin
+                        ? "👑 Admin"
+                        : group.isModerator
+                          ? "🛡️ Mod"
+                          : "👤 Membro"}
                     </Badge>
                   </div>
                   <div className="absolute top-2 right-2">
@@ -508,11 +611,11 @@ const GroupsAndCommunities = ({
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                     {group.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span className="flex items-center space-x-1">
                       <MessageCircle className="w-3 h-3" />
@@ -520,10 +623,15 @@ const GroupsAndCommunities = ({
                     </span>
                     <span className="flex items-center space-x-1">
                       <Clock className="w-3 h-3" />
-                      <span>{formatDistanceToNow(group.createdAt, { addSuffix: true, locale: ptBR })}</span>
+                      <span>
+                        {formatDistanceToNow(group.createdAt, {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </span>
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       onClick={() => setSelectedGroup(group)}
@@ -551,8 +659,11 @@ const GroupsAndCommunities = ({
         {/* Em Alta */}
         <TabsContent value="trending" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trendingGroups.map(group => (
-              <Card key={group.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            {trendingGroups.map((group) => (
+              <Card
+                key={group.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <div className="relative">
                   <img
                     src={group.cover}
@@ -560,7 +671,10 @@ const GroupsAndCommunities = ({
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute top-2 left-2">
-                    <Badge variant="destructive" className="flex items-center space-x-1">
+                    <Badge
+                      variant="destructive"
+                      className="flex items-center space-x-1"
+                    >
                       <TrendingUp className="w-3 h-3" />
                       <span>Em Alta</span>
                     </Badge>
@@ -598,11 +712,11 @@ const GroupsAndCommunities = ({
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                     {group.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span className="flex items-center space-x-1">
                       <MessageCircle className="w-3 h-3" />
@@ -610,10 +724,15 @@ const GroupsAndCommunities = ({
                     </span>
                     <span className="flex items-center space-x-1">
                       <Clock className="w-3 h-3" />
-                      <span>{formatDistanceToNow(group.createdAt, { addSuffix: true, locale: ptBR })}</span>
+                      <span>
+                        {formatDistanceToNow(group.createdAt, {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </span>
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {group.isJoined ? (
                       <Button
@@ -682,25 +801,32 @@ const GroupsAndCommunities = ({
                 </label>
                 <Input
                   value={newGroup.name}
-                  onChange={(e) => setNewGroup(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGroup((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="Ex: Fitness Enthusiasts"
                   className="w-full"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Descrição
                 </label>
                 <textarea
                   value={newGroup.description}
-                  onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGroup((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Descreva o propósito do grupo..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   rows={3}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -708,27 +834,37 @@ const GroupsAndCommunities = ({
                   </label>
                   <select
                     value={newGroup.category}
-                    onChange={(e) => setNewGroup(prev => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) =>
+                      setNewGroup((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   >
-                    {categories.slice(1).map(category => (
+                    {categories.slice(1).map((category) => (
                       <option key={category.value} value={category.value}>
                         {category.icon} {category.label}
                       </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Privacidade
                   </label>
                   <select
                     value={newGroup.privacy}
-                    onChange={(e) => setNewGroup(prev => ({ ...prev, privacy: e.target.value }))}
+                    onChange={(e) =>
+                      setNewGroup((prev) => ({
+                        ...prev,
+                        privacy: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   >
-                    {privacyOptions.map(option => (
+                    {privacyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.icon} {option.label}
                       </option>
@@ -736,20 +872,22 @@ const GroupsAndCommunities = ({
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Regras do Grupo
                 </label>
                 <textarea
                   value={newGroup.rules}
-                  onChange={(e) => setNewGroup(prev => ({ ...prev, rules: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGroup((prev) => ({ ...prev, rules: e.target.value }))
+                  }
                   placeholder="Liste as regras do grupo (uma por linha)..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   rows={4}
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   onClick={() => setShowCreateModal(false)}
@@ -799,24 +937,24 @@ const GroupsAndCommunities = ({
                       {selectedGroup.description}
                     </p>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       Regras
                     </h4>
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                      {selectedGroup.rules.map((rule, index) => (
+                      {(selectedGroup.rules || []).map((rule, index) => (
                         <li key={index}>{rule}</li>
                       ))}
                     </ul>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       Tags
                     </h4>
                     <div className="flex flex-wrap gap-1">
-                      {selectedGroup.tags.map(tag => (
+                      {(selectedGroup.tags || []).map((tag) => (
                         <Badge key={tag} variant="outline">
                           {tag}
                         </Badge>
@@ -824,7 +962,7 @@ const GroupsAndCommunities = ({
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -834,7 +972,7 @@ const GroupsAndCommunities = ({
                       Membros
                     </div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="text-3xl font-bold text-gray-900 dark:text-white">
                       {selectedGroup.posts.toLocaleString()}
@@ -843,7 +981,7 @@ const GroupsAndCommunities = ({
                       Posts
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-center space-x-2">
                     {selectedGroup.isJoined ? (
                       <Button
@@ -866,15 +1004,18 @@ const GroupsAndCommunities = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Moderadores */}
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-3">
                   Moderadores
                 </h4>
                 <div className="space-y-2">
-                  {selectedGroup.moderators.map(moderator => (
-                    <div key={moderator.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  {(selectedGroup.moderators || []).map((moderator) => (
+                    <div
+                      key={moderator.id}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-8 h-8">
                           <AvatarImage src={moderator.avatar} />
@@ -885,21 +1026,27 @@ const GroupsAndCommunities = ({
                             {moderator.name}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {moderator.role === 'admin' ? 'Administrador' : 'Moderador'}
+                            {moderator.role === "admin"
+                              ? "Administrador"
+                              : "Moderador"}
                           </div>
                         </div>
                       </div>
                       {(selectedGroup.isAdmin || selectedGroup.isModerator) && (
                         <div className="flex items-center space-x-1">
                           <Button
-                            onClick={() => handlePromoteUser(selectedGroup.id, moderator.id)}
+                            onClick={() =>
+                              handlePromoteUser(selectedGroup.id, moderator.id)
+                            }
                             variant="ghost"
                             size="sm"
                           >
                             <Crown className="w-4 h-4" />
                           </Button>
                           <Button
-                            onClick={() => handleDemoteUser(selectedGroup.id, moderator.id)}
+                            onClick={() =>
+                              handleDemoteUser(selectedGroup.id, moderator.id)
+                            }
                             variant="ghost"
                             size="sm"
                           >
@@ -911,15 +1058,18 @@ const GroupsAndCommunities = ({
                   ))}
                 </div>
               </div>
-              
+
               {/* Posts Recentes */}
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-3">
                   Posts Recentes
                 </h4>
                 <div className="space-y-3">
-                  {selectedGroup.recentPosts.map(post => (
-                    <div key={post.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  {(selectedGroup.recentPosts || []).map((post) => (
+                    <div
+                      key={post.id}
+                      className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
                       <div className="flex items-start space-x-3">
                         <Avatar className="w-8 h-8">
                           <AvatarImage src={post.user.avatar} />
@@ -931,7 +1081,10 @@ const GroupsAndCommunities = ({
                               {post.user.name}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(post.timestamp, { addSuffix: true, locale: ptBR })}
+                              {formatDistanceToNow(post.timestamp, {
+                                addSuffix: true,
+                                locale: ptBR,
+                              })}
                             </span>
                           </div>
                           <p className="text-gray-900 dark:text-white text-sm">

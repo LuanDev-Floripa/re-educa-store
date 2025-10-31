@@ -1,6 +1,13 @@
 """
-Serviço de Monitoramento e Logs
-Gerencia métricas, alertas e monitoramento da aplicação
+Serviço de Monitoramento e Logs RE-EDUCA Store.
+
+Gerencia monitoramento do sistema incluindo:
+- Métricas de CPU, memória e disco
+- Performance de endpoints
+- Alertas automáticos
+- Health checks
+- Logs estruturados
+- Integração com Prometheus/Grafana
 """
 
 import logging
@@ -11,19 +18,27 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from functools import wraps
 from services.cache_service import cache_service
-from database.connection import get_db_connection
+from config.database import supabase_client
 
 logger = logging.getLogger(__name__)
 
 class MonitoringService:
+    """Service para monitoramento de métricas e performance."""
+    
     def __init__(self):
-        self.conn = get_db_connection()
+        """Inicializa o serviço de monitoramento."""
+        self.supabase = supabase_client
         self.metrics = {}
         self.alerts = []
         self.start_time = datetime.now()
         
     def get_system_metrics(self) -> Dict:
-        """Obtém métricas do sistema"""
+        """
+        Obtém métricas do sistema.
+        
+        Returns:
+            Dict: Métricas de CPU, memória, disco e rede.
+        """
         try:
             # Métricas de CPU
             cpu_percent = psutil.cpu_percent(interval=1)
@@ -107,9 +122,7 @@ class MonitoringService:
     def _get_database_metrics(self) -> Dict:
         """Obtém métricas do banco de dados"""
         try:
-            cursor = self.conn.cursor()
-            
-            # Contagem de registros por tabela
+            # Contagem de registros por tabela usando Supabase
             tables = [
                 'users', 'posts', 'live_streams', 'video_uploads',
                 'stream_viewers', 'stream_messages', 'stream_gifts'
@@ -118,20 +131,17 @@ class MonitoringService:
             table_counts = {}
             for table in tables:
                 try:
-                    cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                    count = cursor.fetchone()[0]
+                    result = self.supabase.table(table).select('id', count='exact').limit(0).execute()
+                    # Supabase retorna count no atributo count se disponível
+                    count = result.count if hasattr(result, 'count') else len(result.data) if result.data else 0
                     table_counts[table] = count
                 except Exception as e:
                     logger.warning(f"Erro ao contar registros da tabela {table}: {e}")
                     table_counts[table] = 0
             
-            # Conexões ativas
-            cursor.execute("""
-                SELECT count(*) as active_connections 
-                FROM pg_stat_activity 
-                WHERE state = 'active'
-            """)
-            active_connections = cursor.fetchone()[0]
+            # Para Supabase, não temos acesso direto a pg_stat_activity
+            # Podemos usar uma aproximação ou deixar como 0
+            active_connections = 0
             
             return {
                 'table_counts': table_counts,

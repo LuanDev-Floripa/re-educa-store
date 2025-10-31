@@ -1,6 +1,20 @@
 """
-Worker para Processamento de Tarefas das Filas Redis
-RE-EDUCA - Sistema de Educação em Saúde
+Worker para Processamento de Tarefas das Filas Redis RE-EDUCA Store.
+
+Processa tarefas assíncronas em background incluindo:
+- Pagamentos e transações
+- Análises de saúde
+- Envio de notificações
+- Geração de relatórios
+- Processamento de IA
+- Sincronização de dados
+
+Suporta:
+- Múltiplas filas simultâneas
+- Retry automático com backoff
+- Graceful shutdown
+- Monitoramento de performance
+- Handlers customizáveis por tipo de tarefa
 """
 
 import time
@@ -17,10 +31,25 @@ from services.queue_service import RedisQueueService, QueueNames
 logger = logging.getLogger(__name__)
 
 class QueueWorker:
-    """Worker para processar tarefas das filas Redis"""
+    """
+    Worker para processar tarefas das filas Redis.
+    
+    Processa tarefas de forma assíncrona com retry e logging.
+    
+    Attributes:
+        worker_id (str): ID único do worker.
+        running (bool): Flag de execução.
+        processed_tasks (int): Contador de tarefas processadas.
+        failed_tasks (int): Contador de tarefas falhadas.
+    """
     
     def __init__(self, worker_id: str = None):
-        """Inicializa o worker"""
+        """
+        Inicializa o worker.
+        
+        Args:
+            worker_id (str, optional): ID do worker (gerado se não fornecido).
+        """
         self.worker_id = worker_id or f"worker_{int(time.time())}"
         self.queue_service = RedisQueueService()
         self.running = False

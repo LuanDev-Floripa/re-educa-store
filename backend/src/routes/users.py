@@ -1,5 +1,11 @@
 """
-Rotas de usuários RE-EDUCA Store
+Rotas de usuários RE-EDUCA Store.
+
+Gerencia operações de usuários incluindo:
+- Dashboard e perfil do usuário
+- Atualização de perfil e senha
+- Históricos e atividades
+- Preferências e configurações
 """
 import logging
 from flask import Blueprint, request, jsonify

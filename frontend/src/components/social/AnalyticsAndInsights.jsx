@@ -1,77 +1,104 @@
-import React, { useState, useEffect } from 'react';
-import { getAuthToken } from '../../utils/authToken';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
+import React, { useState, useEffect } from "react";
+/**
+ * Analytics e Insights do Social.
+ * - Carrega métricas, posts, audiência e insights da API
+ * - Fallbacks seguros e toasts em falhas
+ */
+import { getAuthToken } from "../../utils/authToken";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
 import {
-  BarChart3, TrendingUp, TrendingDown, Users, Eye, Heart, MessageCircle, Share2,
-  Calendar, Clock, Target, Award, Star, Crown, Zap, ArrowUp, ArrowDown,
-  Filter, Download, RefreshCw, Settings, Bell, MoreHorizontal, X, Check
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Eye,
+  Heart,
+  MessageCircle,
+  Share2,
+  Calendar,
+  Clock,
+  Target,
+  Award,
+  Star,
+  Crown,
+  Zap,
+  ArrowUp,
+  ArrowDown,
+  Filter,
+  Download,
+  RefreshCw,
+  Settings,
+  Bell,
+  MoreHorizontal,
+  X,
+  Check,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-const AnalyticsAndInsights = ({ 
-  currentUser, 
-  onExportData, 
+const AnalyticsAndInsights = ({
+  currentUser,
+  onExportData,
   onUpdateGoals,
-  onGenerateReport
+  onGenerateReport,
 }) => {
   const [analytics, setAnalytics] = useState({
     followers: {
       current: 12500,
       change: 12.5,
-      trend: 'up'
+      trend: "up",
     },
     engagement: {
       rate: 8.5,
       change: 2.1,
-      trend: 'up'
+      trend: "up",
     },
     reach: {
       current: 45000,
       change: -5.2,
-      trend: 'down'
+      trend: "down",
     },
     impressions: {
       current: 125000,
       change: 15.8,
-      trend: 'up'
+      trend: "up",
     },
     likes: {
       current: 8500,
       change: 8.3,
-      trend: 'up'
+      trend: "up",
     },
     comments: {
       current: 1200,
       change: 22.1,
-      trend: 'up'
+      trend: "up",
     },
     shares: {
       current: 450,
       change: -3.2,
-      trend: 'down'
-    }
+      trend: "down",
+    },
   });
 
   const [posts, setPosts] = useState([]);
   const [audience, setAudience] = useState({});
   const [goals, setGoals] = useState([]);
   const [insights, setInsights] = useState([]);
-  const [timeRange, setTimeRange] = useState('7d');
+  const [timeRange, setTimeRange] = useState("7d");
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
   const [newGoal, setNewGoal] = useState({
-    type: 'followers',
+    type: "followers",
     target: 0,
-    deadline: '',
-    description: ''
+    deadline: "",
+    description: "",
   });
 
   // Carregar dados reais de analytics
@@ -79,18 +106,25 @@ const AnalyticsAndInsights = ({
     const loadAnalytics = async () => {
       try {
         const token = getAuthToken();
-        const response = await fetch('/api/social/analytics', {
-          method: 'GET',
+        const response = await fetch("/api/social/analytics", {
+          method: "GET",
           headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
           const data = await response.json();
           setPosts(data.posts || []);
-          setAudience(data.audience || { ageGroups: [], genders: [], locations: [], interests: [] });
+          setAudience(
+            data.audience || {
+              ageGroups: [],
+              genders: [],
+              locations: [],
+              interests: [],
+            },
+          );
           setGoals(data.goals || []);
           setInsights(data.insights || []);
         } else {
@@ -98,15 +132,27 @@ const AnalyticsAndInsights = ({
           const errorMsg = `Erro ${response.status}: Não foi possível carregar analytics`;
           toast.error(errorMsg);
           setPosts([]);
-          setAudience({ ageGroups: [], genders: [], locations: [], interests: [] });
+          setAudience({
+            ageGroups: [],
+            genders: [],
+            locations: [],
+            interests: [],
+          });
           setGoals([]);
           setInsights([]);
         }
       } catch (error) {
-        console.error('Erro ao carregar analytics:', error);
-        toast.error('Erro ao carregar dados de analytics. Tente novamente mais tarde.');
+        console.error("Erro ao carregar analytics:", error);
+        toast.error(
+          "Erro ao carregar dados de analytics. Tente novamente mais tarde.",
+        );
         setPosts([]);
-        setAudience({ ageGroups: [], genders: [], locations: [], interests: [] });
+        setAudience({
+          ageGroups: [],
+          genders: [],
+          locations: [],
+          interests: [],
+        });
         setGoals([]);
         setInsights([]);
       }
@@ -119,90 +165,94 @@ const AnalyticsAndInsights = ({
 
   const handleExportData = async (format) => {
     try {
-      await onExportData({ format, timeRange });
+      if (onExportData) {
+        await onExportData({ format, timeRange });
+      }
       setShowExportModal(false);
       toast.success(`Dados exportados em formato ${format.toUpperCase()}`);
-    } catch (error) {
-      toast.error('Erro ao exportar dados');
+    } catch {
+      toast.error("Erro ao exportar dados");
     }
   };
 
   const handleCreateGoal = async () => {
     if (!newGoal.target || !newGoal.deadline) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
     try {
-      await onUpdateGoals([...goals, { ...newGoal, id: Date.now() }]);
-      setGoals(prev => [...prev, { ...newGoal, id: Date.now() }]);
+      if (onUpdateGoals) {
+        await onUpdateGoals([...goals, { ...newGoal, id: Date.now() }]);
+      }
+      setGoals((prev) => [...prev, { ...newGoal, id: Date.now() }]);
       setNewGoal({
-        type: 'followers',
+        type: "followers",
         target: 0,
-        deadline: '',
-        description: ''
+        deadline: "",
+        description: "",
       });
       setShowGoalsModal(false);
-      toast.success('Meta criada com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao criar meta');
+      toast.success("Meta criada com sucesso!");
+    } catch {
+      toast.error("Erro ao criar meta");
     }
   };
 
   // Implementar funcionalidade real para refresh
+  // eslint-disable-next-line no-unused-vars
   const handleRefreshAnalytics = async () => {
     try {
-      const response = await fetch('/api/analytics/social', {
+      const response = await fetch("/api/analytics/social", {
         headers: {
-          'Authorization': `Bearer ${currentUser?.token}`
-        }
+          Authorization: `Bearer ${currentUser?.token}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setAnalytics(data);
-        toast.success('Analytics atualizados!');
+        toast.success("Analytics atualizados!");
       }
-    } catch (error) {
-      toast.error('Erro ao atualizar analytics');
+    } catch {
+      toast.error("Erro ao atualizar analytics");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleGenerateReport = async () => {
     try {
-      const response = await fetch('/api/analytics/generate-report', {
-        method: 'POST',
+      const response = await fetch("/api/analytics/generate-report", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser?.token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser?.token}`,
         },
-        body: JSON.stringify({ period: 'monthly' })
+        body: JSON.stringify({ period: "monthly" }),
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = 'analytics-report.pdf';
+        a.download = "analytics-report.pdf";
         a.click();
-        toast.success('Relatório gerado com sucesso!');
-        
-        if (onGenerateReport) {
-          onGenerateReport({ timeRange, format: 'pdf' });
-        }
+        toast.success("Relatório gerado com sucesso!");
+
+        onGenerateReport?.({ timeRange, format: "pdf" });
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao gerar relatório');
+        throw new Error(error.error || "Erro ao gerar relatório");
       }
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast.error(error.message || 'Erro ao gerar relatório');
+      console.error("Erro ao gerar relatório:", error);
+      toast.error(error.message || "Erro ao gerar relatório");
     }
   };
 
   const getTrendIcon = (trend) => {
-    return trend === 'up' ? (
+    return trend === "up" ? (
       <ArrowUp className="w-4 h-4 text-green-500" />
     ) : (
       <ArrowDown className="w-4 h-4 text-red-500" />
@@ -210,23 +260,23 @@ const AnalyticsAndInsights = ({
   };
 
   const getTrendColor = (trend) => {
-    return trend === 'up' ? 'text-green-600' : 'text-red-600';
+    return trend === "up" ? "text-green-600" : "text-red-600";
   };
 
   const timeRanges = [
-    { value: '7d', label: '7 dias' },
-    { value: '30d', label: '30 dias' },
-    { value: '90d', label: '90 dias' },
-    { value: '1y', label: '1 ano' }
+    { value: "7d", label: "7 dias" },
+    { value: "30d", label: "30 dias" },
+    { value: "90d", label: "90 dias" },
+    { value: "1y", label: "1 ano" },
   ];
 
   const goalTypes = [
-    { value: 'followers', label: 'Seguidores', icon: '👥' },
-    { value: 'engagement', label: 'Engajamento', icon: '💬' },
-    { value: 'reach', label: 'Alcance', icon: '👁️' },
-    { value: 'posts', label: 'Posts', icon: '📝' },
-    { value: 'likes', label: 'Curtidas', icon: '❤️' },
-    { value: 'comments', label: 'Comentários', icon: '💭' }
+    { value: "followers", label: "Seguidores", icon: "👥" },
+    { value: "engagement", label: "Engajamento", icon: "💬" },
+    { value: "reach", label: "Alcance", icon: "👁️" },
+    { value: "posts", label: "Posts", icon: "📝" },
+    { value: "likes", label: "Curtidas", icon: "❤️" },
+    { value: "comments", label: "Comentários", icon: "💭" },
   ];
 
   return (
@@ -247,7 +297,7 @@ const AnalyticsAndInsights = ({
             onChange={(e) => setTimeRange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
           >
-            {timeRanges.map(range => (
+            {timeRanges.map((range) => (
               <option key={range.value} value={range.value}>
                 {range.label}
               </option>
@@ -274,7 +324,9 @@ const AnalyticsAndInsights = ({
                 </p>
                 <div className="flex items-center space-x-1 mt-1">
                   {getTrendIcon(analytics.followers.trend)}
-                  <span className={`text-sm ${getTrendColor(analytics.followers.trend)}`}>
+                  <span
+                    className={`text-sm ${getTrendColor(analytics.followers.trend)}`}
+                  >
                     {analytics.followers.change}%
                   </span>
                 </div>
@@ -298,7 +350,9 @@ const AnalyticsAndInsights = ({
                 </p>
                 <div className="flex items-center space-x-1 mt-1">
                   {getTrendIcon(analytics.engagement.trend)}
-                  <span className={`text-sm ${getTrendColor(analytics.engagement.trend)}`}>
+                  <span
+                    className={`text-sm ${getTrendColor(analytics.engagement.trend)}`}
+                  >
                     {analytics.engagement.change}%
                   </span>
                 </div>
@@ -322,7 +376,9 @@ const AnalyticsAndInsights = ({
                 </p>
                 <div className="flex items-center space-x-1 mt-1">
                   {getTrendIcon(analytics.reach.trend)}
-                  <span className={`text-sm ${getTrendColor(analytics.reach.trend)}`}>
+                  <span
+                    className={`text-sm ${getTrendColor(analytics.reach.trend)}`}
+                  >
                     {analytics.reach.change}%
                   </span>
                 </div>
@@ -346,7 +402,9 @@ const AnalyticsAndInsights = ({
                 </p>
                 <div className="flex items-center space-x-1 mt-1">
                   {getTrendIcon(analytics.impressions.trend)}
-                  <span className={`text-sm ${getTrendColor(analytics.impressions.trend)}`}>
+                  <span
+                    className={`text-sm ${getTrendColor(analytics.impressions.trend)}`}
+                  >
                     {analytics.impressions.change}%
                   </span>
                 </div>
@@ -379,36 +437,54 @@ const AnalyticsAndInsights = ({
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Curtidas</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Curtidas
+                    </span>
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{analytics.likes.current.toLocaleString()}</span>
+                      <span className="font-semibold">
+                        {analytics.likes.current.toLocaleString()}
+                      </span>
                       <div className="flex items-center space-x-1">
                         {getTrendIcon(analytics.likes.trend)}
-                        <span className={`text-sm ${getTrendColor(analytics.likes.trend)}`}>
+                        <span
+                          className={`text-sm ${getTrendColor(analytics.likes.trend)}`}
+                        >
                           {analytics.likes.change}%
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Comentários</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Comentários
+                    </span>
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{analytics.comments.current.toLocaleString()}</span>
+                      <span className="font-semibold">
+                        {analytics.comments.current.toLocaleString()}
+                      </span>
                       <div className="flex items-center space-x-1">
                         {getTrendIcon(analytics.comments.trend)}
-                        <span className={`text-sm ${getTrendColor(analytics.comments.trend)}`}>
+                        <span
+                          className={`text-sm ${getTrendColor(analytics.comments.trend)}`}
+                        >
                           {analytics.comments.change}%
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Compartilhamentos</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Compartilhamentos
+                    </span>
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{analytics.shares.current.toLocaleString()}</span>
+                      <span className="font-semibold">
+                        {analytics.shares.current.toLocaleString()}
+                      </span>
                       <div className="flex items-center space-x-1">
                         {getTrendIcon(analytics.shares.trend)}
-                        <span className={`text-sm ${getTrendColor(analytics.shares.trend)}`}>
+                        <span
+                          className={`text-sm ${getTrendColor(analytics.shares.trend)}`}
+                        >
                           {analytics.shares.change}%
                         </span>
                       </div>
@@ -459,7 +535,7 @@ const AnalyticsAndInsights = ({
         {/* Posts */}
         <TabsContent value="posts" className="space-y-4">
           <div className="space-y-4">
-            {posts.map(post => (
+            {posts.map((post) => (
               <Card key={post.id} className="overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
@@ -492,7 +568,10 @@ const AnalyticsAndInsights = ({
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">
-                          {formatDistanceToNow(post.timestamp, { addSuffix: true, locale: ptBR })}
+                          {formatDistanceToNow(post.timestamp, {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
                         </span>
                         <Badge variant="outline">
                           {post.metrics.engagement}% engajamento
@@ -571,7 +650,10 @@ const AnalyticsAndInsights = ({
                           {location.percentage}%
                         </span>
                       </div>
-                      <Progress value={location.percentage} className="w-full" />
+                      <Progress
+                        value={location.percentage}
+                        className="w-full"
+                      />
                     </div>
                   ))}
                 </div>
@@ -594,7 +676,10 @@ const AnalyticsAndInsights = ({
                           {interest.percentage}%
                         </span>
                       </div>
-                      <Progress value={interest.percentage} className="w-full" />
+                      <Progress
+                        value={interest.percentage}
+                        className="w-full"
+                      />
                     </div>
                   ))}
                 </div>
@@ -614,17 +699,22 @@ const AnalyticsAndInsights = ({
               Nova Meta
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {goals.map(goal => (
+            {goals.map((goal) => (
               <Card key={goal.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">
-                      {goalTypes.find(t => t.value === goal.type)?.icon} {goalTypes.find(t => t.value === goal.type)?.label}
+                      {goalTypes.find((t) => t.value === goal.type)?.icon}{" "}
+                      {goalTypes.find((t) => t.value === goal.type)?.label}
                     </CardTitle>
-                    <Badge variant={goal.status === 'active' ? 'default' : 'secondary'}>
-                      {goal.status === 'active' ? 'Ativa' : 'Concluída'}
+                    <Badge
+                      variant={
+                        goal.status === "active" ? "default" : "secondary"
+                      }
+                    >
+                      {goal.status === "active" ? "Ativa" : "Concluída"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -635,7 +725,8 @@ const AnalyticsAndInsights = ({
                     </p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">
-                        {goal.current.toLocaleString()} / {goal.target.toLocaleString()}
+                        {goal.current.toLocaleString()} /{" "}
+                        {goal.target.toLocaleString()}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {goal.progress}%
@@ -643,9 +734,13 @@ const AnalyticsAndInsights = ({
                     </div>
                     <Progress value={goal.progress} className="w-full mt-2" />
                   </div>
-                  
+
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Prazo: {formatDistanceToNow(goal.deadline, { addSuffix: true, locale: ptBR })}
+                    Prazo:{" "}
+                    {formatDistanceToNow(goal.deadline, {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -656,7 +751,7 @@ const AnalyticsAndInsights = ({
         {/* Insights */}
         <TabsContent value="insights" className="space-y-4">
           <div className="space-y-4">
-            {insights.map(insight => (
+            {insights.map((insight) => (
               <Card key={insight.id} className="overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
@@ -672,12 +767,20 @@ const AnalyticsAndInsights = ({
                         {insight.action}
                       </Button>
                     </div>
-                    <Badge 
-                      variant={insight.type === 'success' ? 'default' : 
-                              insight.type === 'warning' ? 'destructive' : 'secondary'}
+                    <Badge
+                      variant={
+                        insight.type === "success"
+                          ? "default"
+                          : insight.type === "warning"
+                            ? "destructive"
+                            : "secondary"
+                      }
                     >
-                      {insight.type === 'success' ? 'Sucesso' : 
-                       insight.type === 'warning' ? 'Atenção' : 'Info'}
+                      {insight.type === "success"
+                        ? "Sucesso"
+                        : insight.type === "warning"
+                          ? "Atenção"
+                          : "Info"}
                     </Badge>
                   </div>
                 </CardContent>
@@ -708,28 +811,28 @@ const AnalyticsAndInsights = ({
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
-                    onClick={() => handleExportData('csv')}
+                    onClick={() => handleExportData("csv")}
                     variant="outline"
                     className="w-full"
                   >
                     CSV
                   </Button>
                   <Button
-                    onClick={() => handleExportData('xlsx')}
+                    onClick={() => handleExportData("xlsx")}
                     variant="outline"
                     className="w-full"
                   >
                     Excel
                   </Button>
                   <Button
-                    onClick={() => handleExportData('pdf')}
+                    onClick={() => handleExportData("pdf")}
                     variant="outline"
                     className="w-full"
                   >
                     PDF
                   </Button>
                   <Button
-                    onClick={() => handleExportData('json')}
+                    onClick={() => handleExportData("json")}
                     variant="outline"
                     className="w-full"
                   >
@@ -763,17 +866,19 @@ const AnalyticsAndInsights = ({
                 </label>
                 <select
                   value={newGoal.type}
-                  onChange={(e) => setNewGoal(prev => ({ ...prev, type: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGoal((prev) => ({ ...prev, type: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                 >
-                  {goalTypes.map(type => (
+                  {goalTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.icon} {type.label}
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Meta
@@ -781,12 +886,17 @@ const AnalyticsAndInsights = ({
                 <Input
                   type="number"
                   value={newGoal.target}
-                  onChange={(e) => setNewGoal(prev => ({ ...prev, target: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewGoal((prev) => ({
+                      ...prev,
+                      target: Number(e.target.value),
+                    }))
+                  }
                   placeholder="Digite a meta"
                   className="w-full"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Prazo
@@ -794,24 +904,34 @@ const AnalyticsAndInsights = ({
                 <Input
                   type="date"
                   value={newGoal.deadline}
-                  onChange={(e) => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGoal((prev) => ({
+                      ...prev,
+                      deadline: e.target.value,
+                    }))
+                  }
                   className="w-full"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Descrição
                 </label>
                 <textarea
                   value={newGoal.description}
-                  onChange={(e) => setNewGoal(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setNewGoal((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Descreva sua meta..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   rows={3}
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   onClick={() => setShowGoalsModal(false)}

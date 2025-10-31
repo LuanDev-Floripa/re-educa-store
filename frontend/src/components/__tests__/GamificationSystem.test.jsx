@@ -1,5 +1,5 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
+import React from "react";
+import { render, screen } from "@testing-library/react";
 
 // Mock do componente para evitar problemas de importação
 const MockGamificationSystem = () => (
@@ -10,18 +10,18 @@ const MockGamificationSystem = () => (
 );
 
 // Mock das dependências
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn()
-  }
+    error: jest.fn(),
+  },
 }));
 
-describe('GamificationSystem', () => {
-  test('renderiza corretamente', () => {
+describe("GamificationSystem", () => {
+  test("renderiza corretamente", () => {
     render(<MockGamificationSystem />);
-    
+
     // Verificar que o componente está sendo renderizado
-    expect(screen.getByText('Sistema de Gamificação')).toBeInTheDocument();
+    expect(screen.getByText("Sistema de Gamificação")).toBeInTheDocument();
   });
 });

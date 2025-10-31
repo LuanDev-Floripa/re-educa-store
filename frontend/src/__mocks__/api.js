@@ -2,7 +2,7 @@
 export const useApi = () => ({
   request: jest.fn(),
   loading: false,
-  error: null
+  error: null,
 });
 
 export const apiService = {
@@ -11,17 +11,17 @@ export const apiService = {
     getChallenges: jest.fn(),
     startChallenge: jest.fn(),
     completeChallenge: jest.fn(),
-    claimReward: jest.fn()
+    claimReward: jest.fn(),
   },
   payments: {
     getPaymentItems: jest.fn(),
     processPayment: jest.fn(),
     getPaymentHistory: jest.fn(),
-    applyCoupon: jest.fn()
+    applyCoupon: jest.fn(),
   },
   ai: {
     sendMessage: jest.fn(),
     getConversationHistory: jest.fn(),
-    getAvailableAgents: jest.fn()
-  }
+    getAvailableAgents: jest.fn(),
+  },
 };

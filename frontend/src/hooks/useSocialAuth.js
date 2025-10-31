@@ -1,6 +1,10 @@
-import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext';
-import { toast } from 'sonner';
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+import { toast } from "sonner";
+/**
+ * useSocialAuth
+ * - Wrapper para login/logout/registro com estados e toasts
+ */
 
 export const useSocialAuth = () => {
   const { user, login, logout, register } = useContext(AuthContext);
@@ -11,11 +15,11 @@ export const useSocialAuth = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login(credentials);
-      toast.success('Login realizado com sucesso!');
+      await login?.(credentials);
+      toast.success("Login realizado com sucesso!");
     } catch (err) {
       setError(err.message);
-      toast.error('Erro no login: ' + err.message);
+      toast.error("Erro no login: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -24,11 +28,11 @@ export const useSocialAuth = () => {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await logout();
-      toast.success('Logout realizado com sucesso!');
+      await logout?.();
+      toast.success("Logout realizado com sucesso!");
     } catch (err) {
       setError(err.message);
-      toast.error('Erro no logout: ' + err.message);
+      toast.error("Erro no logout: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -38,11 +42,11 @@ export const useSocialAuth = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await register(userData);
-      toast.success('Conta criada com sucesso!');
+      await register?.(userData);
+      toast.success("Conta criada com sucesso!");
     } catch (err) {
       setError(err.message);
-      toast.error('Erro no registro: ' + err.message);
+      toast.error("Erro no registro: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +59,6 @@ export const useSocialAuth = () => {
     login: handleLogin,
     logout: handleLogout,
     register: handleRegister,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
   };
 };

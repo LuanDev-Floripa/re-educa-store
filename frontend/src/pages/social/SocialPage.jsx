@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/Ui/card';
-import { Button } from '../../components/Ui/button';
-import { Input } from '../../components/Ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/Ui/tabs';
-import { Badge } from '../../components/Ui/badge';
-import { 
-  Users, 
-  MessageCircle, 
-  Heart, 
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/Ui/card";
+import { Button } from "../../components/Ui/button";
+import { Input } from "../../components/Ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../components/Ui/tabs";
+import { Badge } from "../../components/Ui/badge";
+import {
+  Users,
+  MessageCircle,
+  Heart,
   Search,
   Plus,
   Bell,
@@ -16,72 +26,86 @@ import {
   Users2,
   Award,
   Activity,
-  Video
-} from 'lucide-react';
-import SocialFeed from '../../components/social/SocialFeed';
-import CreatePostModal from '../../components/social/CreatePostModal';
-import StoriesSection from '../../components/social/StoriesSection';
-import DirectMessages from '../../components/social/DirectMessages';
-import ReelsSection from '../../components/social/ReelsSection';
-import NotificationsCenter from '../../components/social/NotificationsCenter';
-import SocialSearch from '../../components/social/SocialSearch';
-import LiveStreaming from '../../components/social/LiveStreaming';
-import GroupsAndCommunities from '../../components/social/GroupsAndCommunities';
-import MonetizationSystem from '../../components/social/MonetizationSystem';
-import apiClient from '@/services/apiClient';
-import AccountVerification from '../../components/social/AccountVerification';
-import AnalyticsAndInsights from '../../components/social/AnalyticsAndInsights';
+  Video,
+} from "lucide-react";
+import SocialFeed from "../../components/social/SocialFeed";
+import CreatePostModal from "../../components/social/CreatePostModal";
+import StoriesSection from "../../components/social/StoriesSection";
+import DirectMessages from "../../components/social/DirectMessages";
+import ReelsSection from "../../components/social/ReelsSection";
+import NotificationsCenter from "../../components/social/NotificationsCenter";
+import SocialSearch from "../../components/social/SocialSearch";
+import LiveStreaming from "../../components/social/LiveStreaming";
+import GroupsAndCommunities from "../../components/social/GroupsAndCommunities";
+import MonetizationSystem from "../../components/social/MonetizationSystem";
+import apiClient from "@/services/apiClient";
+import AccountVerification from "../../components/social/AccountVerification";
+import AnalyticsAndInsights from "../../components/social/AnalyticsAndInsights";
+import { toast } from "sonner";
 
 const SocialPage = () => {
-  const [activeTab, setActiveTab] = useState('feed');
+  // eslint-disable-next-line no-unused-vars
+  const [activeTab, setActiveTab] = useState("feed");
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [stats, setStats] = useState({
     totalPosts: 0,
     totalFollowers: 0,
     totalFollowing: 0,
-    totalLikes: 0
+    totalLikes: 0,
   });
-  
+
   // Estados para as novas funcionalidades
+  // eslint-disable-next-line no-unused-vars
   const [stories, setStories] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [conversations, setConversations] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [reels, setReels] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [notifications, setNotifications] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [showMessages, setShowMessages] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [showNotifications, setShowNotifications] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [groups, setGroups] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [monetizationData, setMonetizationData] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [verificationData, setVerificationData] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [analyticsData, setAnalyticsData] = useState({});
   const [searchResults, setSearchResults] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [searchFilters, setSearchFilters] = useState({
-    type: 'all',
-    dateRange: 'all',
-    sortBy: 'recent',
+    type: "all",
+    dateRange: "all",
+    sortBy: "recent",
     verified: false,
     media: false,
     minLikes: 0,
-    location: ''
+    location: "",
   });
 
   useEffect(() => {
     // Carregar dados reais do usuário autenticado
     const loadCurrentUser = async () => {
       try {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
         if (!token) {
           setCurrentUser(null);
           return;
         }
 
-        const response = await fetch('/api/users/profile', {
-          method: 'GET',
+        const response = await fetch("/api/users/profile", {
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -91,7 +115,7 @@ const SocialPage = () => {
           setCurrentUser(null);
         }
       } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
+        console.error("Erro ao carregar usuário:", error);
         setCurrentUser(null);
       }
     };
@@ -101,15 +125,16 @@ const SocialPage = () => {
     // Carregar stats reais
     const loadStats = async () => {
       try {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
         if (!token) return;
 
-        const response = await fetch('/api/social/stats', {
-          method: 'GET',
+        const response = await fetch("/api/social/stats", {
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -117,19 +142,20 @@ const SocialPage = () => {
           setStats(data.stats || data);
         }
       } catch (error) {
-        console.error('Erro ao carregar stats:', error);
+        console.error("Erro ao carregar stats:", error);
       }
     };
 
     loadStats();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleCreatePost = async (formData) => {
     try {
-      toast.success('Post criado com sucesso!');
+      toast.success("Post criado com sucesso!");
       setShowCreatePost(false);
-    } catch (error) {
-      toast.error('Erro ao criar post');
+    } catch {
+      toast.error("Erro ao criar post");
     }
   };
 
@@ -142,22 +168,26 @@ const SocialPage = () => {
       // Implementar busca avançada real
       const searchParams = new URLSearchParams({
         q: query,
-        type: filters.type || 'all',
-        ...filters
+        type: filters.type || "all",
+        ...filters,
       });
-      
-      const response = await apiClient.request(`/api/social/search?${searchParams.toString()}`);
-      
+
+      const response = await apiClient.request(
+        `/api/social/search?${searchParams.toString()}`,
+      );
+
       if (response.results || response.data) {
         setSearchResults(response.results || response.data || []);
-        toast.success(`Encontrados ${(response.results || response.data || []).length} resultados`);
+        toast.success(
+          `Encontrados ${(response.results || response.data || []).length} resultados`,
+        );
       } else {
         setSearchResults([]);
-        toast.info('Nenhum resultado encontrado');
+        toast.info("Nenhum resultado encontrado");
       }
     } catch (error) {
-      console.error('Erro na busca avançada:', error);
-      toast.error('Erro ao realizar busca');
+      console.error("Erro na busca avançada:", error);
+      toast.error("Erro ao realizar busca");
       setSearchResults([]);
     }
   };
@@ -168,160 +198,160 @@ const SocialPage = () => {
 
   // Handlers para Live Streaming
   const handleStartStream = async (streamData) => {
-    toast.success('Transmissão iniciada!');
+    toast.success("Transmissão iniciada!");
   };
 
   const handleEndStream = async (streamId) => {
-    toast.success('Transmissão encerrada!');
+    toast.success("Transmissão encerrada!");
   };
 
   const handleJoinStream = async (streamId) => {
-    toast.success('Entrou na transmissão!');
+    toast.success("Entrou na transmissão!");
   };
 
   const handleLeaveStream = async (streamId) => {
-    toast.success('Saiu da transmissão!');
+    toast.success("Saiu da transmissão!");
   };
 
   const handleSendMessage = async (messageData) => {
-    toast.success('Mensagem enviada!');
+    toast.success("Mensagem enviada!");
   };
 
   const handleSendGift = async (giftData) => {
-    toast.success('Presente enviado!');
+    toast.success("Presente enviado!");
   };
 
   const handleFollowUser = async (userId) => {
-    toast.success('Usuário seguido!');
+    toast.success("Usuário seguido!");
   };
 
   const handleReportStream = async (streamId, reason) => {
-    toast.success('Transmissão reportada!');
+    toast.success("Transmissão reportada!");
   };
 
   // Handlers para Grupos e Comunidades
   const handleCreateGroup = async (groupData) => {
-    toast.success('Grupo criado!');
+    toast.success("Grupo criado!");
   };
 
   const handleJoinGroup = async (groupId) => {
-    toast.success('Entrou no grupo!');
+    toast.success("Entrou no grupo!");
   };
 
   const handleLeaveGroup = async (groupId) => {
-    toast.success('Saiu do grupo!');
+    toast.success("Saiu do grupo!");
   };
 
   const handleUpdateGroup = async (groupId, groupData) => {
-    toast.success('Grupo atualizado!');
+    toast.success("Grupo atualizado!");
   };
 
   const handleDeleteGroup = async (groupId) => {
-    toast.success('Grupo deletado!');
+    toast.success("Grupo deletado!");
   };
 
   const handleInviteUser = async (groupId, userId) => {
-    toast.success('Convite enviado!');
+    toast.success("Convite enviado!");
   };
 
   const handleRemoveUser = async (groupId, userId) => {
-    toast.success('Usuário removido!');
+    toast.success("Usuário removido!");
   };
 
   const handlePromoteUser = async (groupId, userId) => {
-    toast.success('Usuário promovido!');
+    toast.success("Usuário promovido!");
   };
 
   const handleDemoteUser = async (groupId, userId) => {
-    toast.success('Usuário removido da moderação!');
+    toast.success("Usuário removido da moderação!");
   };
 
   const handleReportGroup = async (groupId, reason) => {
-    toast.success('Grupo reportado!');
+    toast.success("Grupo reportado!");
   };
 
   // Handlers para Monetização
   const handleSendTip = async (tipData) => {
-    toast.success('Dica enviada!');
+    toast.success("Dica enviada!");
   };
 
   const handlePurchaseCoins = async (purchaseData) => {
-    toast.success('Moedas compradas!');
+    toast.success("Moedas compradas!");
   };
 
   const handleWithdrawEarnings = async (withdrawData) => {
-    toast.success('Saque solicitado!');
+    toast.success("Saque solicitado!");
   };
 
   const handleSubscribeToUser = async (userId, plan) => {
-    toast.success('Assinatura ativada!');
+    toast.success("Assinatura ativada!");
   };
 
   const handleUnsubscribeFromUser = async (subscriptionId) => {
-    toast.success('Assinatura cancelada!');
+    toast.success("Assinatura cancelada!");
   };
 
   const handlePurchasePremium = async (premiumData) => {
-    toast.success('Premium ativado!');
+    toast.success("Premium ativado!");
   };
 
   const handleCreatePaidContent = async (contentData) => {
-    toast.success('Conteúdo pago criado!');
+    toast.success("Conteúdo pago criado!");
   };
 
   const handlePurchaseContent = async (contentId) => {
-    toast.success('Conteúdo comprado!');
+    toast.success("Conteúdo comprado!");
   };
 
   // Handlers para Verificação de Contas
   const handleSubmitVerification = async (verificationData) => {
-    toast.success('Verificação enviada!');
+    toast.success("Verificação enviada!");
   };
 
   const handleUpdateVerification = async (verificationId, verificationData) => {
-    toast.success('Verificação atualizada!');
+    toast.success("Verificação atualizada!");
   };
 
   const handleApproveVerification = async (verificationId) => {
-    toast.success('Verificação aprovada!');
+    toast.success("Verificação aprovada!");
   };
 
   const handleRejectVerification = async (verificationId, reason) => {
-    toast.success('Verificação rejeitada!');
+    toast.success("Verificação rejeitada!");
   };
 
   const handleRequestReview = async (verificationId) => {
-    toast.success('Revisão solicitada!');
+    toast.success("Revisão solicitada!");
   };
 
   // Handlers para Analytics
   const handleExportData = async (exportData) => {
-    toast.success('Dados exportados!');
+    toast.success("Dados exportados!");
   };
 
   const handleUpdateGoals = async (goals) => {
-    toast.success('Metas atualizadas!');
+    toast.success("Metas atualizadas!");
   };
 
   const handleGenerateReport = async (reportData) => {
-    toast.success('Relatório gerado!');
+    toast.success("Relatório gerado!");
   };
 
   const tabs = [
-    { id: 'feed', label: 'Feed', icon: MessageCircle },
-    { id: 'stories', label: 'Stories', icon: Plus },
-    { id: 'reels', label: 'Reels', icon: Video },
-    { id: 'messages', label: 'Mensagens', icon: MessageCircle },
-    { id: 'notifications', label: 'Notificações', icon: Bell },
-    { id: 'search', label: 'Busca', icon: Search },
-    { id: 'trending', label: 'Em Alta', icon: TrendingUp },
-    { id: 'following', label: 'Seguindo', icon: Users2 },
-    { id: 'discover', label: 'Descobrir', icon: Search },
-    { id: 'live', label: 'Live', icon: Video },
-    { id: 'groups', label: 'Grupos', icon: Users },
-    { id: 'monetization', label: 'Monetização', icon: Award },
-    { id: 'verification', label: 'Verificação', icon: Award },
-    { id: 'analytics', label: 'Analytics', icon: Activity }
+    { id: "feed", label: "Feed", icon: MessageCircle },
+    { id: "stories", label: "Stories", icon: Plus },
+    { id: "reels", label: "Reels", icon: Video },
+    { id: "messages", label: "Mensagens", icon: MessageCircle },
+    { id: "notifications", label: "Notificações", icon: Bell },
+    { id: "search", label: "Busca", icon: Search },
+    { id: "trending", label: "Em Alta", icon: TrendingUp },
+    { id: "following", label: "Seguindo", icon: Users2 },
+    { id: "discover", label: "Descobrir", icon: Search },
+    { id: "live", label: "Live", icon: Video },
+    { id: "groups", label: "Grupos", icon: Users },
+    { id: "monetization", label: "Monetização", icon: Award },
+    { id: "verification", label: "Verificação", icon: Award },
+    { id: "analytics", label: "Analytics", icon: Activity },
   ];
 
   return (
@@ -331,9 +361,11 @@ const SocialPage = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-gray-900">Rede Social</h1>
-              <Badge variant="secondary" className="text-xs">Beta</Badge>
+              <Badge variant="secondary" className="text-xs">
+                Beta
+              </Badge>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -344,12 +376,14 @@ const SocialPage = () => {
                   className="pl-10 w-80"
                 />
               </div>
-              
+
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  3
+                </span>
               </Button>
-              
+
               <Button variant="ghost" size="sm">
                 <Settings className="h-5 w-5" />
               </Button>
@@ -365,13 +399,17 @@ const SocialPage = () => {
               <CardContent className="p-6">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                    {currentUser?.name?.charAt(0) || 'U'}
+                    {currentUser?.name?.charAt(0) || "U"}
                   </div>
                   <h3 className="text-lg font-semibold">{currentUser?.name}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{currentUser?.bio}</p>
-                  
+                  <p className="text-sm text-gray-500 mb-4">
+                    {currentUser?.bio}
+                  </p>
+
                   {currentUser?.is_verified && (
-                    <Badge variant="secondary" className="mb-4">✓ Verificado</Badge>
+                    <Badge variant="secondary" className="mb-4">
+                      ✓ Verificado
+                    </Badge>
                   )}
                 </div>
               </CardContent>
@@ -389,7 +427,7 @@ const SocialPage = () => {
                   </div>
                   <span className="font-semibold">{stats.totalPosts}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Users className="h-4 w-4 text-green-500" />
@@ -397,7 +435,7 @@ const SocialPage = () => {
                   </div>
                   <span className="font-semibold">{stats.totalFollowers}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Users2 className="h-4 w-4 text-purple-500" />
@@ -405,7 +443,7 @@ const SocialPage = () => {
                   </div>
                   <span className="font-semibold">{stats.totalFollowing}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Heart className="h-4 w-4 text-red-500" />
@@ -421,24 +459,24 @@ const SocialPage = () => {
                 <CardTitle className="text-lg">Ações Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => setShowCreatePost(true)}
                   className="w-full justify-start"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Postagem
                 </Button>
-                
+
                 <Button variant="outline" className="w-full justify-start">
                   <Users className="h-4 w-4 mr-2" />
                   Encontrar Amigos
                 </Button>
-                
+
                 <Button variant="outline" className="w-full justify-start">
                   <Award className="h-4 w-4 mr-2" />
                   Conquistas
                 </Button>
-                
+
                 <Button variant="outline" className="w-full justify-start">
                   <Activity className="h-4 w-4 mr-2" />
                   Atividade
@@ -448,12 +486,20 @@ const SocialPage = () => {
           </div>
 
           <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-4 lg:grid-cols-14">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
-                    <TabsTrigger key={tab.id} value={tab.id} className="flex items-center space-x-1 text-xs">
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="flex items-center space-x-1 text-xs"
+                    >
                       <Icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{tab.label}</span>
                     </TabsTrigger>
@@ -463,15 +509,15 @@ const SocialPage = () => {
 
               <TabsContent value="feed" className="mt-6">
                 <div className="space-y-6">
-                  <StoriesSection 
+                  <StoriesSection
                     stories={stories}
                     currentUser={currentUser}
-                    onCreateStory={() => toast.info('Funcionalidade em breve!')}
+                    onCreateStory={() => toast.info("Funcionalidade em breve!")}
                     onViewStory={() => {}}
                     onLikeStory={() => {}}
                     onReplyStory={() => {}}
                   />
-                  <SocialFeed 
+                  <SocialFeed
                     currentUser={currentUser}
                     onCreatePost={handleCreatePost}
                   />
@@ -479,10 +525,10 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="stories" className="mt-6">
-                <StoriesSection 
+                <StoriesSection
                   stories={stories}
                   currentUser={currentUser}
-                  onCreateStory={() => toast.info('Funcionalidade em breve!')}
+                  onCreateStory={() => toast.info("Funcionalidade em breve!")}
                   onViewStory={() => {}}
                   onLikeStory={() => {}}
                   onReplyStory={() => {}}
@@ -490,10 +536,10 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="reels" className="mt-6">
-                <ReelsSection 
+                <ReelsSection
                   reels={reels}
                   currentUser={currentUser}
-                  onCreateReel={() => toast.info('Funcionalidade em breve!')}
+                  onCreateReel={() => toast.info("Funcionalidade em breve!")}
                   onLikeReel={() => {}}
                   onCommentReel={() => {}}
                   onShareReel={() => {}}
@@ -502,17 +548,19 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="messages" className="mt-6">
-                <DirectMessages 
+                <DirectMessages
                   conversations={conversations}
                   currentUser={currentUser}
                   onSendMessage={() => {}}
-                  onStartConversation={() => toast.info('Funcionalidade em breve!')}
+                  onStartConversation={() =>
+                    toast.info("Funcionalidade em breve!")
+                  }
                   onMarkAsRead={() => {}}
                 />
               </TabsContent>
 
               <TabsContent value="notifications" className="mt-6">
-                <NotificationsCenter 
+                <NotificationsCenter
                   notifications={notifications}
                   onMarkAsRead={() => {}}
                   onMarkAllAsRead={() => {}}
@@ -524,7 +572,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="search" className="mt-6">
-                <SocialSearch 
+                <SocialSearch
                   searchResults={searchResults}
                   onSearch={handleAdvancedSearch}
                   onFilterChange={handleSearchFilterChange}
@@ -533,7 +581,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="live" className="mt-6">
-                <LiveStreaming 
+                <LiveStreaming
                   currentUser={currentUser}
                   onStartStream={handleStartStream}
                   onEndStream={handleEndStream}
@@ -547,7 +595,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="groups" className="mt-6">
-                <GroupsAndCommunities 
+                <GroupsAndCommunities
                   currentUser={currentUser}
                   onCreateGroup={handleCreateGroup}
                   onJoinGroup={handleJoinGroup}
@@ -563,7 +611,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="monetization" className="mt-6">
-                <MonetizationSystem 
+                <MonetizationSystem
                   currentUser={currentUser}
                   onSendTip={handleSendTip}
                   onPurchaseCoins={handlePurchaseCoins}
@@ -578,7 +626,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="verification" className="mt-6">
-                <AccountVerification 
+                <AccountVerification
                   currentUser={currentUser}
                   onSubmitVerification={handleSubmitVerification}
                   onUpdateVerification={handleUpdateVerification}
@@ -589,7 +637,7 @@ const SocialPage = () => {
               </TabsContent>
 
               <TabsContent value="analytics" className="mt-6">
-                <AnalyticsAndInsights 
+                <AnalyticsAndInsights
                   currentUser={currentUser}
                   onExportData={handleExportData}
                   onUpdateGoals={handleUpdateGoals}

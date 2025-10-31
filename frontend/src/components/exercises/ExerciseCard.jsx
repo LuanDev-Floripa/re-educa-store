@@ -1,25 +1,57 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Play, Clock, Target, Dumbbell, Star, Eye } from 'lucide-react';
+/**
+ * ExerciseCard Component - RE-EDUCA Store
+ * 
+ * Card de exibição de exercício individual.
+ * 
+ * Funcionalidades:
+ * - Exibe informações do exercício
+ * - Badge de dificuldade
+ * - Botões de ação (visualizar, adicionar ao treino)
+ * - Hover effects
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {Object} props.exercise - Dados do exercício
+ * @param {Function} [props.onViewDetails] - Callback para ver detalhes
+ * @param {Function} [props.onAddToWorkout] - Callback para adicionar ao treino
+ * @returns {JSX.Element} Card de exercício
+ */
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Play, Clock, Target, Dumbbell, Star, Eye } from "lucide-react";
 
 export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "beginner":
+        return "bg-green-100 text-green-800";
+      case "intermediate":
+        return "bg-yellow-100 text-yellow-800";
+      case "advanced":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getDifficultyLabel = (difficulty) => {
     switch (difficulty) {
-      case 'beginner': return 'Iniciante';
-      case 'intermediate': return 'Intermediário';
-      case 'advanced': return 'Avançado';
-      default: return difficulty;
+      case "beginner":
+        return "Iniciante";
+      case "intermediate":
+        return "Intermediário";
+      case "advanced":
+        return "Avançado";
+      default:
+        return difficulty;
     }
   };
 
@@ -42,7 +74,9 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
         </div>
 
         {/* Badge de dificuldade */}
-        <Badge className={`absolute top-2 right-2 ${getDifficultyColor(exercise.difficulty)}`}>
+        <Badge
+          className={`absolute top-2 right-2 ${getDifficultyColor(exercise.difficulty)}`}
+        >
           {getDifficultyLabel(exercise.difficulty)}
         </Badge>
 
@@ -67,7 +101,9 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
           <div className="mb-4">
             <div className="flex items-center space-x-2 mb-2">
               <Target className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Grupos Musculares:</span>
+              <span className="text-sm font-medium text-gray-700">
+                Grupos Musculares:
+              </span>
             </div>
             <div className="flex flex-wrap gap-1">
               {exercise.muscle_groups.slice(0, 3).map((muscle, index) => (
@@ -89,7 +125,9 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
           <div className="mb-4">
             <div className="flex items-center space-x-2 mb-2">
               <Dumbbell className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Equipamentos:</span>
+              <span className="text-sm font-medium text-gray-700">
+                Equipamentos:
+              </span>
             </div>
             <div className="flex flex-wrap gap-1">
               {exercise.equipment.slice(0, 2).map((equipment, index) => (
@@ -114,7 +152,7 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
               MET: {exercise.met_value}
             </span>
           </div>
-          
+
           {/* Rating (simulado) */}
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -132,7 +170,7 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
             <Eye className="w-4 h-4 mr-2" />
             Ver Detalhes
           </Button>
-          
+
           <Button
             onClick={() => onAddToWorkout && onAddToWorkout(exercise)}
             className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -146,7 +184,7 @@ export const ExerciseCard = ({ exercise, onViewDetails, onAddToWorkout }) => {
         {exercise.video_url && (
           <div className="mt-3 pt-3 border-t">
             <Button
-              onClick={() => window.open(exercise.video_url, '_blank')}
+              onClick={() => window.open(exercise.video_url, "_blank")}
               variant="ghost"
               size="sm"
               className="w-full text-blue-600 hover:text-blue-700"

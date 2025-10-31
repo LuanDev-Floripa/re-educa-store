@@ -1,6 +1,18 @@
 """
-Serviço de Rotação Automática de Chaves de IA
-Gerencia a rotação automática e manual de chaves de API
+Serviço de Rotação Automática de Chaves de IA RE-EDUCA Store.
+
+Implementa rotação segura de API keys incluindo:
+- Verificação automática de chaves expiradas
+- Rotação manual por administrador
+- Rotação em lote de múltiplas chaves
+- Histórico de rotações
+- Notificações de chaves próximas à expiração
+
+SEGURANÇA:
+- Chaves antigas mantidas por período de grace
+- Rollback em caso de falha
+- Validação de novas chaves antes de ativar
+- Logs auditáveis de todas as rotações
 """
 import logging
 from typing import Dict, Any, List, Optional

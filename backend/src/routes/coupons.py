@@ -1,5 +1,11 @@
 """
-Rotas de Cupons e Promoções RE-EDUCA Store
+Rotas de Cupons e Promoções RE-EDUCA Store.
+
+Gerencia cupons de desconto incluindo:
+- Validação de cupons
+- Aplicação em pedidos
+- Listagem de cupons disponíveis
+- Gerenciamento administrativo de cupons
 """
 from flask import Blueprint, request, jsonify
 from services.coupon_service import CouponService
@@ -14,7 +20,16 @@ coupon_service = CouponService()
 @rate_limit("10 per minute")
 @validate_json('code', 'order_value')
 def validate_coupon():
-    """Valida cupom para uso"""
+    """
+    Valida cupom para uso.
+    
+    Request Body:
+        code (str): Código do cupom.
+        order_value (float): Valor do pedido.
+        
+    Returns:
+        JSON: Cupom válido com desconto calculado ou erro.
+    """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
@@ -43,7 +58,17 @@ def validate_coupon():
 @rate_limit("10 per minute")
 @validate_json('code', 'order_id', 'order_value')
 def apply_coupon():
-    """Aplica cupom a um pedido"""
+    """
+    Aplica cupom a um pedido.
+    
+    Request Body:
+        code (str): Código do cupom.
+        order_id (str): ID do pedido.
+        order_value (float): Valor do pedido.
+        
+    Returns:
+        JSON: Pedido com desconto aplicado ou erro.
+    """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
@@ -72,7 +97,15 @@ def apply_coupon():
 @coupons_bp.route('/', methods=['GET'])
 @token_required
 def get_coupons():
-    """Lista cupons disponíveis para o usuário"""
+    """
+    Lista cupons disponíveis para o usuário.
+    
+    Query Parameters:
+        search (str): Termo de busca opcional.
+        
+    Returns:
+        JSON: Lista de cupons válidos e ativos.
+    """
     try:
         user_id = request.current_user['id']
         

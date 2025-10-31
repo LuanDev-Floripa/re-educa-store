@@ -1,5 +1,8 @@
 """
-Rotas de Afiliados RE-EDUCA Store
+Rotas de Afiliados RE-EDUCA Store.
+
+Gerencia integração com plataformas de afiliados (Hotmart, Kiwify, Eduzz)
+incluindo listagem de produtos, sincronização e tracking de conversões.
 """
 from flask import Blueprint, request, jsonify
 from services.affiliate_service import AffiliateService
@@ -13,7 +16,18 @@ affiliate_service = AffiliateService()
 @token_required
 @rate_limit("30 per minute")
 def get_affiliate_products():
-    """Busca produtos afiliados"""
+    """
+    Busca produtos afiliados.
+    
+    Query Parameters:
+        platform (str): Plataforma de afiliados (hotmart, kiwify, eduzz).
+        category (str): Categoria de produtos.
+        page (int): Número da página (padrão: 1).
+        limit (int): Limite de resultados (padrão: 20, máx: 100).
+        
+    Returns:
+        JSON: Lista de produtos afiliados ou erro.
+    """
     try:
         platform = request.args.get('platform')
         category = request.args.get('category')
@@ -41,7 +55,12 @@ def get_affiliate_products():
 @admin_required
 @rate_limit("5 per hour")
 def sync_affiliate_products():
-    """Sincroniza produtos de todas as plataformas (admin only)"""
+    """
+    Sincroniza produtos de todas as plataformas (admin only).
+    
+    Returns:
+        JSON: Resultado da sincronização com total de produtos e plataformas.
+    """
     try:
         result = affiliate_service.sync_all_affiliate_products()
         

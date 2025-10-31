@@ -1,5 +1,12 @@
 """
-Testes de Pagamentos RE-EDUCA Store
+Testes de Pagamentos RE-EDUCA Store.
+
+Cobre rotas e serviços de pagamento incluindo:
+- Criação de clientes e Payment Intents
+- Processamento de webhooks
+- Histórico de pagamentos
+- Gerenciamento de assinaturas
+- Validação de dados
 """
 import pytest
 import json

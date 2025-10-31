@@ -1,4 +1,9 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
+/**
+ * setupTests
+ * Configura ambiente de testes do frontend com mocks de APIs do browser
+ * (IntersectionObserver, ResizeObserver, matchMedia, storages, fetch e console).
+ */
 
 // Mock do IntersectionObserver
 /* eslint-disable no-undef */
@@ -18,9 +23,9 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock do matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,

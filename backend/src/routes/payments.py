@@ -1,6 +1,13 @@
 """
-Rotas de Pagamentos RE-EDUCA Store
+Rotas de Pagamentos RE-EDUCA Store.
+
+Gerencia pagamentos via múltiplos métodos incluindo:
+- Stripe (cartão de crédito, PIX)
+- PayPal
+- Assinaturas recorrentes
+- Webhooks de confirmação
 """
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from services.payment_service import PaymentService
 from utils.decorators import token_required, rate_limit, validate_json
@@ -11,7 +18,12 @@ payment_service = PaymentService()
 
 @payments_bp.route('/methods', methods=['GET'])
 def get_payment_methods():
-    """Retorna métodos de pagamento disponíveis"""
+    """
+    Retorna métodos de pagamento disponíveis.
+    
+    Returns:
+        JSON: Lista de métodos de pagamento suportados.
+    """
     try:
         methods = payment_service.get_payment_methods()
         return jsonify(methods), 200
@@ -23,7 +35,17 @@ def get_payment_methods():
 @rate_limit("10 per minute")
 @validate_json('amount', 'currency')
 def create_stripe_payment_intent():
-    """Cria Payment Intent no Stripe"""
+    """
+    Cria Payment Intent no Stripe.
+    
+    Request Body:
+        amount (int): Valor em centavos.
+        currency (str): Moeda (padrão: 'brl').
+        order_id (str, optional): ID do pedido relacionado.
+        
+    Returns:
+        JSON: Payment Intent com client_secret para processamento.
+    """
     try:
         user = request.current_user
         data = request.get_json()
@@ -69,7 +91,16 @@ def create_stripe_payment_intent():
 @rate_limit("5 per minute")
 @validate_json('price_id')
 def create_stripe_subscription():
-    """Cria assinatura no Stripe"""
+    """
+    Cria assinatura no Stripe.
+    
+    Request Body:
+        price_id (str): ID do preço da assinatura no Stripe.
+        trial_period_days (int, optional): Dias de período trial.
+        
+    Returns:
+        JSON: Assinatura criada com status e detalhes.
+    """
     try:
         user = request.current_user
         data = request.get_json()

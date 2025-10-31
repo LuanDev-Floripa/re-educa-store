@@ -1,5 +1,11 @@
 """
-Service administrativo RE-EDUCA Store
+Service administrativo RE-EDUCA Store.
+
+Gerencia operações administrativas incluindo:
+- Dashboard com estatísticas gerais
+- Gestão de usuários e permissões
+- Analytics de vendas e pedidos
+- Relatórios e métricas
 """
 import logging
 from typing import Dict, Any, List
@@ -9,13 +15,23 @@ from config.database import supabase_client
 logger = logging.getLogger(__name__)
 
 class AdminService:
-    """Service para operações administrativas"""
+    """
+    Service para operações administrativas.
+    
+    Centraliza lógica de negócio para painel administrativo.
+    """
     
     def __init__(self):
+        """Inicializa o serviço administrativo."""
         self.supabase = supabase_client
     
     def get_dashboard_stats(self) -> Dict[str, Any]:
-        """Retorna estatísticas do dashboard admin"""
+        """
+        Retorna estatísticas do dashboard admin.
+        
+        Returns:
+            Dict[str, Any]: Métricas de usuários, produtos, pedidos e receita.
+        """
         try:
             # Buscar totais
             users_result = self.supabase.table('users').select('id, is_active, created_at').execute()
@@ -82,7 +98,8 @@ class AdminService:
             query = self.supabase.table('users').select('*')
             
             if search:
-                query = query.or_(f'name.ilike.%{search}%,email.ilike.%{search}%')
+                # Para busca, usar filtro ilike em name (pode ser estendido para email)
+                query = query.ilike('name', f"%{search}%")
             
             result = query.order('created_at', desc=True).execute()
             

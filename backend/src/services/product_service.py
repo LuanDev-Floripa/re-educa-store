@@ -1,5 +1,13 @@
 """
-Service de produtos RE-EDUCA Store - Supabase
+Service de produtos RE-EDUCA Store - Supabase.
+
+Gerencia operações de produtos incluindo:
+- Listagem com filtros e paginação
+- Busca de produtos
+- CRUD completo de produtos
+- Gestão de categorias
+- Produtos em destaque
+- Controle de estoque
 """
 import logging
 from typing import Dict, Any, List, Optional
@@ -39,7 +47,15 @@ class ProductService:
             return {'error': 'Erro interno do servidor'}
     
     def get_product(self, product_id: str) -> Optional[Dict[str, Any]]:
-        """Retorna detalhes de um produto"""
+        """
+        Retorna detalhes de um produto específico.
+        
+        Args:
+            product_id (str): ID do produto.
+            
+        Returns:
+            Optional[Dict[str, Any]]: Dados do produto ou None se não encontrado.
+        """
         try:
             return self.db.get_product_by_id(product_id)
         except Exception as e:

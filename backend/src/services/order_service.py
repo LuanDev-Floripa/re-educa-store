@@ -1,5 +1,12 @@
 """
-Service de pedidos RE-EDUCA Store
+Service de pedidos RE-EDUCA Store.
+
+Gerencia fluxo completo de pedidos incluindo:
+- Criação de pedidos a partir do carrinho
+- Gestão de status do pedido
+- Histórico de pedidos do usuário
+- Validação de estoque
+- Integração com pagamentos
 """
 import logging
 from typing import Dict, Any, List, Optional
@@ -10,13 +17,28 @@ from utils.helpers import generate_uuid
 logger = logging.getLogger(__name__)
 
 class OrderService:
-    """Service para operações de pedidos"""
+    """
+    Service para operações de pedidos.
+    
+    Implementa lógica de negócio para gerenciamento de pedidos.
+    """
     
     def __init__(self):
+        """Inicializa o serviço de pedidos."""
         self.supabase = supabase_client
     
     def get_user_orders(self, user_id: str, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        """Retorna pedidos do usuário"""
+        """
+        Retorna pedidos do usuário com paginação.
+        
+        Args:
+            user_id (str): ID do usuário.
+            page (int): Página (padrão: 1).
+            per_page (int): Itens por página (padrão: 20).
+            
+        Returns:
+            Dict[str, Any]: Pedidos paginados ou erro.
+        """
         try:
             result = self.supabase.table('orders')\
                 .select('*')\

@@ -1,11 +1,27 @@
-import React from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { AuthLayout } from '../../components/layouts/PageLayout';
-import { useApi } from '../../lib/api';
-import { CheckCircle, XCircle, Mail, ArrowRight, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+/**
+ * VerifyEmailPage
+ * - Verifica por token, reenviar email; fallbacks/toasts
+ */
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { AuthLayout } from "../../components/layouts/PageLayout";
+import { useApi } from "../../lib/api";
+import {
+  CheckCircle,
+  XCircle,
+  Mail,
+  ArrowRight,
+  RefreshCw,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
@@ -15,7 +31,7 @@ export const VerifyEmailPage = () => {
   const [verificationStatus, setVerificationStatus] = React.useState(null);
   const [isResending, setIsResending] = React.useState(false);
 
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   React.useEffect(() => {
     if (token) {
@@ -26,32 +42,40 @@ export const VerifyEmailPage = () => {
   const verifyEmail = async (verificationToken) => {
     setIsVerifying(true);
     try {
-      const response = await request(() => 
-        fetch('/api/auth/verify-email', {
-          method: 'POST',
+      if (typeof request !== "function") {
+        throw new Error("Serviço de rede indisponível");
+      }
+      const response = await request(() =>
+        fetch("/api/auth/verify-email", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ token: verificationToken }),
-        })
+        }),
       );
 
       if (response.ok) {
-        setVerificationStatus('success');
-        toast.success('Email verificado com sucesso!');
+        setVerificationStatus("success");
+        toast.success("Email verificado com sucesso!");
         // Redireciona para o dashboard após 3 segundos
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate("/dashboard");
         }, 3000);
       } else {
-        const error = await response.json();
-        setVerificationStatus('error');
-        toast.error(error.error || 'Erro ao verificar email');
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          error = {};
+        }
+        setVerificationStatus("error");
+        toast.error(error?.error || "Erro ao verificar email");
       }
     } catch (error) {
-      console.error('Erro ao verificar email:', error);
-      setVerificationStatus('error');
-      toast.error('Erro ao verificar email. Tente novamente.');
+      console.error("Erro ao verificar email:", error);
+      setVerificationStatus("error");
+      toast.error(error?.message || "Erro ao verificar email. Tente novamente.");
     } finally {
       setIsVerifying(false);
     }
@@ -60,24 +84,24 @@ export const VerifyEmailPage = () => {
   const resendVerificationEmail = async () => {
     setIsResending(true);
     try {
-      const response = await request(() => 
-        fetch('/api/auth/resend-verification', {
-          method: 'POST',
+      const response = await request(() =>
+        fetch("/api/auth/resend-verification", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-        })
+        }),
       );
 
       if (response.ok) {
-        toast.success('Email de verificação reenviado!');
+        toast.success("Email de verificação reenviado!");
       } else {
         const error = await response.json();
-        toast.error(error.error || 'Erro ao reenviar email');
+        toast.error(error.error || "Erro ao reenviar email");
       }
     } catch (error) {
-      console.error('Erro ao reenviar email:', error);
-      toast.error('Erro ao reenviar email. Tente novamente.');
+      console.error("Erro ao reenviar email:", error);
+      toast.error("Erro ao reenviar email. Tente novamente.");
     } finally {
       setIsResending(false);
     }
@@ -98,7 +122,7 @@ export const VerifyEmailPage = () => {
       );
     }
 
-    if (verificationStatus === 'success') {
+    if (verificationStatus === "success") {
       return (
         <div className="text-center">
           <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -106,10 +130,11 @@ export const VerifyEmailPage = () => {
             Email Verificado!
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Seu email foi verificado com sucesso. Você será redirecionado para o dashboard em alguns segundos.
+            Seu email foi verificado com sucesso. Você será redirecionado para o
+            dashboard em alguns segundos.
           </p>
           <Button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate("/dashboard")}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <ArrowRight className="w-4 h-4 mr-2" />
@@ -119,7 +144,7 @@ export const VerifyEmailPage = () => {
       );
     }
 
-    if (verificationStatus === 'error') {
+    if (verificationStatus === "error") {
       return (
         <div className="text-center">
           <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
@@ -127,7 +152,8 @@ export const VerifyEmailPage = () => {
             Erro na Verificação
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Não foi possível verificar seu email. O link pode ter expirado ou já foi usado.
+            Não foi possível verificar seu email. O link pode ter expirado ou já
+            foi usado.
           </p>
           <div className="space-y-3">
             <Button
@@ -149,7 +175,7 @@ export const VerifyEmailPage = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
               className="w-full"
             >
               Voltar ao Login
@@ -167,7 +193,8 @@ export const VerifyEmailPage = () => {
           Verifique seu Email
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Enviamos um link de verificação para seu email. Clique no link para ativar sua conta.
+          Enviamos um link de verificação para seu email. Clique no link para
+          ativar sua conta.
         </p>
         <div className="space-y-3">
           <Button
@@ -189,7 +216,7 @@ export const VerifyEmailPage = () => {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
             className="w-full"
           >
             Voltar ao Login
@@ -217,13 +244,13 @@ export const VerifyEmailPage = () => {
             Verificação de Email
           </CardTitle>
           <CardDescription className="text-gray-600 dark:text-gray-400">
-            {token ? 'Verificando seu email...' : 'Confirme seu email para continuar'}
+            {token
+              ? "Verificando seu email..."
+              : "Confirme seu email para continuar"}
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
     </AuthLayout>
   );

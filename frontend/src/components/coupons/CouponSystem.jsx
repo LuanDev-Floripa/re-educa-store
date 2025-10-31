@@ -1,35 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { 
-  Tag, 
-  Copy, 
-  Check, 
-  X, 
-  Clock, 
-  Percent, 
-  DollarSign, 
-  Gift, 
-  ShoppingCart, 
-  Star, 
-  Users, 
-  Calendar, 
-  TrendingUp, 
-  AlertTriangle, 
-  Info, 
-  ArrowRight, 
-  Plus, 
-  Minus, 
-  Target, 
-  Award, 
-  Zap, 
-  Heart, 
-  Package, 
-  Truck, 
-  Shield, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import {
+  Tag,
+  Copy,
+  Check,
+  X,
+  Clock,
+  Percent,
+  DollarSign,
+  Gift,
+  ShoppingCart,
+  Star,
+  Users,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+  Info,
+  ArrowRight,
+  Plus,
+  Minus,
+  Target,
+  Award,
+  Zap,
+  Heart,
+  Package,
+  Truck,
+  Shield,
   Crown,
   Sparkles,
   Flame,
@@ -44,33 +50,33 @@ import {
   Edit,
   Trash2,
   Filter,
-  Search
-} from 'lucide-react';
+  Search,
+} from "lucide-react";
 
-export const CouponSystem = ({ 
+export const CouponSystem = ({
   userProfile = {},
   onApplyCoupon,
   onGenerateCoupon,
   onShareCoupon,
-  showAdminFeatures = false
+  showAdminFeatures = false,
 }) => {
   const [coupons, setCoupons] = useState([]);
   const [userCoupons, setUserCoupons] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('available');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [activeTab, setActiveTab] = useState("available");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [copiedCoupon, setCopiedCoupon] = useState(null);
 
   // Dados do usuário de exemplo
   const defaultUserProfile = {
     id: 1,
-    name: 'João Silva',
-    email: 'joao@email.com',
-    loyaltyTier: 'gold',
-    totalSpent: 2450.80,
+    name: "João Silva",
+    email: "joao@email.com",
+    loyaltyTier: "gold",
+    totalSpent: 2450.8,
     totalOrders: 23,
-    memberSince: '2023-01-15'
+    memberSince: "2023-01-15",
   };
 
   const currentUserProfile = { ...defaultUserProfile, ...userProfile };
@@ -80,179 +86,179 @@ export const CouponSystem = ({
     available: [
       {
         id: 1,
-        code: 'WELCOME10',
-        name: 'Bem-vindo',
-        description: '10% de desconto na primeira compra',
-        type: 'percentage',
+        code: "WELCOME10",
+        name: "Bem-vindo",
+        description: "10% de desconto na primeira compra",
+        type: "percentage",
         value: 10,
         minOrderValue: 100,
         maxDiscount: 50,
-        validFrom: '2024-01-01',
-        validUntil: '2024-12-31',
+        validFrom: "2024-01-01",
+        validUntil: "2024-12-31",
         usageLimit: 1000,
         usedCount: 234,
         isActive: true,
-        category: 'welcome',
+        category: "welcome",
         icon: Gift,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
-        requirements: ['Primeira compra'],
-        exclusions: ['Produtos em promoção'],
-        applicableProducts: ['all'],
-        applicableCategories: ['all']
+        color: "text-green-600",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        requirements: ["Primeira compra"],
+        exclusions: ["Produtos em promoção"],
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
       },
       {
         id: 2,
-        code: 'FREESHIP',
-        name: 'Frete Grátis',
-        description: 'Frete grátis em pedidos acima de R$ 150',
-        type: 'shipping',
+        code: "FREESHIP",
+        name: "Frete Grátis",
+        description: "Frete grátis em pedidos acima de R$ 150",
+        type: "shipping",
         value: 0,
         minOrderValue: 150,
         maxDiscount: 0,
-        validFrom: '2024-01-01',
-        validUntil: '2024-12-31',
+        validFrom: "2024-01-01",
+        validUntil: "2024-12-31",
         usageLimit: 500,
         usedCount: 89,
         isActive: true,
-        category: 'shipping',
+        category: "shipping",
         icon: Truck,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
-        requirements: ['Pedido mínimo R$ 150'],
-        exclusions: ['Frete expresso'],
-        applicableProducts: ['all'],
-        applicableCategories: ['all']
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+        requirements: ["Pedido mínimo R$ 150"],
+        exclusions: ["Frete expresso"],
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
       },
       {
         id: 3,
-        code: 'SUPPLY20',
-        name: 'Suplementos',
-        description: '20% de desconto em suplementos',
-        type: 'percentage',
+        code: "SUPPLY20",
+        name: "Suplementos",
+        description: "20% de desconto em suplementos",
+        type: "percentage",
         value: 20,
         minOrderValue: 200,
         maxDiscount: 100,
-        validFrom: '2024-01-01',
-        validUntil: '2024-06-30',
+        validFrom: "2024-01-01",
+        validUntil: "2024-06-30",
         usageLimit: 200,
         usedCount: 45,
         isActive: true,
-        category: 'category',
+        category: "category",
         icon: Package,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50',
-        borderColor: 'border-purple-200',
-        requirements: ['Pedido mínimo R$ 200'],
-        exclusions: ['Produtos em promoção'],
-        applicableProducts: ['all'],
-        applicableCategories: ['Suplementos']
+        color: "text-purple-600",
+        bgColor: "bg-purple-50",
+        borderColor: "border-purple-200",
+        requirements: ["Pedido mínimo R$ 200"],
+        exclusions: ["Produtos em promoção"],
+        applicableProducts: ["all"],
+        applicableCategories: ["Suplementos"],
       },
       {
         id: 4,
-        code: 'GOLD15',
-        name: 'Membro Gold',
-        description: '15% de desconto exclusivo para membros Gold',
-        type: 'percentage',
+        code: "GOLD15",
+        name: "Membro Gold",
+        description: "15% de desconto exclusivo para membros Gold",
+        type: "percentage",
         value: 15,
         minOrderValue: 0,
         maxDiscount: 0,
-        validFrom: '2024-01-01',
-        validUntil: '2024-12-31',
+        validFrom: "2024-01-01",
+        validUntil: "2024-12-31",
         usageLimit: 0,
         usedCount: 12,
         isActive: true,
-        category: 'loyalty',
+        category: "loyalty",
         icon: Crown,
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-50',
-        borderColor: 'border-yellow-200',
-        requirements: ['Membro Gold'],
-        exclusions: ['Produtos em promoção'],
-        applicableProducts: ['all'],
-        applicableCategories: ['all']
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+        requirements: ["Membro Gold"],
+        exclusions: ["Produtos em promoção"],
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
       },
       {
         id: 5,
-        code: 'FLASH50',
-        name: 'Flash Sale',
-        description: 'R$ 50 de desconto em pedidos acima de R$ 300',
-        type: 'fixed',
+        code: "FLASH50",
+        name: "Flash Sale",
+        description: "R$ 50 de desconto em pedidos acima de R$ 300",
+        type: "fixed",
         value: 50,
         minOrderValue: 300,
         maxDiscount: 50,
-        validFrom: '2024-01-15',
-        validUntil: '2024-01-20',
+        validFrom: "2024-01-15",
+        validUntil: "2024-01-20",
         usageLimit: 100,
         usedCount: 67,
         isActive: true,
-        category: 'flash',
+        category: "flash",
         icon: Zap,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
-        requirements: ['Pedido mínimo R$ 300'],
-        exclusions: ['Produtos em promoção'],
-        applicableProducts: ['all'],
-        applicableCategories: ['all']
-      }
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        requirements: ["Pedido mínimo R$ 300"],
+        exclusions: ["Produtos em promoção"],
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
+      },
     ],
     userCoupons: [
       {
         id: 6,
-        code: 'PERSONAL10',
-        name: 'Cupom Pessoal',
-        description: '10% de desconto pessoal',
-        type: 'percentage',
+        code: "PERSONAL10",
+        name: "Cupom Pessoal",
+        description: "10% de desconto pessoal",
+        type: "percentage",
         value: 10,
         minOrderValue: 0,
         maxDiscount: 0,
-        validFrom: '2024-01-01',
-        validUntil: '2024-12-31',
+        validFrom: "2024-01-01",
+        validUntil: "2024-12-31",
         usageLimit: 1,
         usedCount: 0,
         isActive: true,
-        category: 'personal',
+        category: "personal",
         icon: Star,
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50',
-        borderColor: 'border-indigo-200',
+        color: "text-indigo-600",
+        bgColor: "bg-indigo-50",
+        borderColor: "border-indigo-200",
         requirements: [],
         exclusions: [],
-        applicableProducts: ['all'],
-        applicableCategories: ['all'],
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
         isUsed: false,
-        usedAt: null
-      }
+        usedAt: null,
+      },
     ],
     expired: [
       {
         id: 7,
-        code: 'NEWYEAR2023',
-        name: 'Ano Novo 2023',
-        description: '15% de desconto no Ano Novo',
-        type: 'percentage',
+        code: "NEWYEAR2023",
+        name: "Ano Novo 2023",
+        description: "15% de desconto no Ano Novo",
+        type: "percentage",
         value: 15,
         minOrderValue: 0,
         maxDiscount: 0,
-        validFrom: '2023-12-31',
-        validUntil: '2024-01-05',
+        validFrom: "2023-12-31",
+        validUntil: "2024-01-05",
         usageLimit: 500,
         usedCount: 500,
         isActive: false,
-        category: 'seasonal',
+        category: "seasonal",
         icon: Calendar,
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-50',
-        borderColor: 'border-gray-200',
+        color: "text-gray-600",
+        bgColor: "bg-gray-50",
+        borderColor: "border-gray-200",
         requirements: [],
         exclusions: [],
-        applicableProducts: ['all'],
-        applicableCategories: ['all']
-      }
-    ]
+        applicableProducts: ["all"],
+        applicableCategories: ["all"],
+      },
+    ],
   };
 
   useEffect(() => {
@@ -261,7 +267,7 @@ export const CouponSystem = ({
 
   const loadCoupons = useCallback(async () => {
     setLoading(true);
-    
+
     // Simular carregamento de API
     setTimeout(() => {
       setCoupons(couponData.available);
@@ -290,60 +296,88 @@ export const CouponSystem = ({
 
   const getCouponIcon = (type) => {
     switch (type) {
-      case 'percentage': return Percent;
-      case 'fixed': return DollarSign;
-      case 'shipping': return Truck;
-      default: return Tag;
+      case "percentage":
+        return Percent;
+      case "fixed":
+        return DollarSign;
+      case "shipping":
+        return Truck;
+      default:
+        return Tag;
     }
   };
 
   const getCouponColor = (category) => {
     switch (category) {
-      case 'welcome': return 'text-green-600';
-      case 'shipping': return 'text-blue-600';
-      case 'category': return 'text-purple-600';
-      case 'loyalty': return 'text-yellow-600';
-      case 'flash': return 'text-red-600';
-      case 'personal': return 'text-indigo-600';
-      case 'seasonal': return 'text-gray-600';
-      default: return 'text-gray-600';
+      case "welcome":
+        return "text-green-600";
+      case "shipping":
+        return "text-blue-600";
+      case "category":
+        return "text-purple-600";
+      case "loyalty":
+        return "text-yellow-600";
+      case "flash":
+        return "text-red-600";
+      case "personal":
+        return "text-indigo-600";
+      case "seasonal":
+        return "text-gray-600";
+      default:
+        return "text-gray-600";
     }
   };
 
   const getCouponBgColor = (category) => {
     switch (category) {
-      case 'welcome': return 'bg-green-50';
-      case 'shipping': return 'bg-blue-50';
-      case 'category': return 'bg-purple-50';
-      case 'loyalty': return 'bg-yellow-50';
-      case 'flash': return 'bg-red-50';
-      case 'personal': return 'bg-indigo-50';
-      case 'seasonal': return 'bg-gray-50';
-      default: return 'bg-gray-50';
+      case "welcome":
+        return "bg-green-50";
+      case "shipping":
+        return "bg-blue-50";
+      case "category":
+        return "bg-purple-50";
+      case "loyalty":
+        return "bg-yellow-50";
+      case "flash":
+        return "bg-red-50";
+      case "personal":
+        return "bg-indigo-50";
+      case "seasonal":
+        return "bg-gray-50";
+      default:
+        return "bg-gray-50";
     }
   };
 
   const getCouponBorderColor = (category) => {
     switch (category) {
-      case 'welcome': return 'border-green-200';
-      case 'shipping': return 'border-blue-200';
-      case 'category': return 'border-purple-200';
-      case 'loyalty': return 'border-yellow-200';
-      case 'flash': return 'border-red-200';
-      case 'personal': return 'border-indigo-200';
-      case 'seasonal': return 'border-gray-200';
-      default: return 'border-gray-200';
+      case "welcome":
+        return "border-green-200";
+      case "shipping":
+        return "border-blue-200";
+      case "category":
+        return "border-purple-200";
+      case "loyalty":
+        return "border-yellow-200";
+      case "flash":
+        return "border-red-200";
+      case "personal":
+        return "border-indigo-200";
+      case "seasonal":
+        return "border-gray-200";
+      default:
+        return "border-gray-200";
     }
   };
 
   const formatCouponValue = (coupon) => {
     switch (coupon.type) {
-      case 'percentage':
+      case "percentage":
         return `${coupon.value}%`;
-      case 'fixed':
+      case "fixed":
         return `R$ ${coupon.value}`;
-      case 'shipping':
-        return 'Grátis';
+      case "shipping":
+        return "Grátis";
       default:
         return coupon.value;
     }
@@ -353,76 +387,99 @@ export const CouponSystem = ({
     const now = new Date();
     const validFrom = new Date(coupon.validFrom);
     const validUntil = new Date(coupon.validUntil);
-    
+
     return now >= validFrom && now <= validUntil && coupon.isActive;
   };
 
   const isCouponExpired = (coupon) => {
     const now = new Date();
     const validUntil = new Date(coupon.validUntil);
-    
+
     return now > validUntil;
   };
 
   const getCouponStatus = (coupon) => {
-    if (!coupon.isActive) return 'inactive';
-    if (isCouponExpired(coupon)) return 'expired';
-    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) return 'limit_reached';
-    if (isCouponValid(coupon)) return 'valid';
-    return 'pending';
+    if (!coupon.isActive) return "inactive";
+    if (isCouponExpired(coupon)) return "expired";
+    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit)
+      return "limit_reached";
+    if (isCouponValid(coupon)) return "valid";
+    return "pending";
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'valid': return 'text-green-600';
-      case 'expired': return 'text-red-600';
-      case 'inactive': return 'text-gray-600';
-      case 'limit_reached': return 'text-orange-600';
-      case 'pending': return 'text-yellow-600';
-      default: return 'text-gray-600';
+      case "valid":
+        return "text-green-600";
+      case "expired":
+        return "text-red-600";
+      case "inactive":
+        return "text-gray-600";
+      case "limit_reached":
+        return "text-orange-600";
+      case "pending":
+        return "text-yellow-600";
+      default:
+        return "text-gray-600";
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'valid': return 'Válido';
-      case 'expired': return 'Expirado';
-      case 'inactive': return 'Inativo';
-      case 'limit_reached': return 'Limite Atingido';
-      case 'pending': return 'Pendente';
-      default: return 'Desconhecido';
+      case "valid":
+        return "Válido";
+      case "expired":
+        return "Expirado";
+      case "inactive":
+        return "Inativo";
+      case "limit_reached":
+        return "Limite Atingido";
+      case "pending":
+        return "Pendente";
+      default:
+        return "Desconhecido";
     }
   };
 
-  const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coupon.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coupon.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterType === 'all' || coupon.category === filterType;
-    
+  const filteredCoupons = coupons.filter((coupon) => {
+    const matchesSearch =
+      coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      coupon.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      coupon.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter =
+      filterType === "all" || coupon.category === filterType;
+
     return matchesSearch && matchesFilter;
   });
 
   const renderCouponCard = (coupon) => {
     const IconComponent = coupon.icon;
     const status = getCouponStatus(coupon);
-    const isValid = status === 'valid';
-    const isExpired = status === 'expired';
-    
+    const isValid = status === "valid";
+    const isExpired = status === "expired";
+
     return (
-      <Card key={coupon.id} className={`hover:shadow-lg transition-shadow ${isExpired ? 'opacity-60' : ''} ${getCouponBgColor(coupon.category)}`}>
+      <Card
+        key={coupon.id}
+        className={`hover:shadow-lg transition-shadow ${isExpired ? "opacity-60" : ""} ${getCouponBgColor(coupon.category)}`}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-2">
-              <IconComponent className={`w-5 h-5 ${getCouponColor(coupon.category)}`} />
-              <Badge variant="outline" className={getCouponBorderColor(coupon.category)}>
+              <IconComponent
+                className={`w-5 h-5 ${getCouponColor(coupon.category)}`}
+              />
+              <Badge
+                variant="outline"
+                className={getCouponBorderColor(coupon.category)}
+              >
                 {coupon.category}
               </Badge>
             </div>
             <div className="flex items-center space-x-1">
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={`text-xs ${getStatusColor(status)}`}
               >
                 {getStatusText(status)}
@@ -431,7 +488,7 @@ export const CouponSystem = ({
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-3">
           {/* Código do Cupom */}
           <div className="flex items-center space-x-2">
@@ -454,7 +511,9 @@ export const CouponSystem = ({
           {/* Nome e Descrição */}
           <div>
             <h3 className="font-semibold text-sm mb-1 flex items-center">
-              {React.createElement(getCouponIcon(coupon.type), { className: "w-4 h-4 mr-2" })}
+              {React.createElement(getCouponIcon(coupon.type), {
+                className: "w-4 h-4 mr-2",
+              })}
               {coupon.name}
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -496,12 +555,16 @@ export const CouponSystem = ({
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span>Uso</span>
-                <span>{coupon.usedCount}/{coupon.usageLimit}</span>
+                <span>
+                  {coupon.usedCount}/{coupon.usageLimit}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1">
-                <div 
-                  className="bg-blue-600 h-1 rounded-full" 
-                  style={{ width: `${(coupon.usedCount / coupon.usageLimit) * 100}%` }}
+                <div
+                  className="bg-blue-600 h-1 rounded-full"
+                  style={{
+                    width: `${(coupon.usedCount / coupon.usageLimit) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -515,7 +578,10 @@ export const CouponSystem = ({
               </div>
               <div className="space-y-1">
                 {coupon.requirements.map((req, index) => (
-                  <div key={index} className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+                  <div
+                    key={index}
+                    className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400"
+                  >
                     <Check className="w-3 h-3 text-green-600" />
                     <span>{req}</span>
                   </div>
@@ -532,7 +598,10 @@ export const CouponSystem = ({
               </div>
               <div className="space-y-1">
                 {coupon.exclusions.map((exc, index) => (
-                  <div key={index} className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+                  <div
+                    key={index}
+                    className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400"
+                  >
                     <X className="w-3 h-3 text-red-600" />
                     <span>{exc}</span>
                   </div>
@@ -566,24 +635,37 @@ export const CouponSystem = ({
   };
 
   const tabs = [
-    { id: 'available', label: 'Disponíveis', icon: Tag, count: coupons.length },
-    { id: 'my_coupons', label: 'Meus Cupons', icon: Star, count: userCoupons.length },
-    { id: 'expired', label: 'Expirados', icon: Clock, count: couponData.expired.length }
+    { id: "available", label: "Disponíveis", icon: Tag, count: coupons.length },
+    {
+      id: "my_coupons",
+      label: "Meus Cupons",
+      icon: Star,
+      count: userCoupons.length,
+    },
+    {
+      id: "expired",
+      label: "Expirados",
+      icon: Clock,
+      count: couponData.expired.length,
+    },
   ];
 
   const categories = [
-    { id: 'all', label: 'Todos' },
-    { id: 'welcome', label: 'Bem-vindo' },
-    { id: 'shipping', label: 'Frete' },
-    { id: 'category', label: 'Categoria' },
-    { id: 'loyalty', label: 'Fidelidade' },
-    { id: 'flash', label: 'Flash Sale' },
-    { id: 'personal', label: 'Pessoal' }
+    { id: "all", label: "Todos" },
+    { id: "welcome", label: "Bem-vindo" },
+    { id: "shipping", label: "Frete" },
+    { id: "category", label: "Categoria" },
+    { id: "loyalty", label: "Fidelidade" },
+    { id: "flash", label: "Flash Sale" },
+    { id: "personal", label: "Pessoal" },
   ];
 
-  const currentCoupons = activeTab === 'available' ? filteredCoupons : 
-                        activeTab === 'my_coupons' ? userCoupons : 
-                        couponData.expired;
+  const currentCoupons =
+    activeTab === "available"
+      ? filteredCoupons
+      : activeTab === "my_coupons"
+        ? userCoupons
+        : couponData.expired;
 
   return (
     <div className="space-y-6">
@@ -597,13 +679,14 @@ export const CouponSystem = ({
             Encontre e use cupons de desconto exclusivos
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            Bem-vindo, {currentUserProfile.name} • Membro desde {new Date(currentUserProfile.memberSince).toLocaleDateString('pt-BR')}
+            Bem-vindo, {currentUserProfile.name} • Membro desde{" "}
+            {new Date(currentUserProfile.memberSince).toLocaleDateString(
+              "pt-BR",
+            )}
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary">
-            {coupons.length} cupons disponíveis
-          </Badge>
+          <Badge variant="secondary">{coupons.length} cupons disponíveis</Badge>
           {showAdminFeatures && (
             <Button onClick={() => onGenerateCoupon && onGenerateCoupon()}>
               <Plus className="w-4 h-4 mr-2" />
@@ -632,7 +715,7 @@ export const CouponSystem = ({
             onChange={(e) => setFilterType(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {categories.map(category => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.label}
               </option>
@@ -655,8 +738,8 @@ export const CouponSystem = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               <IconComponent className="w-4 h-4" />
@@ -695,11 +778,13 @@ export const CouponSystem = ({
               Nenhum cupom encontrado
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {activeTab === 'available' ? 'Não há cupons disponíveis no momento' :
-               activeTab === 'my_coupons' ? 'Você não possui cupons pessoais' :
-               'Não há cupons expirados'}
+              {activeTab === "available"
+                ? "Não há cupons disponíveis no momento"
+                : activeTab === "my_coupons"
+                  ? "Você não possui cupons pessoais"
+                  : "Não há cupons expirados"}
             </p>
-            {activeTab === 'available' && (
+            {activeTab === "available" && (
               <Button>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Atualizar
@@ -710,7 +795,7 @@ export const CouponSystem = ({
       )}
 
       {/* Estatísticas */}
-      {!loading && activeTab === 'available' && (
+      {!loading && activeTab === "available" && (
         <Card>
           <CardHeader>
             <CardTitle>Estatísticas dos Cupons</CardTitle>
@@ -735,7 +820,7 @@ export const CouponSystem = ({
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {coupons.filter(coupon => isCouponValid(coupon)).length}
+                  {coupons.filter((coupon) => isCouponValid(coupon)).length}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Válidos Agora

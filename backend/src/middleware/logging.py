@@ -1,5 +1,9 @@
 """
-Middleware de logging para RE-EDUCA Store
+Middleware de logging para RE-EDUCA Store.
+
+Configura sistema de logging com diferentes níveis e categorias,
+incluindo logs de requisições, respostas, erros, atividades de
+usuários e eventos de segurança.
 """
 import logging
 import sys
@@ -9,7 +13,15 @@ from flask import Flask, request, g
 from config.settings import get_config
 
 def setup_logging(app: Flask):
-    """Configura logging para a aplicação"""
+    """
+    Configura logging para a aplicação.
+    
+    Configura níveis de log, formatos, handlers e middlewares
+    para registrar requisições, respostas e erros.
+    
+    Args:
+        app (Flask): Instância da aplicação Flask.
+    """
     
     config = get_config()
     
@@ -32,9 +44,9 @@ def setup_logging(app: Flask):
     logger = logging.getLogger('re-educa')
     logger.setLevel(getattr(logging, config.LOG_LEVEL))
     
-    # Middleware para log de requisições
     @app.before_request
     def log_request():
+        """Registra informações da requisição HTTP."""
         g.start_time = datetime.now()
         
         # Log da requisição
@@ -46,6 +58,15 @@ def setup_logging(app: Flask):
     
     @app.after_request
     def log_response(response):
+        """
+        Registra informações da resposta HTTP.
+        
+        Args:
+            response: Objeto de resposta Flask.
+            
+        Returns:
+            Response: Objeto de resposta inalterado.
+        """
         # Calcula tempo de resposta
         if hasattr(g, 'start_time'):
             duration = (datetime.now() - g.start_time).total_seconds()
@@ -53,14 +74,29 @@ def setup_logging(app: Flask):
         
         return response
     
-    # Middleware para log de erros
     @app.errorhandler(Exception)
     def log_error(error):
+        """
+        Registra erros não tratados.
+        
+        Args:
+            error: Exceção capturada.
+            
+        Returns:
+            tuple: Resposta de erro JSON e código de status.
+        """
         logger.error(f"Erro não tratado: {str(error)}", exc_info=True)
         return {'error': 'Erro interno do servidor'}, 500
 
 def log_user_activity(user_id: str, activity: str, details: dict = None):
-    """Log de atividades do usuário"""
+    """
+    Registra atividades do usuário.
+    
+    Args:
+        user_id (str): ID do usuário.
+        activity (str): Descrição da atividade.
+        details (dict, optional): Detalhes adicionais da atividade.
+    """
     logger = logging.getLogger('re-educa.user_activity')
     
     log_data = {
@@ -75,7 +111,13 @@ def log_user_activity(user_id: str, activity: str, details: dict = None):
     logger.info(f"Atividade do usuário: {log_data}")
 
 def log_system_event(event: str, details: dict = None):
-    """Log de eventos do sistema"""
+    """
+    Registra eventos do sistema.
+    
+    Args:
+        event (str): Descrição do evento.
+        details (dict, optional): Detalhes adicionais do evento.
+    """
     logger = logging.getLogger('re-educa.system')
     
     log_data = {
@@ -87,7 +129,14 @@ def log_system_event(event: str, details: dict = None):
     logger.info(f"Evento do sistema: {log_data}")
 
 def log_security_event(event: str, user_id: str = None, details: dict = None):
-    """Log de eventos de segurança"""
+    """
+    Registra eventos de segurança.
+    
+    Args:
+        event (str): Descrição do evento de segurança.
+        user_id (str, optional): ID do usuário envolvido.
+        details (dict, optional): Detalhes adicionais do evento.
+    """
     logger = logging.getLogger('re-educa.security')
     
     log_data = {

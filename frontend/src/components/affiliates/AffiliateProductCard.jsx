@@ -1,28 +1,66 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Badge } from '@/components/Ui/badge';
-import { ExternalLink, ShoppingCart, Star, TrendingUp } from 'lucide-react';
-import { formatCurrency } from '../../lib/utils';
+/**
+ * AffiliateProductCard Component - RE-EDUCA Store
+ * 
+ * Card de exibição de produto afiliado.
+ * 
+ * Funcionalidades:
+ * - Exibe informações do produto
+ * - Link de afiliado
+ * - Badge de plataforma (Hotmart, Kiwify, etc.)
+ * - Botões de ação (adicionar ao carrinho, ver detalhes)
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {Object} props.product - Dados do produto afiliado
+ * @param {Function} [props.onAddToCart] - Callback para adicionar ao carrinho
+ * @param {Function} [props.onViewDetails] - Callback para ver detalhes
+ * @returns {JSX.Element} Card de produto afiliado
+ */
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Badge } from "@/components/Ui/badge";
+import { ExternalLink, ShoppingCart, Star, TrendingUp } from "lucide-react";
+import { formatCurrency } from "../../lib/utils";
 
-export const AffiliateProductCard = ({ product, onAddToCart, onViewDetails }) => {
+export const AffiliateProductCard = ({
+  product,
+  onAddToCart,
+  onViewDetails,
+}) => {
   const getPlatformColor = (platform) => {
     switch (platform) {
-      case 'hotmart': return 'bg-orange-100 text-orange-800';
-      case 'kiwify': return 'bg-blue-100 text-blue-800';
-      case 'logs': return 'bg-green-100 text-green-800';
-      case 'braip': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "hotmart":
+        return "bg-orange-100 text-orange-800";
+      case "kiwify":
+        return "bg-blue-100 text-blue-800";
+      case "logs":
+        return "bg-green-100 text-green-800";
+      case "braip":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getPlatformName = (platform) => {
     switch (platform) {
-      case 'hotmart': return 'Hotmart';
-      case 'kiwify': return 'Kiwify';
-      case 'logs': return 'Logs';
-      case 'braip': return 'Braip';
-      default: return platform;
+      case "hotmart":
+        return "Hotmart";
+      case "kiwify":
+        return "Kiwify";
+      case "logs":
+        return "Logs";
+      case "braip":
+        return "Braip";
+      default:
+        return platform;
     }
   };
 
@@ -45,7 +83,9 @@ export const AffiliateProductCard = ({ product, onAddToCart, onViewDetails }) =>
         </div>
 
         {/* Badge da plataforma */}
-        <Badge className={`absolute top-2 right-2 ${getPlatformColor(product.platform)}`}>
+        <Badge
+          className={`absolute top-2 right-2 ${getPlatformColor(product.platform)}`}
+        >
           {getPlatformName(product.platform)}
         </Badge>
 
@@ -74,11 +114,9 @@ export const AffiliateProductCard = ({ product, onAddToCart, onViewDetails }) =>
             <span className="text-2xl font-bold text-gray-900">
               {formatCurrency(product.price)}
             </span>
-            <span className="text-sm text-gray-500">
-              {product.currency}
-            </span>
+            <span className="text-sm text-gray-500">{product.currency}</span>
           </div>
-          
+
           {/* Rating (simulado) */}
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -111,7 +149,7 @@ export const AffiliateProductCard = ({ product, onAddToCart, onViewDetails }) =>
           >
             Ver Detalhes
           </Button>
-          
+
           <Button
             onClick={() => onAddToCart && onAddToCart(product)}
             className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -125,7 +163,7 @@ export const AffiliateProductCard = ({ product, onAddToCart, onViewDetails }) =>
         {product.affiliate_url && (
           <div className="mt-3 pt-3 border-t">
             <Button
-              onClick={() => window.open(product.affiliate_url, '_blank')}
+              onClick={() => window.open(product.affiliate_url, "_blank")}
               variant="ghost"
               size="sm"
               className="w-full text-blue-600 hover:text-blue-700"

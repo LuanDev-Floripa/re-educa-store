@@ -1,5 +1,14 @@
 """
-Serviço de Afiliados RE-EDUCA Store
+Serviço de Afiliados RE-EDUCA Store.
+
+Gerencia integrações com plataformas de afiliados incluindo:
+- Hotmart (produtos digitais)
+- Kiwify (infoprodutos)
+- Braip (e-learning)
+- Logs (marketplace)
+- Sincronização de produtos
+- Tracking de conversões
+- Validação de webhooks
 """
 import os
 import requests
@@ -13,7 +22,14 @@ import hmac
 logger = logging.getLogger(__name__)
 
 class AffiliateService:
+    """
+    Service para integração com plataformas de afiliados.
+    
+    Gerencia autenticação, sincronização e tracking.
+    """
+    
     def __init__(self):
+        """Inicializa o serviço de afiliados com configurações das plataformas."""
         self.supabase = supabase_client
         
         # Configurações Hotmart
@@ -40,7 +56,12 @@ class AffiliateService:
     # ================================
     
     def get_hotmart_token(self) -> Optional[str]:
-        """Obtém token de acesso do Hotmart"""
+        """
+        Obtém token de acesso do Hotmart via OAuth2.
+        
+        Returns:
+            Optional[str]: Access token ou None se falhar.
+        """
         try:
             url = f"{self.hotmart_base_url}/payments/api/oauth/token"
             data = {

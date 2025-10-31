@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Configuração do Banco de Dados RE-EDUCA Store - Supabase
+Configuração do Banco de Dados RE-EDUCA Store - Supabase.
+
+Módulo responsável pela configuração e conexão com o banco
+de dados Supabase via API REST PostgREST.
 """
 import os
 import logging
@@ -21,7 +24,12 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://hgfrntbtqsarencqzsla.supa
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZnJudGJ0cXNhcmVuY3F6c2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMzgyMDcsImV4cCI6MjA3NjgxNDIwN30.zjknkqDHmpq12uq24raW3PCMcpFfNWkNllH5r5n5a3E')
 
 def test_db_connection():
-    """Testa a conexão com o banco de dados Supabase"""
+    """
+    Testa a conexão com o banco de dados Supabase.
+    
+    Returns:
+        bool: True se a conexão foi bem-sucedida, False caso contrário.
+    """
     try:
         headers = {
             'apikey': SUPABASE_ANON_KEY,
@@ -41,13 +49,24 @@ def test_db_connection():
         return False
 
 def get_supabase_client():
-    """Retorna um cliente Supabase simplificado"""
+    """
+    Retorna um cliente Supabase simplificado.
+    
+    Returns:
+        SupabaseClient: Instância do cliente Supabase.
+    """
     return SupabaseClient()
 
 class SupabaseClient:
-    """Cliente simplificado para Supabase usando API REST"""
+    """
+    Cliente simplificado para Supabase usando API REST.
+    
+    Fornece métodos para interagir com o banco de dados Supabase
+    através da API PostgREST com tratamento de erros robusto.
+    """
     
     def __init__(self):
+        """Inicializa o cliente com configurações do Supabase."""
         self.url = SUPABASE_URL
         self.anon_key = SUPABASE_ANON_KEY
         self.headers = {
@@ -56,8 +75,39 @@ class SupabaseClient:
             'Content-Type': 'application/json'
         }
     
-    def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None) -> Dict:
-        """Faz uma requisição para a API do Supabase"""
+    def table(self, table_name: str):
+        """
+        Retorna um objeto Table para operações na tabela especificada.
+        
+        Compatível com a API do supabase-python para manter consistência.
+        
+        Args:
+            table_name (str): Nome da tabela.
+            
+        Returns:
+            TableQueryBuilder: Builder para construir queries na tabela.
+        """
+        return TableQueryBuilder(self, table_name)
+    
+    def _make_request(
+        self, 
+        method: str, 
+        endpoint: str, 
+        data: Optional[Dict] = None, 
+        params: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Faz uma requisição para a API do Supabase.
+        
+        Args:
+            method (str): Método HTTP.
+            endpoint (str): Endpoint da API.
+            data (Optional[Dict]): Dados para POST/PUT/PATCH.
+            params (Optional[Dict]): Parâmetros de query para GET.
+            
+        Returns:
+            Dict: Resposta da API ou dicionário de erro.
+        """
         url = f"{self.url}/rest/v1/{endpoint}"
         
         try:
@@ -397,6 +447,207 @@ class SupabaseClient:
             params['created_at'] = f'gte.{since}'
         result = self._make_request('GET', 'nutrition_logs', params=params)
         return result if result and 'error' not in result else []
+
+
+class TableQueryBuilder:
+    """
+    Builder para construir queries do PostgREST de forma fluente.
+    
+    Compatível com a API do supabase-python.
+    """
+    
+    def __init__(self, client: SupabaseClient, table_name: str):
+        """Inicializa o builder."""
+        self.client = client
+        self.table_name = table_name
+        self.params = {}
+        self.columns = '*'
+        self.method = 'GET'
+        self.data = None
+    
+    def select(self, columns: str = '*', count: Optional[str] = None):
+        """Define colunas a selecionar."""
+        if count:
+            self.columns = f'{columns},count={count}'
+            self.params['count'] = count
+        else:
+            self.columns = columns
+        return self
+    
+    def eq(self, column: str, value: Any):
+        """Adiciona filtro de igualdade."""
+        self.params[column] = f'eq.{value}'
+        return self
+    
+    def neq(self, column: str, value: Any):
+        """Adiciona filtro de diferença."""
+        self.params[column] = f'neq.{value}'
+        return self
+    
+    def gt(self, column: str, value: Any):
+        """Adiciona filtro maior que."""
+        self.params[column] = f'gt.{value}'
+        return self
+    
+    def gte(self, column: str, value: Any):
+        """Adiciona filtro maior ou igual."""
+        self.params[column] = f'gte.{value}'
+        return self
+    
+    def lt(self, column: str, value: Any):
+        """Adiciona filtro menor que."""
+        self.params[column] = f'lt.{value}'
+        return self
+    
+    def lte(self, column: str, value: Any):
+        """Adiciona filtro menor ou igual."""
+        self.params[column] = f'lte.{value}'
+        return self
+    
+    def like(self, column: str, pattern: str):
+        """Adiciona filtro LIKE."""
+        self.params[column] = f'like.{pattern}'
+        return self
+    
+    def ilike(self, column: str, pattern: str):
+        """Adiciona filtro ILIKE (case-insensitive)."""
+        self.params[column] = f'ilike.{pattern}'
+        return self
+    
+    def in_(self, column: str, values: List[Any]):
+        """Adiciona filtro IN."""
+        self.params[column] = f'in.({",".join(map(str, values))})'
+        return self
+    
+    def contains(self, column: str, value: Any):
+        """Adiciona filtro contains (para arrays)."""
+        self.params[column] = f'cs.{value if isinstance(value, str) else "{" + ",".join(map(str, value)) + "}"}'
+        return self
+    
+    def order(self, column: str, desc: bool = False):
+        """Define ordenação."""
+        self.params['order'] = f'{column}.{"desc" if desc else "asc"}'
+        return self
+    
+    def range(self, from_: int, to_: int):
+        """Define range para paginação."""
+        self.params['offset'] = str(from_)
+        self.params['limit'] = str(to_ - from_ + 1)
+        return self
+    
+    def limit(self, limit: int):
+        """Define limite."""
+        self.params['limit'] = str(limit)
+        return self
+    
+    def single(self):
+        """Retorna apenas um resultado."""
+        self.params['limit'] = '1'
+        return self
+    
+    def insert(self, data: Dict[str, Any]):
+        """Prepara inserção."""
+        self.method = 'POST'
+        self.data = data
+        return self
+    
+    def update(self, data: Dict[str, Any]):
+        """Prepara atualização."""
+        self.method = 'PATCH'
+        self.data = data
+        return self
+    
+    def delete(self):
+        """Prepara deleção."""
+        self.method = 'DELETE'
+        return self
+    
+    def upsert(self, data: Dict[str, Any]):
+        """Prepara upsert."""
+        self.method = 'POST'
+        self.data = data
+        self.params['on_conflict'] = 'id'  # Assumir que há um campo id único
+        return self
+    
+    def execute(self):
+        """Executa a query."""
+        try:
+            # Construir URL com parâmetros
+            url = f"{self.client.url}/rest/v1/{self.table_name}"
+            
+            # Adicionar select como header se especificado
+            headers = self.client.headers.copy()
+            if self.columns and self.columns != '*' and self.method == 'GET':
+                headers['Prefer'] = f'return=representation,columns={self.columns}'
+            
+            # Preparar parâmetros de query (filtros)
+            query_params = {}
+            for key, value in self.params.items():
+                if key in ['offset', 'limit', 'order']:
+                    query_params[key] = value
+                elif key == 'count':
+                    headers['Prefer'] = f"{headers.get('Prefer', '')},count=exact"
+                else:
+                    query_params[key] = value
+            
+            # Executar requisição
+            import requests
+            if self.method == 'GET':
+                response = requests.get(url, headers=headers, params=query_params, timeout=10)
+            elif self.method == 'POST':
+                response = requests.post(url, headers=headers, json=self.data, params=query_params, timeout=10)
+            elif self.method == 'PATCH':
+                # Para PATCH, precisamos converter filtros para query string
+                filter_params = '&'.join([f"{k}=eq.{v.split('.')[1]}" if '.' in str(v) else f"{k}={v}" 
+                                         for k, v in self.params.items() if k not in ['limit', 'offset', 'order', 'count']])
+                if filter_params:
+                    url = f"{url}?{filter_params}"
+                response = requests.patch(url, headers=headers, json=self.data, timeout=10)
+            elif self.method == 'DELETE':
+                filter_params = '&'.join([f"{k}=eq.{v.split('.')[1]}" if '.' in str(v) else f"{k}={v}" 
+                                         for k, v in self.params.items()])
+                if filter_params:
+                    url = f"{url}?{filter_params}"
+                response = requests.delete(url, headers=headers, timeout=10)
+            else:
+                raise ValueError(f"Método não suportado: {self.method}")
+            
+            response.raise_for_status()
+            
+            # Processar resposta
+            if response.content:
+                result_data = response.json()
+                
+                # Criar objeto de resultado similar ao supabase-python
+                class Result:
+                    def __init__(self, data, count=None):
+                        self.data = data if isinstance(data, list) else [data] if data else []
+                        self.count = count if count is not None else (len(self.data) if isinstance(data, list) else None)
+                
+                # Extrair count do header se disponível
+                count = None
+                if 'Content-Range' in response.headers:
+                    try:
+                        count = int(response.headers['Content-Range'].split('/')[-1])
+                    except:
+                        pass
+                
+                return Result(result_data, count)
+            else:
+                class Result:
+                    def __init__(self):
+                        self.data = []
+                        self.count = 0
+                return Result()
+                
+        except Exception as e:
+            logger.error(f"Erro ao executar query na tabela {self.table_name}: {e}", exc_info=True)
+            class ErrorResult:
+                def __init__(self, error):
+                    self.data = []
+                    self.count = 0
+                    self.error = error
+            return ErrorResult(str(e))
 
 # Instância global do cliente
 supabase_client = SupabaseClient()

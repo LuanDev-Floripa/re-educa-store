@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Rotas adicionais da Rede Social RE-EDUCA
-Endpoints faltantes identificados durante remoção de mocks
-CORRIGIDO: Usa Supabase Client corretamente ao invés de SQL direto
+Rotas adicionais da Rede Social RE-EDUCA.
+
+Endpoints complementares para funcionalidades sociais incluindo:
+- Grupos e comunidades
+- Notificações sociais
+- Reels e stories
+- Verificação de contas
+- Monetização
+- Analytics sociais
+
+NOTA: Usa Supabase Client via API REST (não SQL direto).
 """
 from flask import Blueprint, request, jsonify
 from utils.decorators import handle_exceptions, token_required
@@ -18,7 +26,12 @@ social_additional_bp = Blueprint('social_additional', __name__, url_prefix='/api
 @token_required
 @handle_exceptions
 def get_groups():
-    """Lista grupos sociais"""
+    """
+    Lista grupos sociais disponíveis.
+    
+    Returns:
+        JSON: Lista de grupos com informações de membro e categoria.
+    """
     try:
         user_id = request.current_user.get('id') if hasattr(request, 'current_user') else None
         
@@ -90,7 +103,17 @@ def get_groups():
 @token_required
 @handle_exceptions
 def get_analytics():
-    """Retorna analytics sociais do usuário"""
+    """
+    Retorna analytics sociais do usuário.
+    
+    Coleta estatísticas de engajamento incluindo:
+    - Posts criados pelo usuário
+    - Metas ativas
+    - Insights de audiência (estrutura preparada)
+    
+    Returns:
+        JSON: Analytics com posts, audiência, metas e insights.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -156,7 +179,18 @@ def get_analytics():
 @token_required
 @handle_exceptions
 def get_pending_verifications():
-    """Lista verificações pendentes (admin)"""
+    """
+    Lista verificações pendentes de contas (apenas admin).
+    
+    Retorna todas as solicitações de verificação de conta que
+    estão aguardando aprovação de administradores.
+    
+    Returns:
+        JSON: Lista de verificações pendentes com ID, usuário e status.
+        
+    Raises:
+        403: Se usuário não for administrador.
+    """
     try:
         user_id = request.current_user.get('id')
         role = request.current_user.get('role', 'user')
@@ -202,7 +236,15 @@ def get_pending_verifications():
 @token_required
 @handle_exceptions
 def get_subscriptions():
-    """Lista assinaturas de monetização"""
+    """
+    Lista assinaturas de monetização do usuário.
+    
+    Retorna tanto assinaturas onde o usuário é subscriber quanto
+    onde é creator (conteudista).
+    
+    Returns:
+        JSON: Lista de assinaturas com planos, preços e status.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -267,7 +309,17 @@ def get_subscriptions():
 @token_required
 @handle_exceptions
 def get_transactions():
-    """Lista transações de monetização"""
+    """
+    Lista transações de monetização do usuário.
+    
+    Retorna histórico de transações incluindo:
+    - Pagamentos recebidos (creator)
+    - Pagamentos realizados (subscriber)
+    - Status e valores das transações
+    
+    Returns:
+        JSON: Lista de transações com tipo, valor, descrição e status.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -312,7 +364,18 @@ def get_transactions():
 @token_required
 @handle_exceptions
 def get_social_stats():
-    """Retorna estatísticas sociais do usuário"""
+    """
+    Retorna estatísticas sociais do usuário.
+    
+    Calcula métricas de engajamento incluindo:
+    - Total de posts criados
+    - Total de seguidores (followers)
+    - Total de seguindo (following)
+    - Total de likes recebidos em todos os posts
+    
+    Returns:
+        JSON: Estatísticas com contadores de posts, followers, following e likes.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -395,7 +458,15 @@ def get_social_stats():
 @token_required
 @handle_exceptions
 def get_my_groups():
-    """Retorna grupos do usuário autenticado"""
+    """
+    Retorna grupos dos quais o usuário autenticado é membro.
+    
+    Busca todos os grupos onde o usuário está cadastrado e retorna
+    informações detalhadas de cada um.
+    
+    Returns:
+        JSON: Lista de grupos do usuário com detalhes completos.
+    """
     try:
         user_id = request.current_user.get('id')
         if not user_id:
@@ -459,7 +530,15 @@ def get_my_groups():
 @token_required
 @handle_exceptions
 def get_trending_groups():
-    """Retorna grupos em tendência (mais membros)"""
+    """
+    Retorna grupos em tendência ordenados por número de membros.
+    
+    Busca os 20 grupos com maior número de membros para exibição
+    na página de descoberta de grupos.
+    
+    Returns:
+        JSON: Lista dos 20 grupos mais populares.
+    """
     try:
         # Buscar grupos ordenados por número de membros
         try:

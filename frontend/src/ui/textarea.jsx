@@ -1,5 +1,3 @@
-import React from 'react';
+import React from "react";
 
-export const Textarea = ({ ...props }) => (
-  <textarea {...props} />
-);
+export const Textarea = ({ ...props }) => <textarea {...props} />;

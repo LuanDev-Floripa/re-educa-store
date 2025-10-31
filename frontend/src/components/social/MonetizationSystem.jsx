@@ -1,32 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
+import React, { useState, useEffect } from "react";
+/**
+ * Sistema de Monetização do Social.
+ * - Assinaturas, dicas, presentes e transações
+ * - Fallbacks em listas/valores e toasts nas interações
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
 import {
-  DollarSign, Plus, Minus, Gift, Heart, Star, Crown, Zap, TrendingUp, 
-  CreditCard, Wallet, Banknote, Coins, Gem, Award, Trophy, Target,
-  X, Check, ArrowUp, ArrowDown, Eye, Users, MessageCircle, Share2,
-  Settings, Bell, Lock, Unlock, Edit, Trash2, Flag, MoreHorizontal
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  DollarSign,
+  Plus,
+  Minus,
+  Gift,
+  Heart,
+  Star,
+  Crown,
+  Zap,
+  TrendingUp,
+  CreditCard,
+  Wallet,
+  Banknote,
+  Coins,
+  Gem,
+  Award,
+  Trophy,
+  Target,
+  X,
+  Check,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+  Users,
+  MessageCircle,
+  Share2,
+  Settings,
+  Bell,
+  Lock,
+  Unlock,
+  Edit,
+  Trash2,
+  Flag,
+  MoreHorizontal,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const MonetizationSystem = ({ 
-  currentUser, 
-  onSendTip, 
-  onPurchaseCoins, 
+const MonetizationSystem = ({
+  // eslint-disable-next-line no-unused-vars
+  currentUser,
+  onSendTip,
+  onPurchaseCoins,
   onWithdrawEarnings,
   onSubscribeToUser,
   onUnsubscribeFromUser,
+  // eslint-disable-next-line no-unused-vars
   onPurchasePremium,
   onSendGift,
+  // eslint-disable-next-line no-unused-vars
   onCreatePaidContent,
-  onPurchaseContent
+  // eslint-disable-next-line no-unused-vars
+  onPurchaseContent,
 }) => {
   const [balance, setBalance] = useState(0);
   const [coins, setCoins] = useState(0);
@@ -37,26 +75,31 @@ const MonetizationSystem = ({
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [selectedUser, setSelectedUser] = useState(null);
   const [tipAmount, setTipAmount] = useState(0);
   const [purchaseAmount, setPurchaseAmount] = useState(0);
   const [withdrawAmount, setWithdrawAmount] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState("card");
 
   // Carregar dados reais de monetização da API
   useEffect(() => {
     const loadMonetizationData = async () => {
       try {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-        
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
+
         // Carregar subscriptions
-        const subscriptionsResponse = await fetch('/api/social/monetization/subscriptions', {
-          method: 'GET',
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
-        });
+        const subscriptionsResponse = await fetch(
+          "/api/social/monetization/subscriptions",
+          {
+            method: "GET",
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
         if (subscriptionsResponse.ok) {
           const subsData = await subscriptionsResponse.json();
@@ -66,27 +109,34 @@ const MonetizationSystem = ({
         }
 
         // Carregar transactions
-        const transactionsResponse = await fetch('/api/social/monetization/transactions', {
-          method: 'GET',
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
-        });
+        const transactionsResponse = await fetch(
+          "/api/social/monetization/transactions",
+          {
+            method: "GET",
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
         if (transactionsResponse.ok) {
           const transData = await transactionsResponse.json();
           setTransactions(transData.transactions || transData.data || []);
-          
+
           // Calcular balance e earnings a partir das transactions
-          const transactionsList = transData.transactions || transData.data || [];
+          const transactionsList =
+            transData.transactions || transData.data || [];
           const totalEarnings = transactionsList
-            .filter(t => t.type === 'tip_received' || t.type === 'subscription_payment')
+            .filter(
+              (t) =>
+                t.type === "tip_received" || t.type === "subscription_payment",
+            )
             .reduce((sum, t) => sum + (Math.abs(t.amount) || 0), 0);
           const totalSpent = transactionsList
-            .filter(t => t.amount < 0)
+            .filter((t) => t.amount < 0)
             .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
-          
+
           setEarnings(totalEarnings);
           setBalance(totalEarnings - totalSpent);
         } else {
@@ -95,19 +145,25 @@ const MonetizationSystem = ({
 
         // Buscar balance e coins do endpoint de stats ou monetization/balance
         try {
-          const balanceResponse = await fetch('/api/social/monetization/balance', {
-            method: 'GET',
-            headers: {
-              'Authorization': token ? `Bearer ${token}` : '',
-              'Content-Type': 'application/json'
-            }
-          });
+          const balanceResponse = await fetch(
+            "/api/social/monetization/balance",
+            {
+              method: "GET",
+              headers: {
+                Authorization: token ? `Bearer ${token}` : "",
+                "Content-Type": "application/json",
+              },
+            },
+          );
 
           if (balanceResponse.ok) {
             const balanceData = await balanceResponse.json();
-            if (balanceData.balance !== undefined) setBalance(balanceData.balance || 0);
-            if (balanceData.coins !== undefined) setCoins(balanceData.coins || 0);
-            if (balanceData.earnings !== undefined) setEarnings(balanceData.earnings || 0);
+            if (balanceData.balance !== undefined)
+              setBalance(balanceData.balance || 0);
+            if (balanceData.coins !== undefined)
+              setCoins(balanceData.coins || 0);
+            if (balanceData.earnings !== undefined)
+              setEarnings(balanceData.earnings || 0);
           } else {
             // Se endpoint não existir, manter valores zerados (não hardcoded)
             setBalance(0);
@@ -116,13 +172,13 @@ const MonetizationSystem = ({
           }
         } catch (error) {
           // Em caso de erro, manter zerado ao invés de hardcoded
-          console.error('Erro ao carregar balance:', error);
+          console.error("Erro ao carregar balance:", error);
           setBalance(0);
           setCoins(0);
           setEarnings(0);
         }
       } catch (error) {
-        console.error('Erro ao carregar dados de monetização:', error);
+        console.error("Erro ao carregar dados de monetização:", error);
         setSubscriptions([]);
         setTransactions([]);
         // Manter valores zerados ao invés de hardcoded
@@ -137,109 +193,121 @@ const MonetizationSystem = ({
 
   const handleSendTip = async () => {
     if (tipAmount <= 0) {
-      toast.error('Digite um valor válido para a dica');
+      toast.error("Digite um valor válido para a dica");
       return;
     }
 
     if (tipAmount > balance) {
-      toast.error('Saldo insuficiente');
+      toast.error("Saldo insuficiente");
       return;
     }
 
     try {
-      await onSendTip({
+      if (onSendTip) {
+        await onSendTip({
         userId: selectedUser?.id,
         amount: tipAmount,
-        message: `Dica de R$ ${tipAmount.toFixed(2)}`
-      });
-      
-      setBalance(prev => prev - tipAmount);
+        message: `Dica de R$ ${tipAmount.toFixed(2)}`,
+        });
+      }
+
+      setBalance((prev) => prev - tipAmount);
       setTipAmount(0);
       setShowTipModal(false);
       toast.success(`Dica de R$ ${tipAmount.toFixed(2)} enviada!`);
     } catch (error) {
-      toast.error('Erro ao enviar dica');
+      toast.error("Erro ao enviar dica");
     }
   };
 
   const handlePurchaseCoins = async () => {
     if (purchaseAmount <= 0) {
-      toast.error('Selecione um pacote de moedas');
+      toast.error("Selecione um pacote de moedas");
       return;
     }
 
     try {
-      await onPurchaseCoins({
+      if (onPurchaseCoins) {
+        await onPurchaseCoins({
         amount: purchaseAmount,
-        paymentMethod
-      });
-      
-      setCoins(prev => prev + purchaseAmount);
+        paymentMethod,
+        });
+      }
+
+      setCoins((prev) => prev + purchaseAmount);
       setShowPurchaseModal(false);
       toast.success(`${purchaseAmount} moedas adicionadas!`);
     } catch (error) {
-      toast.error('Erro ao comprar moedas');
+      toast.error("Erro ao comprar moedas");
     }
   };
 
   const handleWithdrawEarnings = async () => {
     if (withdrawAmount <= 0) {
-      toast.error('Digite um valor válido para saque');
+      toast.error("Digite um valor válido para saque");
       return;
     }
 
     if (withdrawAmount > earnings) {
-      toast.error('Valor maior que os ganhos disponíveis');
+      toast.error("Valor maior que os ganhos disponíveis");
       return;
     }
 
     try {
-      await onWithdrawEarnings({
+      if (onWithdrawEarnings) {
+        await onWithdrawEarnings({
         amount: withdrawAmount,
-        paymentMethod
-      });
-      
-      setEarnings(prev => prev - withdrawAmount);
+        paymentMethod,
+        });
+      }
+
+      setEarnings((prev) => prev - withdrawAmount);
       setWithdrawAmount(0);
       setShowWithdrawModal(false);
       toast.success(`Saque de R$ ${withdrawAmount.toFixed(2)} solicitado!`);
     } catch (error) {
-      toast.error('Erro ao solicitar saque');
+      toast.error("Erro ao solicitar saque");
     }
   };
 
   const handleSubscribeToUser = async (userId, plan) => {
     try {
-      await onSubscribeToUser(userId, plan);
-      toast.success('Assinatura ativada!');
+      if (onSubscribeToUser) {
+        await onSubscribeToUser(userId, plan);
+      }
+      toast.success("Assinatura ativada!");
     } catch (error) {
-      toast.error('Erro ao ativar assinatura');
+      toast.error("Erro ao ativar assinatura");
     }
   };
 
   const handleUnsubscribeFromUser = async (subscriptionId) => {
     try {
-      await onUnsubscribeFromUser(subscriptionId);
-      setSubscriptions(prev => prev.filter(s => s.id !== subscriptionId));
-      toast.success('Assinatura cancelada');
+      if (onUnsubscribeFromUser) {
+        await onUnsubscribeFromUser(subscriptionId);
+      }
+      setSubscriptions((prev) => prev.filter((s) => s.id !== subscriptionId));
+      toast.success("Assinatura cancelada");
     } catch (error) {
-      toast.error('Erro ao cancelar assinatura');
+      toast.error("Erro ao cancelar assinatura");
     }
   };
 
   const handleSendGift = async (gift) => {
     try {
-      await onSendGift({
+      if (onSendGift) {
+        await onSendGift({
         userId: selectedUser?.id,
         gift,
-        message: `Presente: ${gift.name}`
-      });
-      
-      setCoins(prev => prev - gift.cost);
+        message: `Presente: ${gift.name}`,
+        });
+      }
+
+      setCoins((prev) => prev - gift.cost);
       setShowGiftModal(false);
       toast.success(`Presente ${gift.name} enviado!`);
     } catch (error) {
-      toast.error('Erro ao enviar presente');
+      toast.error("Erro ao enviar presente");
     }
   };
 
@@ -248,40 +316,57 @@ const MonetizationSystem = ({
     { amount: 500, price: 19.99, bonus: 50 },
     { amount: 1000, price: 39.99, bonus: 150 },
     { amount: 2500, price: 89.99, bonus: 500 },
-    { amount: 5000, price: 159.99, bonus: 1250 }
+    { amount: 5000, price: 159.99, bonus: 1250 },
   ];
 
   const gifts = [
-    { id: 1, name: 'Coração', emoji: '❤️', cost: 10, color: 'text-red-500' },
-    { id: 2, name: 'Estrela', emoji: '⭐', cost: 25, color: 'text-yellow-500' },
-    { id: 3, name: 'Diamante', emoji: '💎', cost: 50, color: 'text-blue-500' },
-    { id: 4, name: 'Coroa', emoji: '👑', cost: 100, color: 'text-purple-500' },
-    { id: 5, name: 'Foguete', emoji: '🚀', cost: 200, color: 'text-orange-500' },
-    { id: 6, name: 'Presente', emoji: '🎁', cost: 500, color: 'text-green-500' }
+    { id: 1, name: "Coração", emoji: "❤️", cost: 10, color: "text-red-500" },
+    { id: 2, name: "Estrela", emoji: "⭐", cost: 25, color: "text-yellow-500" },
+    { id: 3, name: "Diamante", emoji: "💎", cost: 50, color: "text-blue-500" },
+    { id: 4, name: "Coroa", emoji: "👑", cost: 100, color: "text-purple-500" },
+    {
+      id: 5,
+      name: "Foguete",
+      emoji: "🚀",
+      cost: 200,
+      color: "text-orange-500",
+    },
+    {
+      id: 6,
+      name: "Presente",
+      emoji: "🎁",
+      cost: 500,
+      color: "text-green-500",
+    },
   ];
 
+  // eslint-disable-next-line no-unused-vars
   const subscriptionPlans = [
     {
-      id: 'basic',
-      name: 'Básico',
+      id: "basic",
+      name: "Básico",
       price: 4.99,
-      features: ['Conteúdo premium', 'Suporte prioritário'],
-      color: 'border-gray-300'
+      features: ["Conteúdo premium", "Suporte prioritário"],
+      color: "border-gray-300",
     },
     {
-      id: 'premium',
-      name: 'Premium',
+      id: "premium",
+      name: "Premium",
       price: 9.99,
-      features: ['Conteúdo exclusivo', 'Acesso antecipado', 'Chat privado'],
-      color: 'border-blue-500'
+      features: ["Conteúdo exclusivo", "Acesso antecipado", "Chat privado"],
+      color: "border-blue-500",
     },
     {
-      id: 'vip',
-      name: 'VIP',
+      id: "vip",
+      name: "VIP",
       price: 19.99,
-      features: ['Tudo do Premium', 'Mentoria personalizada', 'Acesso a eventos'],
-      color: 'border-purple-500'
-    }
+      features: [
+        "Tudo do Premium",
+        "Mentoria personalizada",
+        "Acesso a eventos",
+      ],
+      color: "border-purple-500",
+    },
   ];
 
   return (
@@ -325,7 +410,7 @@ const MonetizationSystem = ({
                 <Wallet className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowWithdrawModal(true)}
               className="w-full mt-4"
               variant="outline"
@@ -351,7 +436,7 @@ const MonetizationSystem = ({
                 <Coins className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowPurchaseModal(true)}
               className="w-full mt-4"
             >
@@ -376,7 +461,7 @@ const MonetizationSystem = ({
                 <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowWithdrawModal(true)}
               className="w-full mt-4"
               variant="outline"
@@ -405,21 +490,27 @@ const MonetizationSystem = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {transactions.map(transaction => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {transactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-full ${
-                        transaction.type === 'tip_received' || transaction.type === 'gift_received' 
-                          ? 'bg-green-100 dark:bg-green-900' 
-                          : 'bg-red-100 dark:bg-red-900'
-                      }`}>
-                        {transaction.type === 'tip_received' ? (
+                      <div
+                        className={`p-2 rounded-full ${
+                          transaction.type === "tip_received" ||
+                          transaction.type === "gift_received"
+                            ? "bg-green-100 dark:bg-green-900"
+                            : "bg-red-100 dark:bg-red-900"
+                        }`}
+                      >
+                        {transaction.type === "tip_received" ? (
                           <Heart className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        ) : transaction.type === 'subscription_payment' ? (
+                        ) : transaction.type === "subscription_payment" ? (
                           <Crown className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        ) : transaction.type === 'coin_purchase' ? (
+                        ) : transaction.type === "coin_purchase" ? (
                           <Coins className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        ) : transaction.type === 'gift_sent' ? (
+                        ) : transaction.type === "gift_sent" ? (
                           <Gift className="w-5 h-5 text-red-600 dark:text-red-400" />
                         ) : (
                           <ArrowDown className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -430,20 +521,34 @@ const MonetizationSystem = ({
                           {transaction.description}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatDistanceToNow(transaction.timestamp, { addSuffix: true, locale: ptBR })}
+                          {formatDistanceToNow(transaction.timestamp, {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold ${
-                        transaction.amount > 0 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {transaction.amount > 0 ? '+' : ''}R$ {Math.abs(transaction.amount).toFixed(2)}
+                      <p
+                        className={`font-bold ${
+                          transaction.amount > 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {transaction.amount > 0 ? "+" : ""}R${" "}
+                        {Math.abs(transaction.amount).toFixed(2)}
                       </p>
-                      <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
-                        {transaction.status === 'completed' ? 'Concluído' : 'Pendente'}
+                      <Badge
+                        variant={
+                          transaction.status === "completed"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {transaction.status === "completed"
+                          ? "Concluído"
+                          : "Pendente"}
                       </Badge>
                     </div>
                   </div>
@@ -456,13 +561,15 @@ const MonetizationSystem = ({
         {/* Assinaturas */}
         <TabsContent value="subscriptions" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subscriptions.map(subscription => (
+            {subscriptions.map((subscription) => (
               <Card key={subscription.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={subscription.user.avatar} />
-                      <AvatarFallback>{subscription.user.name[0]}</AvatarFallback>
+                      <AvatarFallback>
+                        {subscription.user.name[0]}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -476,32 +583,45 @@ const MonetizationSystem = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge variant={subscription.plan === 'premium' ? 'default' : 'secondary'}>
-                      {subscription.plan === 'premium' ? 'Premium' : 'Básico'}
+                    <Badge
+                      variant={
+                        subscription.plan === "premium"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {subscription.plan === "premium" ? "Premium" : "Básico"}
                     </Badge>
                     <span className="text-lg font-bold text-gray-900 dark:text-white">
                       R$ {subscription.price.toFixed(2)}/mês
                     </span>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       Benefícios
                     </h4>
                     <ul className="space-y-1">
                       {subscription.benefits.map((benefit, index) => (
-                        <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-2">
+                        <li
+                          key={index}
+                          className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-2"
+                        >
                           <Check className="w-3 h-3 text-green-500" />
                           <span>{benefit}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  
+
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Próxima cobrança: {formatDistanceToNow(subscription.nextBilling, { addSuffix: true, locale: ptBR })}
+                    Próxima cobrança:{" "}
+                    {formatDistanceToNow(subscription.nextBilling, {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
                   </div>
-                  
+
                   <Button
                     onClick={() => handleUnsubscribeFromUser(subscription.id)}
                     variant="outline"
@@ -529,11 +649,11 @@ const MonetizationSystem = ({
                     Valor da Dica
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {[5, 10, 25, 50].map(amount => (
+                    {[5, 10, 25, 50].map((amount) => (
                       <Button
                         key={amount}
                         onClick={() => setTipAmount(amount)}
-                        variant={tipAmount === amount ? 'default' : 'outline'}
+                        variant={tipAmount === amount ? "default" : "outline"}
                         className="w-full"
                       >
                         R$ {amount}
@@ -541,7 +661,7 @@ const MonetizationSystem = ({
                     ))}
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Valor Personalizado
@@ -554,7 +674,7 @@ const MonetizationSystem = ({
                     className="w-full"
                   />
                 </div>
-                
+
                 <Button
                   onClick={() => setShowTipModal(true)}
                   className="w-full"
@@ -576,7 +696,7 @@ const MonetizationSystem = ({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {gifts.map(gift => (
+                {gifts.map((gift) => (
                   <Button
                     key={gift.id}
                     onClick={() => handleSendGift(gift)}
@@ -588,7 +708,9 @@ const MonetizationSystem = ({
                       {gift.emoji}
                     </span>
                     <span className="text-sm font-medium">{gift.name}</span>
-                    <span className="text-xs text-gray-500">{gift.cost} moedas</span>
+                    <span className="text-xs text-gray-500">
+                      {gift.cost} moedas
+                    </span>
                   </Button>
                 ))}
               </div>
@@ -624,7 +746,7 @@ const MonetizationSystem = ({
                   className="w-full"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   onClick={() => setShowTipModal(false)}
@@ -658,19 +780,21 @@ const MonetizationSystem = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                  {coinPackages.map(pkg => (
-                    <Button
-                      key={pkg.amount}
-                      onClick={() => setPurchaseAmount(pkg.amount)}
-                      variant={purchaseAmount === pkg.amount ? 'default' : 'outline'}
-                      className="w-full justify-between"
-                    >
-                      <span>{pkg.amount} moedas</span>
-                      <span>R$ {pkg.price.toFixed(2)}</span>
-                    </Button>
-                  ))}
+                {coinPackages.map((pkg) => (
+                  <Button
+                    key={pkg.amount}
+                    onClick={() => setPurchaseAmount(pkg.amount)}
+                    variant={
+                      purchaseAmount === pkg.amount ? "default" : "outline"
+                    }
+                    className="w-full justify-between"
+                  >
+                    <span>{pkg.amount} moedas</span>
+                    <span>R$ {pkg.price.toFixed(2)}</span>
+                  </Button>
+                ))}
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   onClick={() => setShowPurchaseModal(false)}
@@ -718,7 +842,7 @@ const MonetizationSystem = ({
                   Disponível: R$ {earnings.toFixed(2)}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Método de Pagamento
@@ -733,7 +857,7 @@ const MonetizationSystem = ({
                   <option value="bank">Transferência Bancária</option>
                 </select>
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   onClick={() => setShowWithdrawModal(false)}

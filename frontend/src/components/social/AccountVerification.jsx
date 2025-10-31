@@ -1,117 +1,153 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../Ui/tabs';
+import React, { useState, useEffect } from "react";
+/**
+ * Verificação de Conta (KYC básico para social).
+ * - Envio/gestão de documentos, aprovação e revisão
+ * - Fallbacks em listas/objetos e toasts em erros
+ */
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Ui/tabs";
 import {
-  Shield, CheckCircle, XCircle, Clock, AlertCircle, Upload, Camera, 
-  FileText, User, Mail, Phone, MapPin, Calendar, Award, Star, Crown,
-  X, Check, Eye, Edit, Trash2, Flag, MoreHorizontal, Settings, Bell
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Shield,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Upload,
+  Camera,
+  FileText,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Award,
+  Star,
+  Crown,
+  X,
+  Check,
+  Eye,
+  Edit,
+  Trash2,
+  Flag,
+  MoreHorizontal,
+  Settings,
+  Bell,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const AccountVerification = ({ 
-  currentUser, 
-  onSubmitVerification, 
+const AccountVerification = ({
+  currentUser,
+  onSubmitVerification,
   onUpdateVerification,
   onApproveVerification,
   onRejectVerification,
-  onRequestReview
+  onRequestReview,
 }) => {
   // Implementar funcionalidades reais
+  // eslint-disable-next-line no-unused-vars
   const handleUpdateVerification = async (verificationData) => {
     try {
       if (onUpdateVerification) {
         await onUpdateVerification(verificationData);
-        toast.success('Verificação atualizada com sucesso!');
+        toast.success("Verificação atualizada com sucesso!");
       }
-    } catch (error) {
-      toast.error('Erro ao atualizar verificação');
+    } catch {
+      toast.error("Erro ao atualizar verificação");
     }
   };
-  
+
+  // eslint-disable-next-line no-unused-vars
   const handleRequestReview = async () => {
     try {
       if (onRequestReview) {
         await onRequestReview();
-        toast.success('Solicitação de revisão enviada!');
+        toast.success("Solicitação de revisão enviada!");
       }
-    } catch (error) {
-      toast.error('Erro ao solicitar revisão');
+    } catch {
+      toast.error("Erro ao solicitar revisão");
     }
   };
-  const [verificationStatus, setVerificationStatus] = useState('pending');
+  const [verificationStatus, setVerificationStatus] = useState("pending");
   const [verificationData, setVerificationData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    birthDate: '',
-    documentType: 'cpf',
-    documentNumber: '',
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    birthDate: "",
+    documentType: "cpf",
+    documentNumber: "",
     documentFront: null,
     documentBack: null,
     selfie: null,
     additionalDocuments: [],
-    category: 'fitness',
-    description: '',
+    category: "fitness",
+    description: "",
     socialMedia: {
-      instagram: '',
-      youtube: '',
-      tiktok: '',
-      twitter: ''
+      instagram: "",
+      youtube: "",
+      tiktok: "",
+      twitter: "",
     },
     achievements: [],
-    references: []
+    references: [],
   });
   const [pendingVerifications, setPendingVerifications] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [showReviewModal, setShowReviewModal] = useState(false);
-  
+
   // Implementar funcionalidades reais para modais
+  // eslint-disable-next-line no-unused-vars
   const handleOpenSubmitModal = () => {
     setShowSubmitModal(true);
   };
-  
+
   const handleCloseSubmitModal = () => {
     setShowSubmitModal(false);
   };
-  
+
+  // eslint-disable-next-line no-unused-vars
   const handleOpenReviewModal = () => {
     setShowReviewModal(true);
   };
-  
+
+  // eslint-disable-next-line no-unused-vars
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
   };
-  
+
   // Implementar funcionalidade real para submit
+  // eslint-disable-next-line no-unused-vars
   const handleSubmitVerification = async (formData) => {
     try {
-      const response = await fetch('/api/verification/submit', {
-        method: 'POST',
+      const response = await fetch("/api/verification/submit", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser?.token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser?.token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
+
       if (response.ok) {
+        // eslint-disable-next-line no-unused-vars
         const result = await response.json();
-        setVerificationStatus('pending');
-        toast.success('Verificação enviada com sucesso!');
+        setVerificationStatus("pending");
+        toast.success("Verificação enviada com sucesso!");
         handleCloseSubmitModal();
       } else {
-        throw new Error('Erro ao enviar verificação');
+        throw new Error("Erro ao enviar verificação");
       }
-    } catch (error) {
-      toast.error('Erro ao enviar verificação');
+    } catch {
+      toast.error("Erro ao enviar verificação");
     }
   };
   const [selectedVerification, setSelectedVerification] = useState(null);
@@ -121,13 +157,14 @@ const AccountVerification = ({
   useEffect(() => {
     const loadPendingVerifications = async () => {
       try {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-        const response = await fetch('/api/social/verification/pending', {
-          method: 'GET',
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
+        const response = await fetch("/api/social/verification/pending", {
+          method: "GET",
           headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.ok) {
@@ -137,7 +174,7 @@ const AccountVerification = ({
           setPendingVerifications([]);
         }
       } catch (error) {
-        console.error('Erro ao carregar verificações pendentes:', error);
+        console.error("Erro ao carregar verificações pendentes:", error);
         setPendingVerifications([]);
       }
     };
@@ -145,156 +182,174 @@ const AccountVerification = ({
     loadPendingVerifications();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleSubmitVerificationData = async () => {
-    if (!verificationData.fullName || !verificationData.email || !verificationData.documentNumber) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (
+      !verificationData.fullName ||
+      !verificationData.email ||
+      !verificationData.documentNumber
+    ) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        throw new Error('Token de autenticação não encontrado');
+        throw new Error("Token de autenticação não encontrado");
       }
 
       // Enviar verificação via API
-      const response = await fetch('/api/verification/submit', {
-        method: 'POST',
+      const response = await fetch("/api/verification/submit", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(verificationData)
+        body: JSON.stringify(verificationData),
       });
 
       if (response.ok) {
+        // eslint-disable-next-line no-unused-vars
         const data = await response.json();
-        setVerificationStatus('pending');
+        setVerificationStatus("pending");
         setShowSubmitModal(false);
-        toast.success('Solicitação de verificação enviada!');
-        
+        toast.success("Solicitação de verificação enviada!");
+
         if (onSubmitVerification) {
           onSubmitVerification(verificationData);
         }
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao enviar verificação');
+        throw new Error(error.error || "Erro ao enviar verificação");
       }
     } catch (error) {
-      console.error('Erro ao enviar verificação:', error);
-      toast.error(error.message || 'Erro ao enviar solicitação');
+      console.error("Erro ao enviar verificação:", error);
+      toast.error(error.message || "Erro ao enviar solicitação");
     }
   };
 
   const handleApproveVerification = async (verificationId) => {
     try {
       await onApproveVerification(verificationId);
-      setPendingVerifications(prev => prev.filter(v => v.id !== verificationId));
-      toast.success('Verificação aprovada!');
-    } catch (error) {
-      toast.error('Erro ao aprovar verificação');
+      setPendingVerifications((prev) =>
+        prev.filter((v) => v.id !== verificationId),
+      );
+      toast.success("Verificação aprovada!");
+    } catch {
+      toast.error("Erro ao aprovar verificação");
     }
   };
 
   const handleRejectVerification = async (verificationId, reason) => {
     try {
       await onRejectVerification(verificationId, reason);
-      setPendingVerifications(prev => prev.filter(v => v.id !== verificationId));
-      toast.success('Verificação rejeitada');
-    } catch (error) {
-      toast.error('Erro ao rejeitar verificação');
+      setPendingVerifications((prev) =>
+        prev.filter((v) => v.id !== verificationId),
+      );
+      toast.success("Verificação rejeitada");
+    } catch {
+      toast.error("Erro ao rejeitar verificação");
     }
   };
 
   const handleFileUpload = async (file, type) => {
     try {
       setUploadProgress(0);
-      
+
       // Criar FormData para upload
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', type);
-      formData.append('user_id', currentUser?.id || '');
-      
+      formData.append("file", file);
+      formData.append("type", type);
+      formData.append("user_id", currentUser?.id || "");
+
       // Fazer upload real via API
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("token");
+
       const xhr = new XMLHttpRequest();
-      
+
       // Monitorar progresso do upload
-      xhr.upload.addEventListener('progress', (e) => {
+      xhr.upload.addEventListener("progress", (e) => {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100;
           setUploadProgress(percentComplete);
         }
       });
-      
+
       // Tratar resposta
-      xhr.addEventListener('load', () => {
+      xhr.addEventListener("load", () => {
         if (xhr.status === 200 || xhr.status === 201) {
           const response = JSON.parse(xhr.responseText);
-          setVerificationData(prev => ({
+          setVerificationData((prev) => ({
             ...prev,
-            [type]: response.url || response.file_url || response.data?.url
+            [type]: response.url || response.file_url || response.data?.url,
           }));
-          toast.success('Arquivo enviado com sucesso!');
+          toast.success("Arquivo enviado com sucesso!");
           setUploadProgress(100);
         } else {
-          throw new Error('Erro no upload');
+          throw new Error("Erro no upload");
         }
       });
-      
-      xhr.addEventListener('error', () => {
-        toast.error('Erro ao fazer upload do arquivo');
+
+      xhr.addEventListener("error", () => {
+        toast.error("Erro ao fazer upload do arquivo");
         setUploadProgress(0);
       });
-      
+
       // Tentar endpoint de upload de verificação, ou genérico de storage
-      xhr.open('POST', '/api/social/verification/upload');
-      xhr.setRequestHeader('Authorization', token ? `Bearer ${token}` : '');
+      xhr.open("POST", "/api/social/verification/upload");
+      xhr.setRequestHeader("Authorization", token ? `Bearer ${token}` : "");
       xhr.send(formData);
-      
     } catch (error) {
-      console.error('Erro no upload:', error);
-      toast.error('Erro ao fazer upload do arquivo');
+      console.error("Erro no upload:", error);
+      toast.error("Erro ao fazer upload do arquivo");
       setUploadProgress(0);
     }
   };
 
   const categories = [
-    { value: 'fitness', label: 'Fitness', icon: '💪' },
-    { value: 'nutrition', label: 'Nutrição', icon: '🥗' },
-    { value: 'yoga', label: 'Yoga', icon: '🧘' },
-    { value: 'running', label: 'Corrida', icon: '🏃' },
-    { value: 'cycling', label: 'Ciclismo', icon: '🚴' },
-    { value: 'swimming', label: 'Natação', icon: '🏊' },
-    { value: 'dance', label: 'Dança', icon: '💃' },
-    { value: 'other', label: 'Outros', icon: '🎯' }
+    { value: "fitness", label: "Fitness", icon: "💪" },
+    { value: "nutrition", label: "Nutrição", icon: "🥗" },
+    { value: "yoga", label: "Yoga", icon: "🧘" },
+    { value: "running", label: "Corrida", icon: "🏃" },
+    { value: "cycling", label: "Ciclismo", icon: "🚴" },
+    { value: "swimming", label: "Natação", icon: "🏊" },
+    { value: "dance", label: "Dança", icon: "💃" },
+    { value: "other", label: "Outros", icon: "🎯" },
   ];
 
   const documentTypes = [
-    { value: 'cpf', label: 'CPF' },
-    { value: 'rg', label: 'RG' },
-    { value: 'cnh', label: 'CNH' },
-    { value: 'passport', label: 'Passaporte' }
+    { value: "cpf", label: "CPF" },
+    { value: "rg", label: "RG" },
+    { value: "cnh", label: "CNH" },
+    { value: "passport", label: "Passaporte" },
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-100 dark:bg-green-900';
-      case 'rejected': return 'text-red-600 bg-red-100 dark:bg-red-900';
-      case 'pending': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900';
+      case "approved":
+        return "text-green-600 bg-green-100 dark:bg-green-900";
+      case "rejected":
+        return "text-red-600 bg-red-100 dark:bg-red-900";
+      case "pending":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'approved': return <CheckCircle className="w-4 h-4" />;
-      case 'rejected': return <XCircle className="w-4 h-4" />;
-      case 'pending': return <Clock className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
+      case "approved":
+        return <CheckCircle className="w-4 h-4" />;
+      case "rejected":
+        return <XCircle className="w-4 h-4" />;
+      case "pending":
+        return <Clock className="w-4 h-4" />;
+      default:
+        return <AlertCircle className="w-4 h-4" />;
     }
   };
 
@@ -311,11 +366,19 @@ const AccountVerification = ({
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant={verificationStatus === 'approved' ? 'default' : 'secondary'} className="flex items-center space-x-1">
+          <Badge
+            variant={
+              verificationStatus === "approved" ? "default" : "secondary"
+            }
+            className="flex items-center space-x-1"
+          >
             <Shield className="w-4 h-4" />
             <span>
-              {verificationStatus === 'approved' ? 'Verificado' : 
-               verificationStatus === 'rejected' ? 'Rejeitado' : 'Pendente'}
+              {verificationStatus === "approved"
+                ? "Verificado"
+                : verificationStatus === "rejected"
+                  ? "Rejeitado"
+                  : "Pendente"}
             </span>
           </Badge>
         </div>
@@ -326,7 +389,9 @@ const AccountVerification = ({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-full ${getStatusColor(verificationStatus)}`}>
+              <div
+                className={`p-3 rounded-full ${getStatusColor(verificationStatus)}`}
+              >
                 {getStatusIcon(verificationStatus)}
               </div>
               <div>
@@ -334,16 +399,20 @@ const AccountVerification = ({
                   Status da Verificação
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  {verificationStatus === 'approved' ? 'Sua conta foi verificada com sucesso!' :
-                   verificationStatus === 'rejected' ? 'Sua verificação foi rejeitada. Envie uma nova solicitação.' :
-                   'Sua verificação está sendo analisada. Aguarde o resultado.'}
+                  {verificationStatus === "approved"
+                    ? "Sua conta foi verificada com sucesso!"
+                    : verificationStatus === "rejected"
+                      ? "Sua verificação foi rejeitada. Envie uma nova solicitação."
+                      : "Sua verificação está sendo analisada. Aguarde o resultado."}
                 </p>
               </div>
             </div>
-            {verificationStatus !== 'approved' && (
+            {verificationStatus !== "approved" && (
               <Button onClick={() => setShowSubmitModal(true)}>
                 <Shield className="w-4 h-4 mr-2" />
-                {verificationStatus === 'rejected' ? 'Nova Solicitação' : 'Atualizar Dados'}
+                {verificationStatus === "rejected"
+                  ? "Nova Solicitação"
+                  : "Atualizar Dados"}
               </Button>
             )}
           </div>
@@ -372,7 +441,12 @@ const AccountVerification = ({
                   </label>
                   <Input
                     value={verificationData.fullName}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, fullName: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        fullName: e.target.value,
+                      }))
+                    }
                     placeholder="Digite seu nome completo"
                     className="w-full"
                   />
@@ -383,7 +457,12 @@ const AccountVerification = ({
                   </label>
                   <Input
                     value={verificationData.email}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     placeholder="Digite seu email"
                     className="w-full"
                   />
@@ -394,7 +473,12 @@ const AccountVerification = ({
                   </label>
                   <Input
                     value={verificationData.phone}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     placeholder="Digite seu telefone"
                     className="w-full"
                   />
@@ -406,7 +490,12 @@ const AccountVerification = ({
                   <Input
                     type="date"
                     value={verificationData.birthDate}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, birthDate: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        birthDate: e.target.value,
+                      }))
+                    }
                     className="w-full"
                   />
                 </div>
@@ -418,10 +507,15 @@ const AccountVerification = ({
                 </label>
                 <select
                   value={verificationData.category}
-                  onChange={(e) => setVerificationData(prev => ({ ...prev, category: e.target.value }))}
+                  onChange={(e) =>
+                    setVerificationData((prev) => ({
+                      ...prev,
+                      category: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                 >
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category.value} value={category.value}>
                       {category.icon} {category.label}
                     </option>
@@ -435,7 +529,12 @@ const AccountVerification = ({
                 </label>
                 <textarea
                   value={verificationData.description}
-                  onChange={(e) => setVerificationData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setVerificationData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Descreva sua experiência e credenciais profissionais..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   rows={4}
@@ -449,37 +548,57 @@ const AccountVerification = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     value={verificationData.socialMedia.instagram}
-                    onChange={(e) => setVerificationData(prev => ({ 
-                      ...prev, 
-                      socialMedia: { ...prev.socialMedia, instagram: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          instagram: e.target.value,
+                        },
+                      }))
+                    }
                     placeholder="Instagram (@usuario)"
                     className="w-full"
                   />
                   <Input
                     value={verificationData.socialMedia.youtube}
-                    onChange={(e) => setVerificationData(prev => ({ 
-                      ...prev, 
-                      socialMedia: { ...prev.socialMedia, youtube: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          youtube: e.target.value,
+                        },
+                      }))
+                    }
                     placeholder="YouTube (Canal)"
                     className="w-full"
                   />
                   <Input
                     value={verificationData.socialMedia.tiktok}
-                    onChange={(e) => setVerificationData(prev => ({ 
-                      ...prev, 
-                      socialMedia: { ...prev.socialMedia, tiktok: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          tiktok: e.target.value,
+                        },
+                      }))
+                    }
                     placeholder="TikTok (@usuario)"
                     className="w-full"
                   />
                   <Input
                     value={verificationData.socialMedia.twitter}
-                    onChange={(e) => setVerificationData(prev => ({ 
-                      ...prev, 
-                      socialMedia: { ...prev.socialMedia, twitter: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        socialMedia: {
+                          ...prev.socialMedia,
+                          twitter: e.target.value,
+                        },
+                      }))
+                    }
                     placeholder="Twitter (@usuario)"
                     className="w-full"
                   />
@@ -500,10 +619,15 @@ const AccountVerification = ({
                   </label>
                   <select
                     value={verificationData.documentType}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, documentType: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        documentType: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   >
-                    {documentTypes.map(type => (
+                    {documentTypes.map((type) => (
                       <option key={type.value} value={type.value}>
                         {type.label}
                       </option>
@@ -516,7 +640,12 @@ const AccountVerification = ({
                   </label>
                   <Input
                     value={verificationData.documentNumber}
-                    onChange={(e) => setVerificationData(prev => ({ ...prev, documentNumber: e.target.value }))}
+                    onChange={(e) =>
+                      setVerificationData((prev) => ({
+                        ...prev,
+                        documentNumber: e.target.value,
+                      }))
+                    }
                     placeholder="Digite o número do documento"
                     className="w-full"
                   />
@@ -531,7 +660,11 @@ const AccountVerification = ({
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {verificationData.documentFront ? (
                       <div className="space-y-2">
-                        <img src={verificationData.documentFront} alt="Frente" className="w-full h-32 object-cover rounded" />
+                        <img
+                          src={verificationData.documentFront}
+                          alt="Frente"
+                          className="w-full h-32 object-cover rounded"
+                        />
                         <Button size="sm" variant="outline">
                           <Edit className="w-4 h-4 mr-2" />
                           Alterar
@@ -540,15 +673,22 @@ const AccountVerification = ({
                     ) : (
                       <div className="space-y-2">
                         <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                        <p className="text-sm text-gray-600">Clique para enviar</p>
+                        <p className="text-sm text-gray-600">
+                          Clique para enviar
+                        </p>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleFileUpload(e.target.files[0], 'documentFront')}
+                          onChange={(e) =>
+                            handleFileUpload(e.target.files[0], "documentFront")
+                          }
                           className="hidden"
                           id="documentFront"
                         />
-                        <label htmlFor="documentFront" className="cursor-pointer">
+                        <label
+                          htmlFor="documentFront"
+                          className="cursor-pointer"
+                        >
                           <Button size="sm" variant="outline">
                             <Upload className="w-4 h-4 mr-2" />
                             Enviar
@@ -566,7 +706,11 @@ const AccountVerification = ({
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {verificationData.documentBack ? (
                       <div className="space-y-2">
-                        <img src={verificationData.documentBack} alt="Verso" className="w-full h-32 object-cover rounded" />
+                        <img
+                          src={verificationData.documentBack}
+                          alt="Verso"
+                          className="w-full h-32 object-cover rounded"
+                        />
                         <Button size="sm" variant="outline">
                           <Edit className="w-4 h-4 mr-2" />
                           Alterar
@@ -575,15 +719,22 @@ const AccountVerification = ({
                     ) : (
                       <div className="space-y-2">
                         <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                        <p className="text-sm text-gray-600">Clique para enviar</p>
+                        <p className="text-sm text-gray-600">
+                          Clique para enviar
+                        </p>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleFileUpload(e.target.files[0], 'documentBack')}
+                          onChange={(e) =>
+                            handleFileUpload(e.target.files[0], "documentBack")
+                          }
                           className="hidden"
                           id="documentBack"
                         />
-                        <label htmlFor="documentBack" className="cursor-pointer">
+                        <label
+                          htmlFor="documentBack"
+                          className="cursor-pointer"
+                        >
                           <Button size="sm" variant="outline">
                             <Upload className="w-4 h-4 mr-2" />
                             Enviar
@@ -601,7 +752,11 @@ const AccountVerification = ({
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {verificationData.selfie ? (
                       <div className="space-y-2">
-                        <img src={verificationData.selfie} alt="Selfie" className="w-full h-32 object-cover rounded" />
+                        <img
+                          src={verificationData.selfie}
+                          alt="Selfie"
+                          className="w-full h-32 object-cover rounded"
+                        />
                         <Button size="sm" variant="outline">
                           <Edit className="w-4 h-4 mr-2" />
                           Alterar
@@ -610,11 +765,15 @@ const AccountVerification = ({
                     ) : (
                       <div className="space-y-2">
                         <Camera className="w-8 h-8 mx-auto text-gray-400" />
-                        <p className="text-sm text-gray-600">Clique para enviar</p>
+                        <p className="text-sm text-gray-600">
+                          Clique para enviar
+                        </p>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleFileUpload(e.target.files[0], 'selfie')}
+                          onChange={(e) =>
+                            handleFileUpload(e.target.files[0], "selfie")
+                          }
                           className="hidden"
                           id="selfie"
                         />
@@ -646,26 +805,34 @@ const AccountVerification = ({
         {/* Verificações Pendentes */}
         <TabsContent value="pending" className="space-y-4">
           <div className="space-y-4">
-            {pendingVerifications.map(verification => (
+            {(Array.isArray(pendingVerifications)
+              ? pendingVerifications
+              : []
+            ).map((verification) => (
               <Card key={verification.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={verification.user.avatar} />
-                        <AvatarFallback>{verification.user.name[0]}</AvatarFallback>
+                        <AvatarImage src={verification.user?.avatar} />
+                        <AvatarFallback>
+                          {verification.user?.name?.[0] || "U"}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {verification.user.name}
+                          {verification.user?.name || "Usuário"}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          @{verification.user.username}
+                          @{verification.user?.username || "handle"}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="flex items-center space-x-1">
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center space-x-1"
+                      >
                         <Clock className="w-3 h-3" />
                         <span>Pendente</span>
                       </Badge>
@@ -682,48 +849,65 @@ const AccountVerification = ({
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                      Categoria: {categories.find(c => c.value === verification.category)?.label}
+                      Categoria:{" "}
+                      {
+                        categories.find(
+                          (c) => c.value === verification.category,
+                        )?.label || verification.category
+                      }
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {verification.description}
+                      {verification.description || "Sem descrição."}
                     </p>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       Redes Sociais
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {Object.entries(verification.socialMedia).map(([platform, handle]) => (
-                        handle && (
-                          <Badge key={platform} variant="outline" className="text-xs">
-                            {platform}: {handle}
-                          </Badge>
-                        )
-                      ))}
+                      {Object.entries(verification.socialMedia || {}).map(
+                        ([platform, handle]) =>
+                          handle && (
+                            <Badge
+                              key={platform}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {platform}: {handle}
+                            </Badge>
+                          ),
+                      )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       Conquistas
                     </h4>
                     <ul className="space-y-1">
-                      {verification.achievements.map((achievement, index) => (
-                        <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-2">
+                      {(verification.achievements || []).map((achievement, index) => (
+                        <li
+                          key={index}
+                          className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-2"
+                        >
                           <Award className="w-3 h-3 text-yellow-500" />
                           <span>{achievement}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                     <span>
-                      Enviado em {formatDistanceToNow(verification.submittedAt, { addSuffix: true, locale: ptBR })}
+                      Enviado em{" "}
+                      {formatDistanceToNow(verification.submittedAt, {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       onClick={() => handleApproveVerification(verification.id)}
@@ -733,7 +917,12 @@ const AccountVerification = ({
                       Aprovar
                     </Button>
                     <Button
-                      onClick={() => handleRejectVerification(verification.id, 'Documentos insuficientes')}
+                      onClick={() =>
+                        handleRejectVerification(
+                          verification.id,
+                          "Documentos insuficientes",
+                        )
+                      }
                       variant="outline"
                       className="flex-1"
                     >
@@ -768,10 +957,14 @@ const AccountVerification = ({
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={selectedVerification.user.avatar} />
-                  <AvatarFallback>{selectedVerification.user.name[0]}</AvatarFallback>
+                  <AvatarImage src={selectedVerification.user?.avatar} />
+                  <AvatarFallback>
+                    {selectedVerification.user?.name?.[0] || "U"}
+                  </AvatarFallback>
                 </Avatar>
-                <span>Verificação de {selectedVerification.user.name}</span>
+                <span>
+                  Verificação de {selectedVerification.user?.name || "Usuário"}
+                </span>
               </CardTitle>
               <Button
                 onClick={() => setSelectedVerification(null)}
@@ -790,26 +983,36 @@ const AccountVerification = ({
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-white">Nome:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Nome:
+                      </span>
                       <span className="ml-2 text-gray-600 dark:text-gray-400">
-                        {selectedVerification.user.name}
+                        {selectedVerification.user?.name}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-white">Email:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Email:
+                      </span>
                       <span className="ml-2 text-gray-600 dark:text-gray-400">
-                        {selectedVerification.user.email}
+                        {selectedVerification.user?.email}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-white">Categoria:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Categoria:
+                      </span>
                       <span className="ml-2 text-gray-600 dark:text-gray-400">
-                        {categories.find(c => c.value === selectedVerification.category)?.label}
+                        {
+                          categories.find(
+                            (c) => c.value === selectedVerification.category,
+                          )?.label
+                        }
                       </span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Documentos
@@ -817,7 +1020,7 @@ const AccountVerification = ({
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <img
-                        src={selectedVerification.documents.front}
+                        src={selectedVerification.documents?.front}
                         alt="Frente do documento"
                         className="w-full h-32 object-cover rounded border"
                       />
@@ -827,7 +1030,7 @@ const AccountVerification = ({
                     </div>
                     <div>
                       <img
-                        src={selectedVerification.documents.back}
+                        src={selectedVerification.documents?.back}
                         alt="Verso do documento"
                         className="w-full h-32 object-cover rounded border"
                       />
@@ -837,7 +1040,7 @@ const AccountVerification = ({
                     </div>
                     <div>
                       <img
-                        src={selectedVerification.documents.selfie}
+                        src={selectedVerification.documents?.selfie}
                         alt="Selfie"
                         className="w-full h-32 object-cover rounded border"
                       />
@@ -848,52 +1051,69 @@ const AccountVerification = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Redes Sociais */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Redes Sociais
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(selectedVerification.socialMedia).map(([platform, handle]) => (
-                    handle && (
-                      <div key={platform} className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900 dark:text-white capitalize">
-                          {platform}:
-                        </span>
-                        <span className="text-gray-600 dark:text-gray-400">{handle}</span>
-                      </div>
-                    )
-                  ))}
+                  {Object.entries(selectedVerification.socialMedia).map(
+                    ([platform, handle]) =>
+                      handle && (
+                        <div
+                          key={platform}
+                          className="flex items-center space-x-2"
+                        >
+                          <span className="font-medium text-gray-900 dark:text-white capitalize">
+                            {platform}:
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {handle}
+                          </span>
+                        </div>
+                      ),
+                  )}
                 </div>
               </div>
-              
+
               {/* Conquistas */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Conquistas e Credenciais
                 </h3>
                 <ul className="space-y-2">
-                  {selectedVerification.achievements.map((achievement, index) => (
-                    <li key={index} className="flex items-center space-x-2">
-                      <Award className="w-4 h-4 text-yellow-500" />
-                      <span className="text-gray-900 dark:text-white">{achievement}</span>
-                    </li>
-                  ))}
+                  {selectedVerification.achievements.map(
+                    (achievement, index) => (
+                      <li key={index} className="flex items-center space-x-2">
+                        <Award className="w-4 h-4 text-yellow-500" />
+                        <span className="text-gray-900 dark:text-white">
+                          {achievement}
+                        </span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </div>
-              
+
               {/* Ações */}
               <div className="flex items-center space-x-2">
                 <Button
-                  onClick={() => handleApproveVerification(selectedVerification.id)}
+                  onClick={() =>
+                    handleApproveVerification(selectedVerification.id)
+                  }
                   className="flex-1"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Aprovar Verificação
                 </Button>
                 <Button
-                  onClick={() => handleRejectVerification(selectedVerification.id, 'Documentos insuficientes')}
+                  onClick={() =>
+                    handleRejectVerification(
+                      selectedVerification.id,
+                      "Documentos insuficientes",
+                    )
+                  }
                   variant="outline"
                   className="flex-1"
                 >

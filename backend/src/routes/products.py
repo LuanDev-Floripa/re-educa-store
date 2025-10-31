@@ -1,5 +1,11 @@
 """
-Rotas de produtos RE-EDUCA Store
+Rotas de produtos RE-EDUCA Store.
+
+Gerencia operações com produtos incluindo:
+- Listagem e busca de produtos
+- Detalhes de produtos
+- Criação, atualização e exclusão (admin)
+- Reviews e avaliações
 """
 from flask import Blueprint, request, jsonify
 from services.product_service import ProductService
@@ -13,7 +19,18 @@ product_service = ProductService()
 @products_bp.route('/', methods=['GET'])
 @rate_limit("100 per hour")
 def get_products():
-    """Retorna lista de produtos"""
+    """
+    Retorna lista de produtos.
+    
+    Query Parameters:
+        page (int): Página de resultados (padrão: 1).
+        per_page (int): Itens por página (padrão: 20).
+        category (str): Filtrar por categoria.
+        search (str): Termo de busca.
+        
+    Returns:
+        JSON: Lista paginada de produtos ou erro.
+    """
     try:
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
@@ -24,7 +41,11 @@ def get_products():
         
         return jsonify(products), 200
         
+    except ValueError as e:
+        return jsonify({'error': 'Parâmetros inválidos', 'details': str(e)}), 400
     except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Erro ao listar produtos: {str(e)}", exc_info=True)
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @products_bp.route('/search', methods=['GET'])

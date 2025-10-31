@@ -1,5 +1,19 @@
 """
-Middleware de rate limiting para RE-EDUCA Store
+Middleware de rate limiting para RE-EDUCA Store.
+
+Implementa limitação de requisições por IP incluindo:
+- Rate limiting por endpoint
+- Armazenamento em memória (development)
+- Respostas 429 Too Many Requests
+- Headers de retry-after
+
+AVISO: Implementação simples em memória.
+Para produção, usar Flask-Limiter com Redis.
+
+Exemplos de uso:
+    @app.rate_limit('5 per minute')
+    def sensitive_endpoint():
+        ...
 """
 from flask import Flask, request, jsonify
 from functools import wraps
@@ -13,10 +27,27 @@ _rate_limit_storage = defaultdict(list)
 _rate_limit_lock = Lock()
 
 def setup_rate_limiting(app: Flask):
-    """Configura rate limiting para a aplicação"""
+    """
+    Configura rate limiting para a aplicação.
+    
+    Args:
+        app (Flask): Instância da aplicação Flask.
+        
+    Note:
+        Adiciona decorator app.rate_limit para uso nas rotas.
+    """
     
     def rate_limit(limit: str = "100 per hour"):
-        """Decorator para rate limiting"""
+        """
+        Decorator para rate limiting.
+        
+        Args:
+            limit (str): Limite no formato "N per period".
+                         Ex: "100 per hour", "5 per minute"
+                         
+        Returns:
+            Callable: Decorator de função.
+        """
         def decorator(f):
             @wraps(f)
             def decorated(*args, **kwargs):

@@ -1,57 +1,106 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../Ui/card';
-import { Button } from '../Ui/button';
-import { Input } from '../Ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../Ui/avatar';
-import { Badge } from '../Ui/badge';
-import { Progress } from '../Ui/progress';
-import StreamCard from './shared/StreamCard';
-import StreamChat from './shared/StreamChat';
-import { useLiveStreaming } from '../../hooks/useLiveStreaming';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import React, { useState, useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../Ui/card";
+import { Button } from "../Ui/button";
+import { Input } from "../Ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../Ui/avatar";
+import { Badge } from "../Ui/badge";
+import { Progress } from "../Ui/progress";
+import StreamCard from "./shared/StreamCard";
+import StreamChat from "./shared/StreamChat";
+import { useLiveStreaming } from "../../hooks/useLiveStreaming";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import {
-  Play, Pause, Square, Mic, MicOff, Video, VideoOff, Settings, Users, Heart, MessageCircle, Share2,
-  MoreHorizontal, Eye, Clock, Wifi, WifiOff, AlertCircle, CheckCircle, X, Plus, Camera,
-  Volume2, VolumeX, Maximize, Minimize, RotateCcw, RotateCw, Zap, Star, Gift, Crown
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+  Play,
+  Pause,
+  Square,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Settings,
+  Users,
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  Eye,
+  Clock,
+  Wifi,
+  WifiOff,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Plus,
+  Camera,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  RotateCcw,
+  RotateCw,
+  Zap,
+  Star,
+  Gift,
+  Crown,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+/**
+ * LiveStreaming - Transmissões ao vivo com chat.
+ * - Integra hooks de streaming e WebSocket
+ * - Fallbacks e toasts para operações assíncronas
+ */
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const LiveStreaming = ({ 
-  currentUser, 
-  onStartStream, 
-  onEndStream, 
-  onJoinStream, 
-  onLeaveStream, 
-  onSendMessage, 
-  onSendGift, 
-  onFollowUser, 
-  onReportStream
+const LiveStreaming = ({
+  // eslint-disable-next-line no-unused-vars
+  currentUser,
+  // eslint-disable-next-line no-unused-vars
+  onStartStream,
+  // eslint-disable-next-line no-unused-vars
+  onEndStream,
+  // eslint-disable-next-line no-unused-vars
+  onJoinStream,
+  // eslint-disable-next-line no-unused-vars
+  onLeaveStream,
+  // eslint-disable-next-line no-unused-vars
+  onSendMessage,
+  // eslint-disable-next-line no-unused-vars
+  onSendGift,
+  // eslint-disable-next-line no-unused-vars
+  onFollowUser,
+  // eslint-disable-next-line no-unused-vars
+  onReportStream,
 }) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
-  const [streamTitle, setStreamTitle] = useState('');
-  const [streamCategory, setStreamCategory] = useState('fitness');
+  const [streamTitle, setStreamTitle] = useState("");
+  const [streamCategory, setStreamCategory] = useState("fitness");
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
-  const [streamQuality, setStreamQuality] = useState('auto');
+  const [streamQuality, setStreamQuality] = useState("auto");
   const [showSettings, setShowSettings] = useState(false);
   const [showGifts, setShowGifts] = useState(false);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const videoRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
   const streamRef = useRef(null);
 
   // Use custom hooks
   const {
     streams,
     currentStream,
+    // eslint-disable-next-line no-unused-vars
     isStreaming: hookIsStreaming,
+    // eslint-disable-next-line no-unused-vars
     isWatching: hookIsWatching,
     viewers,
     messages,
+    // eslint-disable-next-line no-unused-vars
     isLoading,
+    // eslint-disable-next-line no-unused-vars
     error,
     startStream,
     endStream,
@@ -61,13 +110,18 @@ const LiveStreaming = ({
     sendGift,
     followUser,
     reportStream,
-    fetchStreams
+    fetchStreams,
   } = useLiveStreaming();
 
   // WebSocket for real-time updates
-  const { isConnected, sendMessage: sendWSMessage } = useWebSocket('/live', (data) => {
-    // Handle real-time updates
-  });
+  // eslint-disable-next-line no-unused-vars
+  const { isConnected, sendMessage: sendWSMessage } = useWebSocket(
+    "/live",
+    // eslint-disable-next-line no-unused-vars
+    (data) => {
+      // Handle real-time updates
+    },
+  );
 
   // Carregar streams reais via hook (useLiveStreaming já faz isso)
   useEffect(() => {
@@ -81,7 +135,7 @@ const LiveStreaming = ({
 
   const handleStartStream = async () => {
     if (!streamTitle.trim()) {
-      toast.error('Digite um título para a transmissão');
+      toast.error("Digite um título para a transmissão");
       return;
     }
 
@@ -90,14 +144,14 @@ const LiveStreaming = ({
         title: streamTitle,
         category: streamCategory,
         description: `Transmissão de ${streamCategory}`,
-        tags: [streamCategory, 'ao-vivo']
+        tags: [streamCategory, "ao-vivo"],
       };
 
       await startStream(streamData);
       setIsStreaming(true);
-      toast.success('Transmissão iniciada!');
-    } catch (error) {
-      toast.error('Erro ao iniciar transmissão');
+      toast.success("Transmissão iniciada!");
+    } catch {
+      toast.error("Erro ao iniciar transmissão");
     }
   };
 
@@ -105,9 +159,9 @@ const LiveStreaming = ({
     try {
       await endStream(currentStream?.id);
       setIsStreaming(false);
-      toast.success('Transmissão encerrada');
-    } catch (error) {
-      toast.error('Erro ao encerrar transmissão');
+      toast.success("Transmissão encerrada");
+    } catch {
+      toast.error("Erro ao encerrar transmissão");
     }
   };
 
@@ -116,8 +170,8 @@ const LiveStreaming = ({
       await joinStream(stream.id);
       setIsWatching(true);
       toast.success(`Assistindo ${stream.user.name}`);
-    } catch (error) {
-      toast.error('Erro ao entrar na transmissão');
+    } catch {
+      toast.error("Erro ao entrar na transmissão");
     }
   };
 
@@ -125,43 +179,45 @@ const LiveStreaming = ({
     try {
       await leaveStream(currentStream?.id);
       setIsWatching(false);
-    } catch (error) {
-      toast.error('Erro ao sair da transmissão');
+    } catch {
+      toast.error("Erro ao sair da transmissão");
     }
   };
 
   const handleSendMessage = async (messageData) => {
     try {
       await sendMessage(messageData);
-    } catch (error) {
-      toast.error('Erro ao enviar mensagem');
+    } catch {
+      toast.error("Erro ao enviar mensagem");
     }
   };
 
   const handleSendGift = async (giftData) => {
     try {
       await sendGift(giftData);
-      toast.success(`Enviou ${giftData.gift.name} para ${currentStream.user.name}`);
-    } catch (error) {
-      toast.error('Erro ao enviar presente');
+      toast.success(
+        `Enviou ${giftData.gift.name} para ${currentStream.user.name}`,
+      );
+    } catch {
+      toast.error("Erro ao enviar presente");
     }
   };
 
   const handleFollowUser = async (userId) => {
     try {
       await followUser(userId);
-      toast.success('Usuário seguido!');
-    } catch (error) {
-      toast.error('Erro ao seguir usuário');
+      toast.success("Usuário seguido!");
+    } catch {
+      toast.error("Erro ao seguir usuário");
     }
   };
 
   const handleReportStream = async (streamId, reason) => {
     try {
       await reportStream(streamId, reason);
-      toast.success('Transmissão reportada');
-    } catch (error) {
-      toast.error('Erro ao reportar transmissão');
+      toast.success("Transmissão reportada");
+    } catch {
+      toast.error("Erro ao reportar transmissão");
     }
   };
 
@@ -169,27 +225,33 @@ const LiveStreaming = ({
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const gifts = [
-    { id: 1, name: 'Coração', emoji: '❤️', cost: 1, color: 'text-red-500' },
-    { id: 2, name: 'Estrela', emoji: '⭐', cost: 5, color: 'text-yellow-500' },
-    { id: 3, name: 'Diamante', emoji: '💎', cost: 10, color: 'text-blue-500' },
-    { id: 4, name: 'Coroa', emoji: '👑', cost: 25, color: 'text-purple-500' },
-    { id: 5, name: 'Foguete', emoji: '🚀', cost: 50, color: 'text-orange-500' },
-    { id: 6, name: 'Presente', emoji: '🎁', cost: 100, color: 'text-green-500' }
+    { id: 1, name: "Coração", emoji: "❤️", cost: 1, color: "text-red-500" },
+    { id: 2, name: "Estrela", emoji: "⭐", cost: 5, color: "text-yellow-500" },
+    { id: 3, name: "Diamante", emoji: "💎", cost: 10, color: "text-blue-500" },
+    { id: 4, name: "Coroa", emoji: "👑", cost: 25, color: "text-purple-500" },
+    { id: 5, name: "Foguete", emoji: "🚀", cost: 50, color: "text-orange-500" },
+    {
+      id: 6,
+      name: "Presente",
+      emoji: "🎁",
+      cost: 100,
+      color: "text-green-500",
+    },
   ];
 
   const categories = [
-    { value: 'fitness', label: 'Fitness', icon: '💪' },
-    { value: 'nutrition', label: 'Nutrição', icon: '🥗' },
-    { value: 'yoga', label: 'Yoga', icon: '🧘' },
-    { value: 'running', label: 'Corrida', icon: '🏃' },
-    { value: 'cycling', label: 'Ciclismo', icon: '🚴' },
-    { value: 'swimming', label: 'Natação', icon: '🏊' },
-    { value: 'dance', label: 'Dança', icon: '💃' },
-    { value: 'other', label: 'Outros', icon: '🎯' }
+    { value: "fitness", label: "Fitness", icon: "💪" },
+    { value: "nutrition", label: "Nutrição", icon: "🥗" },
+    { value: "yoga", label: "Yoga", icon: "🧘" },
+    { value: "running", label: "Corrida", icon: "🏃" },
+    { value: "cycling", label: "Ciclismo", icon: "🚴" },
+    { value: "swimming", label: "Natação", icon: "🏊" },
+    { value: "dance", label: "Dança", icon: "💃" },
+    { value: "other", label: "Outros", icon: "🎯" },
   ];
 
   return (
@@ -243,7 +305,7 @@ const LiveStreaming = ({
                   onChange={(e) => setStreamCategory(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                 >
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category.value} value={category.value}>
                       {category.icon} {category.label}
                     </option>
@@ -251,7 +313,7 @@ const LiveStreaming = ({
                 </select>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={handleStartStream}
               className="w-full bg-red-600 hover:bg-red-700 text-white"
             >
@@ -289,7 +351,7 @@ const LiveStreaming = ({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {streamStats.viewers}
+                  {viewers?.length || 0}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Espectadores
@@ -297,7 +359,7 @@ const LiveStreaming = ({
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {streamStats.likes}
+                  {currentStream?.likes || 0}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Curtidas
@@ -305,7 +367,7 @@ const LiveStreaming = ({
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {streamStats.shares}
+                  {currentStream?.shares || 0}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Compartilhamentos
@@ -313,28 +375,36 @@ const LiveStreaming = ({
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatDuration(streamStats.duration)}
+                  {currentStream?.duration ? formatDuration(currentStream.duration) : "00:00:00"}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Duração
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-center space-x-4">
               <Button
                 onClick={() => setIsMuted(!isMuted)}
                 variant={isMuted ? "destructive" : "outline"}
                 size="sm"
               >
-                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                {isMuted ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
               </Button>
               <Button
                 onClick={() => setIsVideoOff(!isVideoOff)}
                 variant={isVideoOff ? "destructive" : "outline"}
                 size="sm"
               >
-                {isVideoOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                {isVideoOff ? (
+                  <VideoOff className="w-4 h-4" />
+                ) : (
+                  <Video className="w-4 h-4" />
+                )}
               </Button>
               <Button
                 onClick={() => setShowSettings(!showSettings)}
@@ -362,7 +432,7 @@ const LiveStreaming = ({
                   </p>
                 </div>
               </div>
-              
+
               {/* Controles do Player */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                 <div className="flex items-center justify-between text-white">
@@ -373,7 +443,11 @@ const LiveStreaming = ({
                       size="sm"
                       className="text-white hover:bg-white/20"
                     >
-                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      {isMuted ? (
+                        <VolumeX className="w-4 h-4" />
+                      ) : (
+                        <Volume2 className="w-4 h-4" />
+                      )}
                     </Button>
                     <Button
                       onClick={() => setShowSettings(!showSettings)}
@@ -401,25 +475,25 @@ const LiveStreaming = ({
         </Card>
       )}
 
-             {/* Lista de Streams Ativos */}
-             {!isStreaming && !isWatching && (
-               <div className="space-y-4">
-                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                   Transmissões Ao Vivo
-                 </h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                   {streams.map(stream => (
-                     <StreamCard
-                       key={stream.id}
-                       stream={stream}
-                       onJoin={handleJoinStream}
-                       onFollow={handleFollowUser}
-                       onReport={handleReportStream}
-                     />
-                   ))}
-                 </div>
-               </div>
-             )}
+      {/* Lista de Streams Ativos */}
+      {!isStreaming && !isWatching && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Transmissões Ao Vivo
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(Array.isArray(streams) ? streams : []).map((stream) => (
+              <StreamCard
+                key={stream.id}
+                stream={stream}
+                onJoin={handleJoinStream}
+                onFollow={handleFollowUser}
+                onReport={handleReportStream}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Chat da Transmissão */}
       {isWatching && currentStream && (
@@ -441,7 +515,9 @@ const LiveStreaming = ({
                 <div className="flex items-center space-x-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={currentStream.user.avatar_url} />
-                    <AvatarFallback>{currentStream.user.name[0]}</AvatarFallback>
+                    <AvatarFallback>
+                      {currentStream.user.name[0]}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
@@ -462,19 +538,19 @@ const LiveStreaming = ({
 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    {currentStream.viewer_count} espectadores
+                    {Number(currentStream?.viewer_count ?? 0)} espectadores
                   </span>
                   <span className="text-gray-600 dark:text-gray-400">
-                    {formatDistanceToNow(new Date(currentStream.created_at), {
+                    {formatDistanceToNow(new Date(currentStream?.created_at ?? Date.now()), {
                       addSuffix: true,
-                      locale: ptBR
+                      locale: ptBR,
                     })}
                   </span>
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Button
-                    onClick={() => handleFollowUser(currentStream.user.id)}
+                    onClick={() => handleFollowUser(currentStream?.user?.id)}
                     variant="outline"
                     size="sm"
                     className="flex-1"
@@ -514,8 +590,11 @@ const LiveStreaming = ({
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {viewers.map(viewer => (
-                    <div key={viewer.id} className="flex items-center justify-between">
+                  {(Array.isArray(viewers) ? viewers : []).map((viewer) => (
+                    <div
+                      key={viewer.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center space-x-2">
                         <Avatar className="w-8 h-8">
                           <AvatarImage src={viewer.avatar} />
@@ -555,7 +634,7 @@ const LiveStreaming = ({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
-                {gifts.map(gift => (
+                {gifts.map((gift) => (
                   <Button
                     key={gift.id}
                     onClick={() => handleSendGift(gift)}
@@ -566,7 +645,9 @@ const LiveStreaming = ({
                       {gift.emoji}
                     </span>
                     <span className="text-sm font-medium">{gift.name}</span>
-                    <span className="text-xs text-gray-500">{gift.cost} moedas</span>
+                    <span className="text-xs text-gray-500">
+                      {gift.cost} moedas
+                    </span>
                   </Button>
                 ))}
               </div>
@@ -605,7 +686,7 @@ const LiveStreaming = ({
                   <option value="480p">480p SD</option>
                 </select>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   Microfone
@@ -615,10 +696,14 @@ const LiveStreaming = ({
                   variant={isMuted ? "destructive" : "outline"}
                   size="sm"
                 >
-                  {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {isMuted ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   Câmera
@@ -628,7 +713,11 @@ const LiveStreaming = ({
                   variant={isVideoOff ? "destructive" : "outline"}
                   size="sm"
                 >
-                  {isVideoOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                  {isVideoOff ? (
+                    <VideoOff className="w-4 h-4" />
+                  ) : (
+                    <Video className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </CardContent>

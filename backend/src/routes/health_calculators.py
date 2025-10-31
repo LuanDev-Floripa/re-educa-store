@@ -1,5 +1,12 @@
 """
-Rotas de Calculadoras de Saúde RE-EDUCA Store
+Rotas de Calculadoras de Saúde RE-EDUCA Store.
+
+Fornece calculadoras de saúde incluindo:
+- IMC (Índice de Massa Corporal)
+- Calorias diárias necessárias
+- Hidratação diária recomendada
+- Percentual de gordura corporal
+- Histórico de cálculos
 """
 from flask import Blueprint, request, jsonify
 from services.health_calculator_service import HealthCalculatorService
@@ -14,7 +21,16 @@ health_calculator_service = HealthCalculatorService()
 @rate_limit("10 per minute")
 @validate_json('height_cm', 'weight_kg')
 def calculate_bmi():
-    """Calcula IMC (Índice de Massa Corporal)"""
+    """
+    Calcula IMC (Índice de Massa Corporal).
+    
+    Request Body:
+        height_cm (float): Altura em centímetros.
+        weight_kg (float): Peso em quilogramas.
+        
+    Returns:
+        JSON: IMC calculado com classificação e recomendações.
+    """
     try:
         data = request.get_json()
         user_id = request.current_user['id']
@@ -54,7 +70,19 @@ def calculate_bmi():
 @rate_limit("10 per minute")
 @validate_json('age', 'gender', 'height_cm', 'weight_kg', 'activity_level')
 def calculate_calories():
-    """Calcula necessidade calórica diária"""
+    """
+    Calcula necessidade calórica diária.
+    
+    Request Body:
+        age (int): Idade em anos.
+        gender (str): Gênero ('male' ou 'female').
+        height_cm (float): Altura em centímetros.
+        weight_kg (float): Peso em quilogramas.
+        activity_level (str): Nível de atividade física.
+        
+    Returns:
+        JSON: Calorias diárias com metas de macronutrientes.
+    """
     try:
         data = request.get_json()
         user_id = request.current_user['id']

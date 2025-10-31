@@ -1,18 +1,38 @@
-import React from 'react';
-import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { cn } from '@/lib/utils';
+/**
+ * Magic UI Components - RE-EDUCA Store
+ * 
+ * Cole??o de microcomponentes visuais com anima??es e efeitos especiais.
+ * 
+ * Observa??o: Este arquivo exporta apenas componentes de UI puros.
+ * N?o adicionar helpers l?gicos aqui - mover para utils se necess?rio.
+ * 
+ * @module MagicUI
+ */
+import React from "react";
+import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
+import { cn } from "@/lib/utils";
 
 // ================================
 // MAGIC UI COMPONENTS
 // ================================
 
-// Animated Background Gradient
+/**
+ * AnimatedGradient - Container com gradiente animado.
+ * 
+ * Cria um container com gradiente animado de fundo usando cores suaves.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do a ser renderizado
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Container com gradiente animado
+ */
 export const AnimatedGradient = ({ children, className, ...props }) => {
   return (
     <div
       className={cn(
         "relative overflow-hidden bg-gradient-to-br from-blue-50 via-green-50 to-purple-50",
-        className
+        className,
       )}
       {...props}
     >
@@ -22,8 +42,24 @@ export const AnimatedGradient = ({ children, className, ...props }) => {
   );
 };
 
-// Floating Elements
-export const FloatingElement = ({ children, delay = 0, className, ...props }) => {
+/**
+ * FloatingElement - Elemento com anima??o de flutua??o suave.
+ * 
+ * Aplica uma anima??o de movimento vertical e rota??o sutil ao conte?do.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do a ser animado
+ * @param {number} [props.delay=0] - Delay inicial da anima??o em segundos
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Elemento com anima??o de flutua??o
+ */
+export const FloatingElement = ({
+  children,
+  delay = 0,
+  className,
+  ...props
+}) => {
   return (
     <motion.div
       className={cn("", className)}
@@ -44,7 +80,17 @@ export const FloatingElement = ({ children, delay = 0, className, ...props }) =>
   );
 };
 
-// Magnetic Button
+/**
+ * MagneticButton - Bot?o com efeito magn?tico que segue o cursor do mouse.
+ * 
+ * O bot?o se move levemente na dire??o do cursor, criando um efeito de atra??o magn?tica.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do do bot?o
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Bot?o com efeito magn?tico
+ */
 export const MagneticButton = ({ children, className, ...props }) => {
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
 
@@ -63,7 +109,7 @@ export const MagneticButton = ({ children, className, ...props }) => {
     <motion.button
       className={cn(
         "relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500 to-blue-500 px-6 py-3 text-white font-medium shadow-lg transition-all duration-300 hover:shadow-xl",
-        className
+        className,
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -77,7 +123,17 @@ export const MagneticButton = ({ children, className, ...props }) => {
   );
 };
 
-// Morphing Card
+/**
+ * MorphingCard - Card com efeito de transforma??o (morph) ao hover.
+ * 
+ * Aplica escala e rota??o 3D quando o mouse passa sobre o card.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do do card
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Card com efeito morph
+ */
 export const MorphingCard = ({ children, className, ...props }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -85,7 +141,7 @@ export const MorphingCard = ({ children, className, ...props }) => {
     <motion.div
       className={cn(
         "relative overflow-hidden rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-lg",
-        className
+        className,
       )}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -109,7 +165,17 @@ export const MorphingCard = ({ children, className, ...props }) => {
   );
 };
 
-// Particle System
+/**
+ * ParticleSystem - Sistema de part?culas animadas para background.
+ * 
+ * Cria m?ltiplas part?culas que flutuam e desaparecem, criando efeito de movimento constante.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {number} [props.count=50] - N?mero de part?culas a serem criadas
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Sistema de part?culas animadas
+ */
 export const ParticleSystem = ({ count = 50, className }) => {
   const particles = React.useMemo(() => {
     return Array.from({ length: count }, (_, i) => ({
@@ -123,7 +189,12 @@ export const ParticleSystem = ({ count = 50, className }) => {
   }, [count]);
 
   return (
-    <div className={cn("absolute inset-0 overflow-hidden pointer-events-none", className)}>
+    <div
+      className={cn(
+        "absolute inset-0 overflow-hidden pointer-events-none",
+        className,
+      )}
+    >
       {particles.map((particle) => (
         <motion.div
           key={particle.id}
@@ -151,8 +222,24 @@ export const ParticleSystem = ({ count = 50, className }) => {
   );
 };
 
-// Glowing Border
-export const GlowingBorder = ({ children, className, glowColor = "green", ...props }) => {
+/**
+ * GlowingBorder - Container com borda brilhante e gradiente.
+ * 
+ * Cria uma borda animada com efeito de brilho usando gradiente de cores.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do a ser envolvido
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @param {"green"|"blue"|"purple"|"pink"} [props.glowColor="green"] - Cor do brilho
+ * @returns {JSX.Element} Container com borda brilhante
+ */
+export const GlowingBorder = ({
+  children,
+  className,
+  glowColor = "green",
+  ...props
+}) => {
   const glowColors = {
     green: "shadow-green-500/50",
     blue: "shadow-blue-500/50",
@@ -164,11 +251,16 @@ export const GlowingBorder = ({ children, className, glowColor = "green", ...pro
     <div
       className={cn(
         "relative rounded-lg p-[1px] bg-gradient-to-r from-green-500 via-blue-500 to-purple-500",
-        className
+        className,
       )}
       {...props}
     >
-      <div className={cn("absolute inset-0 rounded-lg blur-sm", glowColors[glowColor])} />
+      <div
+        className={cn(
+          "absolute inset-0 rounded-lg blur-sm",
+          glowColors[glowColor],
+        )}
+      />
       <div className="relative rounded-lg bg-white/95 backdrop-blur-sm">
         {children}
       </div>
@@ -176,16 +268,18 @@ export const GlowingBorder = ({ children, className, glowColor = "green", ...pro
   );
 };
 
-// Typing Animation
+/**
+ * TypingAnimation - efeito de digita??o para texto.
+ */
 export const TypingAnimation = ({ text, className, speed = 50 }) => {
-  const [displayText, setDisplayText] = React.useState('');
+  const [displayText, setDisplayText] = React.useState("");
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
   React.useEffect(() => {
-    if (currentIndex < text.length) {
+    if (typeof text === "string" && currentIndex < text.length) {
       const timeout = setTimeout(() => {
-        setDisplayText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
+        setDisplayText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
       }, speed);
 
       return () => clearTimeout(timeout);
@@ -206,7 +300,17 @@ export const TypingAnimation = ({ text, className, speed = 50 }) => {
   );
 };
 
-// Ripple Effect
+/**
+ * RippleEffect - Efeito de ondas (ripple) ao clicar no elemento.
+ * 
+ * Cria um efeito de ondas circulares que se expandem a partir do ponto de clique.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {React.ReactNode} props.children - Conte?do que receber? o efeito
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @returns {JSX.Element} Elemento com efeito ripple
+ */
 export const RippleEffect = ({ children, className, ...props }) => {
   const [ripples, setRipples] = React.useState([]);
 
@@ -223,10 +327,10 @@ export const RippleEffect = ({ children, className, ...props }) => {
       id: Date.now(),
     };
 
-    setRipples(prev => [...prev, newRipple]);
+    setRipples((prev) => [...prev, newRipple]);
 
     setTimeout(() => {
-      setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
+      setRipples((prev) => prev.filter((ripple) => ripple.id !== newRipple.id));
     }, 600);
   };
 
@@ -256,8 +360,14 @@ export const RippleEffect = ({ children, className, ...props }) => {
   );
 };
 
-// Staggered Animation Container
-export const StaggerContainer = ({ children, className, staggerDelay = 0.1 }) => {
+/**
+ * StaggerContainer - container que aplica stagger aos filhos.
+ */
+export const StaggerContainer = ({
+  children,
+  className,
+  staggerDelay = 0.1,
+}) => {
   return (
     <motion.div
       className={className}
@@ -289,7 +399,18 @@ export const StaggerContainer = ({ children, className, staggerDelay = 0.1 }) =>
   );
 };
 
-// Infinite Scroll Text
+/**
+ * InfiniteScrollText - Texto com rolagem infinita horizontal.
+ * 
+ * Cria um efeito de texto rolando continuamente da direita para a esquerda.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {string} props.text - Texto a ser animado
+ * @param {string} [props.className] - Classes CSS adicionais
+ * @param {number} [props.speed=50] - Dura??o da anima??o em segundos
+ * @returns {JSX.Element} Texto com rolagem infinita
+ */
 export const InfiniteScrollText = ({ text, className, speed = 50 }) => {
   return (
     <div className={cn("overflow-hidden whitespace-nowrap", className)}>
@@ -320,4 +441,3 @@ export default {
   StaggerContainer,
   InfiniteScrollText,
 };
-

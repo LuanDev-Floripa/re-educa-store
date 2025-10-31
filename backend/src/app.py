@@ -77,9 +77,11 @@ def register_blueprints(app):
     from routes.predictive import predictive_bp
     from routes.social_additional import social_additional_bp
     from routes.users_exports import exports_bp
+    from routes.user_context import user_context_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
+    app.register_blueprint(user_context_bp)  # Já tem url_prefix='/api/user'
     app.register_blueprint(products_bp, url_prefix='/api/products')
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(cart_bp, url_prefix='/api/cart')
@@ -98,6 +100,8 @@ def register_blueprints(app):
     app.register_blueprint(social_additional_bp, url_prefix='/api/social')
     app.register_blueprint(exports_bp, url_prefix='/api/users/exports')
     app.register_blueprint(swagger_bp)
+    app.register_blueprint(system_bp, url_prefix='/api/system')
+    app.register_blueprint(video_bp, url_prefix='/api/videos')
 
 def setup_websocket(socketio):
     from services.integration_service import integration_service

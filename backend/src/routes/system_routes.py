@@ -1,11 +1,16 @@
 """
-Rotas para monitoramento e saúde do sistema
-Health checks, métricas e estatísticas
+Rotas para monitoramento e saúde do sistema RE-EDUCA Store.
+
+Fornece endpoints para:
+- Health checks do sistema
+- Métricas e estatísticas
+- Limpeza de cache
+- Status de serviços
 """
 
 import logging
-from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, request
+from middleware.auth import token_required
 from services.integration_service import integration_service
 from utils.decorators import handle_exceptions
 
@@ -17,7 +22,14 @@ system_bp = Blueprint('system', __name__, url_prefix='/api/system')
 @system_bp.route('/health', methods=['GET'])
 @handle_exceptions
 def health_check():
-    """Health check do sistema"""
+    """
+    Health check do sistema.
+    
+    Verifica status de todos os serviços e dependências.
+    
+    Returns:
+        JSON: Status geral do sistema (healthy/warning/unhealthy).
+    """
     try:
         health_status = integration_service.health_check()
         
@@ -42,12 +54,22 @@ def health_check():
         }), 500
 
 @system_bp.route('/stats', methods=['GET'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def get_system_stats():
-    """Obtém estatísticas do sistema (requer autenticação)"""
+    """
+    Obtém estatísticas do sistema (requer autenticação).
+    
+    Retorna métricas gerais do sistema incluindo:
+    - Número de usuários
+    - Estatísticas de uso
+    - Status de serviços
+    
+    Returns:
+        JSON: Estatísticas do sistema.
+    """
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
@@ -67,12 +89,12 @@ def get_system_stats():
         }), 500
 
 @system_bp.route('/cache/clear', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def clear_cache():
     """Limpa cache do sistema (requer autenticação)"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
@@ -97,12 +119,12 @@ def clear_cache():
         }), 500
 
 @system_bp.route('/storage/setup', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def setup_storage():
     """Configura storage do sistema (requer autenticação)"""
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
@@ -128,12 +150,20 @@ def setup_storage():
         }), 500
 
 @system_bp.route('/cleanup', methods=['POST'])
-@jwt_required()
+@token_required
 @handle_exceptions
 def cleanup_system():
-    """Limpa recursos do sistema (requer autenticação)"""
+    """
+    Limpa recursos do sistema (requer autenticação).
+    
+    Executa limpeza de recursos temporários e dados obsoletos
+    para otimizar performance do sistema.
+    
+    Returns:
+        JSON: Confirmação de limpeza completa.
+    """
     try:
-        user_id = get_jwt_identity()
+        user_id = request.current_user.get('id')
         
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado

@@ -1,7 +1,21 @@
-import React from 'react';
-import { useTheme } from 'next-themes';
-import { Button } from './ui/button';
-import { Sun, Moon } from 'lucide-react';
+/**
+ * ThemeToggle Component - RE-EDUCA Store
+ * 
+ * Componente para alternar entre tema claro e escuro.
+ * 
+ * Funcionalidades:
+ * - Alterna entre light e dark mode
+ * - Usa next-themes para gerenciamento de tema
+ * - Anima??es suaves de transi??o
+ * - Acessibilidade com aria-label
+ * 
+ * @component
+ * @returns {JSX.Element} Bot?o para alternar tema
+ */
+import React from "react";
+import { useTheme } from "next-themes";
+import { Button } from "./ui/button";
+import { Sun, Moon } from "lucide-react";
 
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
@@ -10,7 +24,7 @@ const ThemeToggle = () => {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="w-9 h-9 p-0"
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

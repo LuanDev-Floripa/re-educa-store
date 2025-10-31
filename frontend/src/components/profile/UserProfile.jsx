@@ -118,6 +118,12 @@ import {
   X as XIcon
 } from 'lucide-react';
 
+/**
+ * Perfil do usuário (dados híbridos API + defaults)
+ * - Carrega perfil, configurações e estatísticas
+ * - Permite atualização de perfil e preferências
+ * - Exibe abas de visão geral, atividade, saúde e configurações
+ */
 export const UserProfile = ({ 
   userId,
   onUpdateProfile,
@@ -213,7 +219,7 @@ export const UserProfile = ({
       stress: 3,
       energy: 8
     }
-  };
+  }), []);
 
   const defaultSettings = useMemo(() => ({
     account: {
@@ -247,7 +253,7 @@ export const UserProfile = ({
       dateFormat: 'DD/MM/YYYY',
       timeFormat: '24h'
     }
-  });
+  }), []);
 
   useEffect(() => {
     const defaultStats = {
@@ -390,7 +396,7 @@ export const UserProfile = ({
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         setSettings(prev => ({ ...prev, ...updatedSettings }));
         
         if (onUpdateSettings) {

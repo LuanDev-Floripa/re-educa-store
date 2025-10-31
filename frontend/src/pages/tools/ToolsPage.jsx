@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { 
-  Calculator, 
-  Activity, 
-  Dumbbell, 
-  Target, 
+import React, { useState } from "react";
+/**
+ * ToolsPage
+ * - Lista e filtra ferramentas com estados vazios
+ */
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import {
+  Calculator,
+  Activity,
+  Dumbbell,
+  Target,
   Calendar,
   Zap,
   Brain,
@@ -17,161 +27,187 @@ import {
   Search,
   Filter,
   Star,
-  TrendingUp
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+  TrendingUp,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ToolsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const tools = [
     // Health Tools
     {
-      id: 'imc',
-      name: 'Calculadora IMC',
-      description: 'Calcule seu índice de massa corporal e descubra se está no peso ideal',
+      id: "imc",
+      name: "Calculadora IMC",
+      description:
+        "Calcule seu índice de massa corporal e descubra se está no peso ideal",
       icon: Calculator,
-      category: 'health',
-      href: '/tools/imc',
+      category: "health",
+      href: "/tools/imc",
       popular: true,
-      color: 'blue'
+      color: "blue",
     },
     {
-      id: 'food-diary',
-      name: 'Diário Alimentar',
-      description: 'Registre suas refeições e acompanhe sua alimentação diária',
+      id: "food-diary",
+      name: "Diário Alimentar",
+      description: "Registre suas refeições e acompanhe sua alimentação diária",
       icon: Calendar,
-      category: 'health',
-      href: '/tools/food-diary',
+      category: "health",
+      href: "/tools/food-diary",
       popular: true,
-      color: 'green'
+      color: "green",
     },
     {
-      id: 'exercises',
-      name: 'Exercícios',
-      description: 'Biblioteca completa de exercícios com instruções detalhadas',
+      id: "exercises",
+      name: "Exercícios",
+      description:
+        "Biblioteca completa de exercícios com instruções detalhadas",
       icon: Activity,
-      category: 'fitness',
-      href: '/tools/exercises',
+      category: "fitness",
+      href: "/tools/exercises",
       popular: true,
-      color: 'purple'
+      color: "purple",
     },
     {
-      id: 'workout-plans',
-      name: 'Planos de Treino',
-      description: 'Planos de treino personalizados para seus objetivos',
+      id: "workout-plans",
+      name: "Planos de Treino",
+      description: "Planos de treino personalizados para seus objetivos",
       icon: Dumbbell,
-      category: 'fitness',
-      href: '/tools/workout-plans',
+      category: "fitness",
+      href: "/tools/workout-plans",
       popular: false,
-      color: 'orange'
+      color: "orange",
     },
     {
-      id: 'workout-sessions',
-      name: 'Sessões de Treino',
-      description: 'Acompanhe suas sessões de treino e progresso',
+      id: "workout-sessions",
+      name: "Sessões de Treino",
+      description: "Acompanhe suas sessões de treino e progresso",
       icon: Target,
-      category: 'fitness',
-      href: '/tools/workout-sessions',
+      category: "fitness",
+      href: "/tools/workout-sessions",
       popular: false,
-      color: 'red'
+      color: "red",
     },
-    
+
     // Calculators
     {
-      id: 'calorie-calculator',
-      name: 'Calculadora de Calorias',
-      description: 'Calcule suas necessidades calóricas diárias',
+      id: "calorie-calculator",
+      name: "Calculadora de Calorias",
+      description: "Calcule suas necessidades calóricas diárias",
       icon: Zap,
-      category: 'calculators',
-      href: '/tools/calorie-calculator',
+      category: "calculators",
+      href: "/tools/calorie-calculator",
       popular: true,
-      color: 'yellow'
+      color: "yellow",
     },
     {
-      id: 'metabolism-calculator',
-      name: 'Calculadora de Metabolismo',
-      description: 'Analise seu metabolismo basal e taxa metabólica',
+      id: "metabolism-calculator",
+      name: "Calculadora de Metabolismo",
+      description: "Analise seu metabolismo basal e taxa metabólica",
       icon: Brain,
-      category: 'calculators',
-      href: '/tools/metabolism-calculator',
+      category: "calculators",
+      href: "/tools/metabolism-calculator",
       popular: false,
-      color: 'indigo'
+      color: "indigo",
     },
     {
-      id: 'hydration-calculator',
-      name: 'Calculadora de Hidratação',
-      description: 'Descubra quanta água você precisa beber por dia',
+      id: "hydration-calculator",
+      name: "Calculadora de Hidratação",
+      description: "Descubra quanta água você precisa beber por dia",
       icon: Droplets,
-      category: 'calculators',
-      href: '/tools/hydration-calculator',
+      category: "calculators",
+      href: "/tools/hydration-calculator",
       popular: false,
-      color: 'cyan'
+      color: "cyan",
     },
     {
-      id: 'sleep-calculator',
-      name: 'Calculadora de Sono',
-      description: 'Analise sua qualidade de sono e ciclos',
+      id: "sleep-calculator",
+      name: "Calculadora de Sono",
+      description: "Analise sua qualidade de sono e ciclos",
       icon: Moon,
-      category: 'calculators',
-      href: '/tools/sleep-calculator',
+      category: "calculators",
+      href: "/tools/sleep-calculator",
       popular: false,
-      color: 'slate'
+      color: "slate",
     },
     {
-      id: 'stress-calculator',
-      name: 'Calculadora de Estresse',
-      description: 'Avalie seu nível de estresse e bem-estar',
+      id: "stress-calculator",
+      name: "Calculadora de Estresse",
+      description: "Avalie seu nível de estresse e bem-estar",
       icon: Heart,
-      category: 'calculators',
-      href: '/tools/stress-calculator',
+      category: "calculators",
+      href: "/tools/stress-calculator",
       popular: false,
-      color: 'pink'
+      color: "pink",
     },
     {
-      id: 'biological-age-calculator',
-      name: 'Idade Biológica',
-      description: 'Descubra sua idade biológica real',
+      id: "biological-age-calculator",
+      name: "Idade Biológica",
+      description: "Descubra sua idade biológica real",
       icon: Clock,
-      category: 'calculators',
-      href: '/tools/biological-age-calculator',
+      category: "calculators",
+      href: "/tools/biological-age-calculator",
       popular: false,
-      color: 'emerald'
-    }
+      color: "emerald",
+    },
   ];
 
   const categories = [
-    { id: 'all', name: 'Todas', count: tools.length },
-    { id: 'health', name: 'Saúde', count: tools.filter(t => t.category === 'health').length },
-    { id: 'fitness', name: 'Fitness', count: tools.filter(t => t.category === 'fitness').length },
-    { id: 'calculators', name: 'Calculadoras', count: tools.filter(t => t.category === 'calculators').length }
+    { id: "all", name: "Todas", count: tools.length },
+    {
+      id: "health",
+      name: "Saúde",
+      count: tools.filter((t) => t.category === "health").length,
+    },
+    {
+      id: "fitness",
+      name: "Fitness",
+      count: tools.filter((t) => t.category === "fitness").length,
+    },
+    {
+      id: "calculators",
+      name: "Calculadoras",
+      count: tools.filter((t) => t.category === "calculators").length,
+    },
   ];
 
-  const filteredTools = tools.filter(tool => {
-    const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tool.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
+  const filteredTools = (Array.isArray(tools) ? tools : []).filter((tool) => {
+    const matchesSearch =
+      String(tool?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(tool?.description || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || tool?.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const popularTools = tools.filter(tool => tool.popular);
+  const popularTools = (Array.isArray(tools) ? tools : []).filter((tool) => tool?.popular);
 
   const getColorClasses = (color) => {
     const colorMap = {
-      blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
-      green: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400',
-      purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400',
-      orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
-      red: 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400',
-      yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400',
-      indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400',
-      cyan: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400',
-      slate: 'bg-slate-100 text-slate-600 dark:bg-slate-900/20 dark:text-slate-400',
-      pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400',
-      emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+      blue: "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+      green:
+        "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
+      purple:
+        "bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+      orange:
+        "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400",
+      red: "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
+      yellow:
+        "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400",
+      indigo:
+        "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400",
+      cyan: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400",
+      slate:
+        "bg-slate-100 text-slate-600 dark:bg-slate-900/20 dark:text-slate-400",
+      pink: "bg-pink-100 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400",
+      emerald:
+        "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
     };
-    return colorMap[color] || 'bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400';
+    return (
+      colorMap[color] ||
+      "bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400"
+    );
   };
 
   return (
@@ -210,7 +246,7 @@ const ToolsPage = () => {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name} ({category.count})
                   </option>
@@ -226,7 +262,7 @@ const ToolsPage = () => {
       </Card>
 
       {/* Popular Tools */}
-      {selectedCategory === 'all' && searchTerm === '' && (
+      {selectedCategory === "all" && searchTerm === "" && (
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Star className="w-5 h-5 text-yellow-500" />
@@ -238,14 +274,18 @@ const ToolsPage = () => {
                 <Card className="hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg ${getColorClasses(tool.color)}`}>
+                      <div
+                        className={`p-3 rounded-lg ${getColorClasses(tool.color)}`}
+                      >
                         <tool.icon className="w-6 h-6" />
                       </div>
                       <div>
                         <CardTitle className="text-lg">{tool.name}</CardTitle>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Popular</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Popular
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -266,10 +306,12 @@ const ToolsPage = () => {
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-500" />
-          {selectedCategory === 'all' ? 'Todas as Ferramentas' : 
-           categories.find(c => c.id === selectedCategory)?.name + ' - Ferramentas'}
+          {selectedCategory === "all"
+            ? "Todas as Ferramentas"
+            : categories.find((c) => c.id === selectedCategory)?.name +
+              " - Ferramentas"}
         </h2>
-        
+
         {filteredTools.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
@@ -289,7 +331,9 @@ const ToolsPage = () => {
                 <Card className="hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg ${getColorClasses(tool.color)}`}>
+                      <div
+                        className={`p-3 rounded-lg ${getColorClasses(tool.color)}`}
+                      >
                         <tool.icon className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
@@ -297,7 +341,9 @@ const ToolsPage = () => {
                         {tool.popular && (
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Popular</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Popular
+                            </span>
                           </div>
                         )}
                       </div>

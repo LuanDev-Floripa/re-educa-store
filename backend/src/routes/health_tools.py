@@ -1,5 +1,17 @@
 """
-Rotas de ferramentas de saúde RE-EDUCA Store
+Rotas de ferramentas de saúde RE-EDUCA Store.
+
+Endpoints para calculadoras e ferramentas de saúde incluindo:
+- Cálculo de IMC (público e autenticado)
+- Cálculo de calorias (TMB, TDEE)
+- Macronutrientes (proteínas, carbos, gorduras)
+- Hidratação diária
+- Idade biológica
+- Análise de sono
+- Níveis de estresse
+- Integração com APIs externas (USDA, nutrition APIs)
+
+NOTA: Alguns endpoints são públicos para atrair usuários.
 """
 from flask import Blueprint, request, jsonify
 from services.health_service import HealthService
@@ -15,7 +27,16 @@ health_service = HealthService()
 @health_tools_bp.route('/imc/calculate', methods=['POST'])
 @rate_limit("20 per hour")
 def calculate_imc_route():
-    """Calcula IMC (público - não requer autenticação)"""
+    """
+    Calcula IMC (público - não requer autenticação).
+    
+    Request Body:
+        weight (float): Peso em kg.
+        height (float): Altura em cm ou metros.
+        
+    Returns:
+        JSON: IMC, classificação, recomendações e faixa de peso ideal.
+    """
     try:
         data = request.get_json()
         # Tenta obter user_id se autenticado, mas não requer

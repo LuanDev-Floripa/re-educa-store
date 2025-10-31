@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
-import { X, ShoppingCart, Plus, Minus, Trash2, ArrowRight, PackageX } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../../hooks/useCart';
-import { Button } from '../Ui/button';
-import { Badge } from '../Ui/badge';
+import React, { useState } from "react";
+import {
+  X,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  ArrowRight,
+  PackageX,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useCart } from "../../hooks/useCart";
+import { Button } from "../Ui/button";
+import { Badge } from "../Ui/badge";
 
 /**
  * CartPopup - Mini carrinho dropdown
- * 
+ *
  * Exibe resumo do carrinho com:
  * - Lista de itens
  * - Incrementar/decrementar quantidade
@@ -25,7 +33,7 @@ export const CartPopup = ({ isOpen, onClose }) => {
     decrementItem,
     removeItem,
     getShipping,
-    getTotalWithShipping
+    getTotalWithShipping,
   } = useCart();
 
   const [removingItem, setRemovingItem] = useState(null);
@@ -45,9 +53,9 @@ export const CartPopup = ({ isOpen, onClose }) => {
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -56,23 +64,20 @@ export const CartPopup = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
 
       {/* Popup */}
       <div className="fixed right-0 top-0 h-full w-full md:w-96 bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-blue-600" />
+            <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               Meu Carrinho
             </h2>
             {itemCount > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+                {itemCount} {itemCount === 1 ? "item" : "itens"}
               </Badge>
             )}
           </div>
@@ -113,18 +118,18 @@ export const CartPopup = ({ isOpen, onClose }) => {
                 <div
                   key={item.id}
                   className={`bg-gray-50 dark:bg-gray-800 rounded-lg p-3 transition-all ${
-                    removingItem === item.id ? 'opacity-50' : ''
+                    removingItem === item.id ? "opacity-50" : ""
                   }`}
                 >
                   <div className="flex gap-3">
                     {/* Image */}
                     <div className="flex-shrink-0">
                       <img
-                        src={item.image_url || '/placeholder-product.png'}
+                        src={item.image_url || "/placeholder-product.png"}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-md bg-white"
                         onError={(e) => {
-                          e.target.src = '/placeholder-product.png';
+                          e.target.src = "/placeholder-product.png";
                         }}
                       />
                     </div>
@@ -134,7 +139,7 @@ export const CartPopup = ({ isOpen, onClose }) => {
                       <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {item.name}
                       </h4>
-                      <p className="text-sm text-blue-600 font-semibold mt-1">
+                      <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold mt-1">
                         {formatCurrency(item.price)}
                       </p>
 
@@ -154,7 +159,10 @@ export const CartPopup = ({ isOpen, onClose }) => {
 
                         <button
                           onClick={() => handleIncrement(item.id)}
-                          disabled={removingItem === item.id || item.quantity >= item.stock_quantity}
+                          disabled={
+                            removingItem === item.id ||
+                            item.quantity >= item.stock_quantity
+                          }
                           className="p-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -218,7 +226,7 @@ export const CartPopup = ({ isOpen, onClose }) => {
               <div className="text-xs text-gray-600 dark:text-gray-400">
                 Faltam {formatCurrency(200 - total)} para frete grátis
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
-                  <div 
+                  <div
                     className="bg-green-600 h-1.5 rounded-full transition-all"
                     style={{ width: `${(total / 200) * 100}%` }}
                   ></div>

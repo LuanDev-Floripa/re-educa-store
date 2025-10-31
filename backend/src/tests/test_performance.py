@@ -1,5 +1,12 @@
 """
-Testes de Performance RE-EDUCA Store
+Testes de Performance RE-EDUCA Store.
+
+Cobre métricas de performance incluindo:
+- Tempos de resposta de rotas
+- Performance de operações críticas (hash, JWT, DB)
+- Uso de recursos (CPU, memória)
+- Concorrência e escalabilidade
+- Tamanho de respostas e serialização
 """
 import pytest
 import time

@@ -1,5 +1,12 @@
 """
-Rotas de autenticação RE-EDUCA Store
+Rotas de autenticação RE-EDUCA Store.
+
+Gerencia autenticação e autorização de usuários incluindo:
+- Registro de novos usuários
+- Login e logout
+- Renovação de tokens
+- Recuperação de senha
+- Verificação de email
 """
 from flask import Blueprint, request, jsonify
 from services.auth_service import AuthService
@@ -14,7 +21,17 @@ auth_service = AuthService()
 @rate_limit("5 per minute")
 @validate_json('name', 'email', 'password')
 def register():
-    """Registra novo usuário"""
+    """
+    Registra novo usuário.
+    
+    Request Body:
+        name (str): Nome completo do usuário.
+        email (str): Email válido.
+        password (str): Senha (mínimo 8 caracteres).
+        
+    Returns:
+        JSON: Usuário criado com token de acesso ou erro.
+    """
     try:
         data = request.get_json()
         
@@ -83,7 +100,15 @@ def login():
 @rate_limit("10 per minute")
 @validate_json('refresh_token')
 def refresh_token():
-    """Renova token de acesso"""
+    """
+    Renova token de acesso.
+    
+    Request Body:
+        refresh_token (str): Token de renovação válido.
+        
+    Returns:
+        JSON: Novos tokens de acesso e renovação ou erro.
+    """
     try:
         data = request.get_json()
         refresh_token = data['refresh_token']

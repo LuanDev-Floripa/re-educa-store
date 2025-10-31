@@ -1,26 +1,41 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { AuthLayout } from '../../components/layouts/PageLayout';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import { Heart, Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+/**
+ * LoginPage
+ * - Validação com zod; fallbacks de erro; redirecionamento por role
+ */
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { AuthLayout } from "../../components/layouts/PageLayout";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import {
+  Heart,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 
 // Schema de validação
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email é obrigatório')
-    .email('Email inválido'),
+  email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
   password: z
     .string()
-    .min(1, 'Senha é obrigatória')
-    .min(6, 'Senha deve ter pelo menos 6 caracteres'),
+    .min(1, "Senha é obrigatória")
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
 });
 
 export const LoginPage = () => {
@@ -44,36 +59,44 @@ export const LoginPage = () => {
     setError(null);
 
     try {
-      const result = await login(data.email.trim().toLowerCase(), data.password);
-      
-      if (result.success && result.user) {
-        toast.success('Login realizado com sucesso!', {
+      if (typeof login !== "function") {
+        throw new Error("Serviço de login indisponível");
+      }
+      const result = await login(
+        data.email.trim().toLowerCase(),
+        data.password,
+      );
+
+      if (result?.success && result?.user) {
+        toast.success("Login realizado com sucesso!", {
           description: `Bem-vindo, ${result.user.name || result.user.email}!`,
         });
-        
+
         // Limpa o formulário
         reset();
-        
+
         // Aguarda um momento antes de redirecionar para melhor UX
         setTimeout(() => {
-          if (result.user.role === 'admin') {
-            navigate('/admin');
+          if (result.user.role === "admin") {
+            navigate("/admin");
           } else {
-            navigate('/dashboard');
+            navigate("/dashboard");
           }
         }, 500);
       } else {
-        const errorMessage = result.error || 'Erro ao fazer login. Verifique suas credenciais.';
+        const errorMessage =
+          result?.error || "Erro ao fazer login. Verifique suas credenciais.";
         setError(errorMessage);
-        toast.error('Erro no login', {
+        toast.error("Erro no login", {
           description: errorMessage,
         });
       }
     } catch (error) {
-      console.error('Erro no login:', error);
-      const errorMessage = error.message || 'Erro ao fazer login. Tente novamente.';
+      console.error("Erro no login:", error);
+      const errorMessage =
+        error?.message || "Erro ao fazer login. Tente novamente.";
       setError(errorMessage);
-      toast.error('Erro no login', {
+      toast.error("Erro no login", {
         description: errorMessage,
       });
     } finally {
@@ -102,10 +125,14 @@ export const LoginPage = () => {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             {/* Mensagem de erro geral */}
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start space-x-3">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start space-x-3" role="alert" aria-live="assertive">
                 <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
@@ -117,8 +144,8 @@ export const LoginPage = () => {
 
             {/* Email */}
             <div className="space-y-2">
-              <label 
-                htmlFor="email" 
+              <label
+                htmlFor="email"
                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Email
@@ -129,8 +156,8 @@ export const LoginPage = () => {
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  className={`pl-10 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                  {...register('email')}
+                  className={`pl-10 ${errors.email ? "border-red-500 focus:ring-red-500" : ""}`}
+                  {...register("email")}
                   disabled={isLoading}
                   autoComplete="email"
                 />
@@ -145,8 +172,8 @@ export const LoginPage = () => {
 
             {/* Password */}
             <div className="space-y-2">
-              <label 
-                htmlFor="password" 
+              <label
+                htmlFor="password"
                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Senha
@@ -155,10 +182,10 @@ export const LoginPage = () => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Sua senha"
-                  className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-                  {...register('password')}
+                  className={`pl-10 pr-10 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
+                  {...register("password")}
                   disabled={isLoading}
                   autoComplete="current-password"
                 />
@@ -167,7 +194,7 @@ export const LoginPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   disabled={isLoading}
-                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -242,7 +269,7 @@ export const LoginPage = () => {
                 type="button"
                 variant="outline"
                 className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => toast.info('Login social em desenvolvimento')}
+                onClick={() => toast.info("Login social em desenvolvimento")}
                 disabled={isLoading}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
@@ -269,11 +296,15 @@ export const LoginPage = () => {
                 type="button"
                 variant="outline"
                 className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => toast.info('Login social em desenvolvimento')}
+                onClick={() => toast.info("Login social em desenvolvimento")}
                 disabled={isLoading}
               >
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
                 </svg>
                 Twitter
               </Button>
@@ -282,7 +313,7 @@ export const LoginPage = () => {
             {/* Sign Up Link */}
             <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Não tem uma conta?{' '}
+                Não tem uma conta?{" "}
                 <Link
                   to="/register"
                   className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"

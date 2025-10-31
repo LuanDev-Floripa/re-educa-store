@@ -1,7 +1,5 @@
-import React from 'react';
+import React from "react";
 
 export const Label = ({ children, ...props }) => (
-  <label {...props}>
-    {children}
-  </label>
+  <label {...props}>{children}</label>
 );

@@ -1,63 +1,75 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Ui/card';
-import { Button } from '@/components/Ui/button';
-import { Input } from '@/components/Ui/input';
-import { Label } from '@/components/Ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/Ui/avatar';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Edit3, 
-  Save, 
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/Ui/card";
+import { Button } from "@/components/Ui/button";
+import { Input } from "@/components/Ui/input";
+import { Label } from "@/components/Ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/Ui/avatar";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Edit3,
+  Save,
   X,
   Camera,
   Shield,
   Bell,
-  Globe
-} from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth.jsx';
+  Globe,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { toast } from "sonner";
 
+/**
+ * UserProfilePage
+ * Perfil do usuário com edição local e preferências (JSDoc e fallbacks mínimos).
+ */
 const UserProfilePage = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    birthDate: user?.birthDate || '',
-    bio: user?.bio || '',
-    website: user?.website || '',
-    notifications: user?.notifications || true,
-    privacy: user?.privacy || 'public'
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    birthDate: user?.birthDate || "",
+    bio: user?.bio || "",
+    website: user?.website || "",
+    notifications: Boolean(user?.notifications ?? true),
+    privacy: user?.privacy || "public",
   });
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSave = () => {
     // Aqui você implementaria a lógica para salvar os dados
     setIsEditing(false);
+    toast.success("Perfil atualizado com sucesso");
   };
 
   const handleCancel = () => {
     setFormData({
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      address: user?.address || '',
-      birthDate: user?.birthDate || '',
-      bio: user?.bio || '',
-      website: user?.website || '',
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+      birthDate: user?.birthDate || "",
+      bio: user?.bio || "",
+      website: user?.website || "",
       notifications: user?.notifications || true,
-      privacy: user?.privacy || 'public'
+      privacy: user?.privacy || "public",
     });
     setIsEditing(false);
   };
@@ -75,7 +87,7 @@ const UserProfilePage = () => {
             Gerencie suas informações pessoais e preferências
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           {isEditing ? (
             <>
@@ -83,13 +95,20 @@ const UserProfilePage = () => {
                 <Save className="w-4 h-4" />
                 Salvar
               </Button>
-              <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="flex items-center gap-2"
+              >
                 <X className="w-4 h-4" />
                 Cancelar
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2"
+            >
               <Edit3 className="w-4 h-4" />
               Editar Perfil
             </Button>
@@ -106,7 +125,7 @@ const UserProfilePage = () => {
                 <Avatar className="w-24 h-24 mx-auto">
                   <AvatarImage src={user?.avatar} />
                   <AvatarFallback className="text-2xl">
-                    {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                    {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
                 {isEditing && (
@@ -120,11 +139,9 @@ const UserProfilePage = () => {
                 )}
               </div>
               <CardTitle className="text-xl">
-                {formData.name || 'Usuário'}
+                {formData.name || "Usuário"}
               </CardTitle>
-              <CardDescription>
-                {formData.email}
-              </CardDescription>
+              <CardDescription>{formData.email}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
@@ -132,7 +149,7 @@ const UserProfilePage = () => {
                   Membro desde {new Date().getFullYear()}
                 </p>
               </div>
-              
+
               {formData.bio && (
                 <div className="text-center">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -176,7 +193,7 @@ const UserProfilePage = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     disabled={!isEditing}
                     placeholder="Seu nome completo"
                   />
@@ -187,7 +204,7 @@ const UserProfilePage = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     disabled={!isEditing}
                     placeholder="seu@email.com"
                   />
@@ -200,7 +217,7 @@ const UserProfilePage = () => {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
                     disabled={!isEditing}
                     placeholder="(11) 99999-9999"
                   />
@@ -211,7 +228,9 @@ const UserProfilePage = () => {
                     id="birthDate"
                     type="date"
                     value={formData.birthDate}
-                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("birthDate", e.target.value)
+                    }
                     disabled={!isEditing}
                   />
                 </div>
@@ -222,7 +241,7 @@ const UserProfilePage = () => {
                 <Input
                   id="address"
                   value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   disabled={!isEditing}
                   placeholder="Seu endereço completo"
                 />
@@ -233,7 +252,7 @@ const UserProfilePage = () => {
                 <textarea
                   id="bio"
                   value={formData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
+                  onChange={(e) => handleInputChange("bio", e.target.value)}
                   disabled={!isEditing}
                   placeholder="Conte um pouco sobre você..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -246,7 +265,7 @@ const UserProfilePage = () => {
                 <Input
                   id="website"
                   value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  onChange={(e) => handleInputChange("website", e.target.value)}
                   disabled={!isEditing}
                   placeholder="https://seusite.com"
                 />
@@ -273,7 +292,9 @@ const UserProfilePage = () => {
                 <input
                   type="checkbox"
                   checked={formData.notifications}
-                  onChange={(e) => handleInputChange('notifications', e.target.checked)}
+                  onChange={(e) =>
+                    handleInputChange("notifications", e.target.checked)
+                  }
                   disabled={!isEditing}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                 />
@@ -284,7 +305,7 @@ const UserProfilePage = () => {
                 <select
                   id="privacy"
                   value={formData.privacy}
-                  onChange={(e) => handleInputChange('privacy', e.target.value)}
+                  onChange={(e) => handleInputChange("privacy", e.target.value)}
                   disabled={!isEditing}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >

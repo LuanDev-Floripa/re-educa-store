@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+/**
+ * useSocialPosts
+ * - CRUD, like/unlike/share, pagina??o e refresh com fallbacks
+ */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.topsupplementslab.com/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://api.topsupplementslab.com/api";
 
 export const useSocialPosts = () => {
   const [posts, setPosts] = useState([]);
@@ -13,38 +18,39 @@ export const useSocialPosts = () => {
   const fetchPosts = useCallback(async (pageNum = 1, filters = {}) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         page: pageNum,
         limit: 10,
-        ...filters
+        ...filters,
       });
 
       const response = await fetch(`${API_BASE_URL}/social/posts?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao carregar posts');
+        throw new Error("Erro ao carregar posts");
       }
 
       const data = await response.json();
-      
+      const list = Array.isArray(data?.posts) ? data.posts : [];
+
       if (pageNum === 1) {
-        setPosts(data.posts);
+        setPosts(list);
       } else {
-        setPosts(prev => [...prev, ...data.posts]);
+        setPosts((prev) => [...prev, ...list]);
       }
-      
-      setHasMore(data.hasMore);
+
+      setHasMore(Boolean(data?.hasMore));
       setPage(pageNum);
     } catch (err) {
       setError(err.message);
-      toast.error('Erro ao carregar posts: ' + err.message);
+      toast.error("Erro ao carregar posts: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -53,39 +59,39 @@ export const useSocialPosts = () => {
   const createPost = async (postData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const formData = new FormData();
-      formData.append('content', postData.content);
-      formData.append('type', postData.type);
-      
+      formData.append("content", postData.content);
+      formData.append("type", postData.type);
+
       if (postData.media) {
-        formData.append('media', postData.media);
+        formData.append("media", postData.media);
       }
-      
+
       if (postData.tags) {
-        formData.append('tags', JSON.stringify(postData.tags));
+        formData.append("tags", JSON.stringify(postData.tags));
       }
 
       const response = await fetch(`${API_BASE_URL}/social/posts`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao criar post');
+        throw new Error("Erro ao criar post");
       }
 
       const newPost = await response.json();
-      setPosts(prev => [newPost, ...prev]);
-      toast.success('Post criado com sucesso!');
+      setPosts((prev) => [newPost, ...prev]);
+      toast.success("Post criado com sucesso!");
       return newPost;
     } catch (err) {
       setError(err.message);
-      toast.error('Erro ao criar post: ' + err.message);
+      toast.error("Erro ao criar post: " + err.message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -95,30 +101,30 @@ export const useSocialPosts = () => {
   const updatePost = async (postId, postData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/social/posts/${postId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(postData)
+        body: JSON.stringify(postData),
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao atualizar post');
+        throw new Error("Erro ao atualizar post");
       }
 
       const updatedPost = await response.json();
-      setPosts(prev => prev.map(post => 
-        post.id === postId ? updatedPost : post
-      ));
-      toast.success('Post atualizado com sucesso!');
+      setPosts((prev) =>
+        prev.map((post) => (post.id === postId ? updatedPost : post)),
+      );
+      toast.success("Post atualizado com sucesso!");
       return updatedPost;
     } catch (err) {
       setError(err.message);
-      toast.error('Erro ao atualizar post: ' + err.message);
+      toast.error("Erro ao atualizar post: " + err.message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -128,24 +134,24 @@ export const useSocialPosts = () => {
   const deletePost = async (postId) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/social/posts/${postId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar post');
+        throw new Error("Erro ao deletar post");
       }
 
-      setPosts(prev => prev.filter(post => post.id !== postId));
-      toast.success('Post deletado com sucesso!');
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+      toast.success("Post deletado com sucesso!");
     } catch (err) {
       setError(err.message);
-      toast.error('Erro ao deletar post: ' + err.message);
+      toast.error("Erro ao deletar post: " + err.message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -154,68 +160,77 @@ export const useSocialPosts = () => {
 
   const likePost = async (postId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/social/posts/${postId}/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/social/posts/${postId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Erro ao curtir post');
+        throw new Error("Erro ao curtir post");
       }
 
       const data = await response.json();
-      setPosts(prev => prev.map(post => 
-        post.id === postId ? { ...post, ...data } : post
-      ));
+      setPosts((prev) =>
+        prev.map((post) => (post.id === postId ? { ...post, ...data } : post)),
+      );
     } catch (err) {
-      toast.error('Erro ao curtir post: ' + err.message);
+      toast.error("Erro ao curtir post: " + err.message);
     }
   };
 
   const unlikePost = async (postId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/social/posts/${postId}/unlike`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/social/posts/${postId}/unlike`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Erro ao descurtir post');
+        throw new Error("Erro ao descurtir post");
       }
 
       const data = await response.json();
-      setPosts(prev => prev.map(post => 
-        post.id === postId ? { ...post, ...data } : post
-      ));
+      setPosts((prev) =>
+        prev.map((post) => (post.id === postId ? { ...post, ...data } : post)),
+      );
     } catch (err) {
-      toast.error('Erro ao descurtir post: ' + err.message);
+      toast.error("Erro ao descurtir post: " + err.message);
     }
   };
 
   const sharePost = async (postId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/social/posts/${postId}/share`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/social/posts/${postId}/share`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Erro ao compartilhar post');
+        throw new Error("Erro ao compartilhar post");
       }
 
       const data = await response.json();
-      setPosts(prev => prev.map(post => 
-        post.id === postId ? { ...post, ...data } : post
-      ));
-      toast.success('Post compartilhado com sucesso!');
+      setPosts((prev) =>
+        prev.map((post) => (post.id === postId ? { ...post, ...data } : post)),
+      );
+      toast.success("Post compartilhado com sucesso!");
     } catch (err) {
-      toast.error('Erro ao compartilhar post: ' + err.message);
+      toast.error("Erro ao compartilhar post: " + err.message);
     }
   };
 
@@ -247,6 +262,6 @@ export const useSocialPosts = () => {
     sharePost,
     loadMore,
     refreshPosts,
-    fetchPosts
+    fetchPosts,
   };
 };
