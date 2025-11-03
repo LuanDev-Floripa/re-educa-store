@@ -486,17 +486,53 @@ export const DataExport = ({
     setIsExporting(true);
     setExportProgress(0);
 
-    // Simular progresso de exportação
-    const interval = setInterval(() => {
-      setExportProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsExporting(false);
-          return 100;
-        }
-        return prev + 10;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:9001'}/api/lgpd/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          data_types: selectedDataTypes.length === exportData.dataTypes?.length ? ['all'] : selectedDataTypes,
+          format: selectedFormat
+        })
       });
-    }, 200);
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Simular progresso
+        const interval = setInterval(() => {
+          setExportProgress((prev) => {
+            if (prev >= 100) {
+              clearInterval(interval);
+              setIsExporting(false);
+              
+              // Download do arquivo
+              const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `export-${new Date().toISOString()}.${selectedFormat}`;
+              a.click();
+              URL.revokeObjectURL(url);
+              
+              return 100;
+            }
+            return prev + 10;
+          });
+        }, 200);
+      } else {
+        alert('Erro ao exportar dados: ' + (data.error || 'Erro desconhecido'));
+        setIsExporting(false);
+      }
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      alert('Erro ao exportar dados');
+      setIsExporting(false);
+    }
 
     if (onExportData) {
       onExportData(selectedDataTypes, selectedFormat);

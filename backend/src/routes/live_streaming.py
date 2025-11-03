@@ -24,12 +24,12 @@ live_streaming_service = LiveStreamingService()
 def get_streams():
     """
     Lista todos os streams ativos.
-    
+
     Query Parameters:
         category (str): Filtrar por categoria.
         limit (int): Limite de resultados (padrão: 20).
         offset (int): Offset para paginação (padrão: 0).
-        
+
     Returns:
         JSON: Lista de streams ativos ou erro.
     """
@@ -37,13 +37,13 @@ def get_streams():
         category = request.args.get('category')
         limit = int(request.args.get('limit', 20))
         offset = int(request.args.get('offset', 0))
-        
+
         streams = live_streaming_service.get_streams(
             category=category,
             limit=limit,
             offset=offset
         )
-        
+
         return jsonify({
             'success': True,
             'streams': streams,
@@ -62,20 +62,20 @@ def get_streams():
 def start_stream():
     """
     Inicia uma nova transmissão ao vivo.
-    
+
     Request Body:
         title (str): Título do stream (obrigatório).
         category (str): Categoria (obrigatório).
         description (str): Descrição opcional.
         tags (list): Tags opcionais.
-        
+
     Returns:
         JSON: Stream criado com detalhes ou erro.
     """
     try:
         user_id = request.current_user.get('id')
         data = request.get_json()
-        
+
         required_fields = ['title', 'category']
         for field in required_fields:
             if field not in data:
@@ -83,7 +83,7 @@ def start_stream():
                     'success': False,
                     'message': f'Campo obrigatório: {field}'
                 }), 400
-        
+
         stream = live_streaming_service.start_stream(
             user_id=user_id,
             title=data['title'],
@@ -91,7 +91,7 @@ def start_stream():
             description=data.get('description', ''),
             tags=data.get('tags', [])
         )
-        
+
         return jsonify({
             'success': True,
             'stream': stream,
@@ -110,27 +110,27 @@ def start_stream():
 def end_stream(stream_id):
     """
     Encerra uma transmissão ao vivo.
-    
+
     Args:
         stream_id (int): ID do stream.
-        
+
     Returns:
         JSON: Confirmação de encerramento ou erro 404.
     """
     try:
         user_id = request.current_user.get('id')
-        
+
         success = live_streaming_service.end_stream(
             stream_id=stream_id,
             user_id=user_id
         )
-        
+
         if not success:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado ou não autorizado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'message': 'Stream encerrado com sucesso'
@@ -149,18 +149,18 @@ def join_stream(stream_id):
     """Join a live stream"""
     try:
         user_id = request.current_user.get('id')
-        
+
         stream = live_streaming_service.join_stream(
             stream_id=stream_id,
             user_id=user_id
         )
-        
+
         if not stream:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'stream': stream,
@@ -180,18 +180,18 @@ def leave_stream(stream_id):
     """Leave a live stream"""
     try:
         user_id = request.current_user.get('id')
-        
+
         success = live_streaming_service.leave_stream(
             stream_id=stream_id,
             user_id=user_id
         )
-        
+
         if not success:
             return jsonify({
                 'success': False,
                 'message': 'Erro ao sair do stream'
             }), 400
-        
+
         return jsonify({
             'success': True,
             'message': 'Saiu do stream com sucesso'
@@ -211,25 +211,25 @@ def send_message(stream_id):
     try:
         user_id = request.current_user.get('id')
         data = request.get_json()
-        
+
         if 'message' not in data:
             return jsonify({
                 'success': False,
                 'message': 'Mensagem é obrigatória'
             }), 400
-        
+
         message = live_streaming_service.send_message(
             stream_id=stream_id,
             user_id=user_id,
             message=data['message']
         )
-        
+
         if not message:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'message': message
@@ -249,7 +249,7 @@ def send_gift(stream_id):
     try:
         user_id = request.current_user.get('id')
         data = request.get_json()
-        
+
         required_fields = ['gift_id', 'gift_name', 'gift_cost']
         for field in required_fields:
             if field not in data:
@@ -257,7 +257,7 @@ def send_gift(stream_id):
                     'success': False,
                     'message': f'Campo obrigatório: {field}'
                 }), 400
-        
+
         gift = live_streaming_service.send_gift(
             stream_id=stream_id,
             user_id=user_id,
@@ -265,13 +265,13 @@ def send_gift(stream_id):
             gift_name=data['gift_name'],
             gift_cost=data['gift_cost']
         )
-        
+
         if not gift:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'gift': gift
@@ -291,25 +291,25 @@ def report_stream(stream_id):
     try:
         user_id = request.current_user.get('id')
         data = request.get_json()
-        
+
         if 'reason' not in data:
             return jsonify({
                 'success': False,
                 'message': 'Motivo é obrigatório'
             }), 400
-        
+
         success = live_streaming_service.report_stream(
             stream_id=stream_id,
             user_id=user_id,
             reason=data['reason']
         )
-        
+
         if not success:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'message': 'Stream reportado com sucesso'
@@ -328,13 +328,13 @@ def get_stream_stats(stream_id):
     """Get stream statistics"""
     try:
         stats = live_streaming_service.get_stream_stats(stream_id)
-        
+
         if not stats:
             return jsonify({
                 'success': False,
                 'message': 'Stream não encontrado'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'stats': stats

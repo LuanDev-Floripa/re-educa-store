@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useApi, apiService } from "../../lib/api";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -81,200 +83,41 @@ export const CouponSystem = ({
 
   const currentUserProfile = { ...defaultUserProfile, ...userProfile };
 
-  // Dados de cupons de exemplo
-  const couponData = {
-    available: [
-      {
-        id: 1,
-        code: "WELCOME10",
-        name: "Bem-vindo",
-        description: "10% de desconto na primeira compra",
-        type: "percentage",
-        value: 10,
-        minOrderValue: 100,
-        maxDiscount: 50,
-        validFrom: "2024-01-01",
-        validUntil: "2024-12-31",
-        usageLimit: 1000,
-        usedCount: 234,
-        isActive: true,
-        category: "welcome",
-        icon: Gift,
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-        borderColor: "border-green-200",
-        requirements: ["Primeira compra"],
-        exclusions: ["Produtos em promoção"],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-      },
-      {
-        id: 2,
-        code: "FREESHIP",
-        name: "Frete Grátis",
-        description: "Frete grátis em pedidos acima de R$ 150",
-        type: "shipping",
-        value: 0,
-        minOrderValue: 150,
-        maxDiscount: 0,
-        validFrom: "2024-01-01",
-        validUntil: "2024-12-31",
-        usageLimit: 500,
-        usedCount: 89,
-        isActive: true,
-        category: "shipping",
-        icon: Truck,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-200",
-        requirements: ["Pedido mínimo R$ 150"],
-        exclusions: ["Frete expresso"],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-      },
-      {
-        id: 3,
-        code: "SUPPLY20",
-        name: "Suplementos",
-        description: "20% de desconto em suplementos",
-        type: "percentage",
-        value: 20,
-        minOrderValue: 200,
-        maxDiscount: 100,
-        validFrom: "2024-01-01",
-        validUntil: "2024-06-30",
-        usageLimit: 200,
-        usedCount: 45,
-        isActive: true,
-        category: "category",
-        icon: Package,
-        color: "text-purple-600",
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-200",
-        requirements: ["Pedido mínimo R$ 200"],
-        exclusions: ["Produtos em promoção"],
-        applicableProducts: ["all"],
-        applicableCategories: ["Suplementos"],
-      },
-      {
-        id: 4,
-        code: "GOLD15",
-        name: "Membro Gold",
-        description: "15% de desconto exclusivo para membros Gold",
-        type: "percentage",
-        value: 15,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        validFrom: "2024-01-01",
-        validUntil: "2024-12-31",
-        usageLimit: 0,
-        usedCount: 12,
-        isActive: true,
-        category: "loyalty",
-        icon: Crown,
-        color: "text-yellow-600",
-        bgColor: "bg-yellow-50",
-        borderColor: "border-yellow-200",
-        requirements: ["Membro Gold"],
-        exclusions: ["Produtos em promoção"],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-      },
-      {
-        id: 5,
-        code: "FLASH50",
-        name: "Flash Sale",
-        description: "R$ 50 de desconto em pedidos acima de R$ 300",
-        type: "fixed",
-        value: 50,
-        minOrderValue: 300,
-        maxDiscount: 50,
-        validFrom: "2024-01-15",
-        validUntil: "2024-01-20",
-        usageLimit: 100,
-        usedCount: 67,
-        isActive: true,
-        category: "flash",
-        icon: Zap,
-        color: "text-red-600",
-        bgColor: "bg-red-50",
-        borderColor: "border-red-200",
-        requirements: ["Pedido mínimo R$ 300"],
-        exclusions: ["Produtos em promoção"],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-      },
-    ],
-    userCoupons: [
-      {
-        id: 6,
-        code: "PERSONAL10",
-        name: "Cupom Pessoal",
-        description: "10% de desconto pessoal",
-        type: "percentage",
-        value: 10,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        validFrom: "2024-01-01",
-        validUntil: "2024-12-31",
-        usageLimit: 1,
-        usedCount: 0,
-        isActive: true,
-        category: "personal",
-        icon: Star,
-        color: "text-indigo-600",
-        bgColor: "bg-indigo-50",
-        borderColor: "border-indigo-200",
-        requirements: [],
-        exclusions: [],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-        isUsed: false,
-        usedAt: null,
-      },
-    ],
-    expired: [
-      {
-        id: 7,
-        code: "NEWYEAR2023",
-        name: "Ano Novo 2023",
-        description: "15% de desconto no Ano Novo",
-        type: "percentage",
-        value: 15,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        validFrom: "2023-12-31",
-        validUntil: "2024-01-05",
-        usageLimit: 500,
-        usedCount: 500,
-        isActive: false,
-        category: "seasonal",
-        icon: Calendar,
-        color: "text-gray-600",
-        bgColor: "bg-gray-50",
-        borderColor: "border-gray-200",
-        requirements: [],
-        exclusions: [],
-        applicableProducts: ["all"],
-        applicableCategories: ["all"],
-      },
-    ],
-  };
-
   useEffect(() => {
     loadCoupons();
-  }, [loadCoupons]);
+  }, []);
 
   const loadCoupons = useCallback(async () => {
     setLoading(true);
-
-    // Simular carregamento de API
-    setTimeout(() => {
-      setCoupons(couponData.available);
-      setUserCoupons(couponData.userCoupons);
+    
+    try {
+      // Buscar cupons disponíveis do backend
+      const response = await request(() =>
+        apiService.request('/coupons/available')
+      );
+      
+      if (response.success) {
+        setCoupons(response.available || []);
+        setUserCoupons(response.userCoupons || []);
+        setExpiredCoupons(response.expired || []);
+      } else {
+        toast.error("Erro ao carregar cupons");
+        // Fallback para listas vazias
+        setCoupons([]);
+        setUserCoupons([]);
+        setExpiredCoupons([]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar cupons:", error);
+      toast.error("Erro ao carregar cupons. Tente novamente.");
+      // Fallback para listas vazias
+      setCoupons([]);
+      setUserCoupons([]);
+      setExpiredCoupons([]);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [couponData.available, couponData.userCoupons]);
+    }
+  }, [request]);
 
   const handleApplyCoupon = (coupon) => {
     if (onApplyCoupon) {

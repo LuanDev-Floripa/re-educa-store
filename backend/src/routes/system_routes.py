@@ -24,15 +24,15 @@ system_bp = Blueprint('system', __name__, url_prefix='/api/system')
 def health_check():
     """
     Health check do sistema.
-    
+
     Verifica status de todos os serviços e dependências.
-    
+
     Returns:
         JSON: Status geral do sistema (healthy/warning/unhealthy).
     """
     try:
         health_status = integration_service.health_check()
-        
+
         # Determinar código de status HTTP
         if health_status['overall'] == 'healthy':
             status_code = 200
@@ -40,12 +40,12 @@ def health_check():
             status_code = 200  # Ainda funcional
         else:
             status_code = 503  # Service Unavailable
-        
+
         return jsonify({
             'success': True,
             'data': health_status
         }), status_code
-        
+
     except Exception as e:
         logger.error(f"Erro no health check: {e}")
         return jsonify({
@@ -59,28 +59,28 @@ def health_check():
 def get_system_stats():
     """
     Obtém estatísticas do sistema (requer autenticação).
-    
+
     Retorna métricas gerais do sistema incluindo:
     - Número de usuários
     - Estatísticas de uso
     - Status de serviços
-    
+
     Returns:
         JSON: Estatísticas do sistema.
     """
     try:
         user_id = request.current_user.get('id')
-        
+
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
-        
+
         stats = integration_service.get_system_stats()
-        
+
         return jsonify({
             'success': True,
             'data': stats
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao obter estatísticas: {e}")
         return jsonify({
@@ -95,10 +95,10 @@ def clear_cache():
     """Limpa cache do sistema (requer autenticação)"""
     try:
         user_id = request.current_user.get('id')
-        
+
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
-        
+
         if integration_service.cache.is_available():
             integration_service.cache.flush_all()
             return jsonify({
@@ -110,7 +110,7 @@ def clear_cache():
                 'success': False,
                 'error': 'Cache não disponível'
             }), 503
-            
+
     except Exception as e:
         logger.error(f"Erro ao limpar cache: {e}")
         return jsonify({
@@ -125,12 +125,12 @@ def setup_storage():
     """Configura storage do sistema (requer autenticação)"""
     try:
         user_id = request.current_user.get('id')
-        
+
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
-        
+
         success = integration_service.video_upload.create_bucket_if_not_exists()
-        
+
         if success:
             return jsonify({
                 'success': True,
@@ -141,7 +141,7 @@ def setup_storage():
                 'success': False,
                 'error': 'Erro ao configurar storage'
             }), 500
-            
+
     except Exception as e:
         logger.error(f"Erro ao configurar storage: {e}")
         return jsonify({
@@ -155,26 +155,26 @@ def setup_storage():
 def cleanup_system():
     """
     Limpa recursos do sistema (requer autenticação).
-    
+
     Executa limpeza de recursos temporários e dados obsoletos
     para otimizar performance do sistema.
-    
+
     Returns:
         JSON: Confirmação de limpeza completa.
     """
     try:
         user_id = request.current_user.get('id')
-        
+
         # Aqui você poderia verificar se o usuário é admin
         # Por enquanto, permitimos para qualquer usuário autenticado
-        
+
         integration_service.cleanup_resources()
-        
+
         return jsonify({
             'success': True,
             'message': 'Sistema limpo com sucesso'
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao limpar sistema: {e}")
         return jsonify({

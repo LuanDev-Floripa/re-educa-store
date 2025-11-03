@@ -14,18 +14,19 @@ import os
 import logging
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
+
 
 class LocalDatabase:
     """
     Cliente para banco de dados PostgreSQL local.
-    
+
     Attributes:
         connection_params (dict): Parâmetros de conexão.
     """
-    
+
     def __init__(self):
         """Inicializa o cliente de banco de dados local."""
         self.connection_params = {
@@ -36,14 +37,14 @@ class LocalDatabase:
             'password': os.environ.get('POSTGRES_PASSWORD', 're_educa_password')
         }
         self._connection = None
-    
+
     def get_connection(self):
         """
         Retorna conexão com o banco de dados.
-        
+
         Returns:
             psycopg2.connection: Conexão ativa com PostgreSQL.
-            
+
         Raises:
             Exception: Se falhar ao conectar.
         """
@@ -55,7 +56,7 @@ class LocalDatabase:
                 logger.error(f"Erro ao conectar com PostgreSQL: {str(e)}")
                 raise
         return self._connection
-    
+
     def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
         """Executa uma query SELECT e retorna os resultados"""
         try:
@@ -66,7 +67,7 @@ class LocalDatabase:
         except Exception as e:
             logger.error(f"Erro ao executar query: {str(e)}")
             raise
-    
+
     def execute_insert(self, query: str, params: tuple = None) -> int:
         """Executa uma query INSERT e retorna o ID inserido"""
         try:
@@ -79,7 +80,7 @@ class LocalDatabase:
             logger.error(f"Erro ao executar insert: {str(e)}")
             conn.rollback()
             raise
-    
+
     def execute_update(self, query: str, params: tuple = None) -> int:
         """Executa uma query UPDATE e retorna o número de linhas afetadas"""
         try:
@@ -92,7 +93,7 @@ class LocalDatabase:
             logger.error(f"Erro ao executar update: {str(e)}")
             conn.rollback()
             raise
-    
+
     def execute_delete(self, query: str, params: tuple = None) -> int:
         """Executa uma query DELETE e retorna o número de linhas afetadas"""
         try:
@@ -105,15 +106,18 @@ class LocalDatabase:
             logger.error(f"Erro ao executar delete: {str(e)}")
             conn.rollback()
             raise
-    
+
     def close(self):
         """Fecha a conexão com o banco de dados"""
         if self._connection and not self._connection.closed:
             self._connection.close()
             logger.info("Conexão com PostgreSQL fechada")
 
+
 # Instância global do banco de dados
+
 _local_db = None
+
 
 def get_local_db() -> LocalDatabase:
     """Retorna instância do banco de dados local"""
@@ -121,6 +125,7 @@ def get_local_db() -> LocalDatabase:
     if _local_db is None:
         _local_db = LocalDatabase()
     return _local_db
+
 
 def test_connection() -> bool:
     """Testa conexão com o banco de dados"""
@@ -131,6 +136,7 @@ def test_connection() -> bool:
     except Exception as e:
         logger.error(f"Erro na conexão com banco: {str(e)}")
         return False
+
 
 def get_connection_info() -> dict:
     """Retorna informações da conexão (sem dados sensíveis)"""

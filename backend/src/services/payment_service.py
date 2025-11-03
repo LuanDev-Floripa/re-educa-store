@@ -13,42 +13,50 @@ import stripe
 import requests
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-from config.database import supabase_client
+from datetime import datetime
+# ✅ REMOVIDO: from config.database import supabase_client (não usado mais)
 from decimal import Decimal
 
-logger = logging.getLogger(__name__)
 
 class PaymentService:
+    """
+    Service de Pagamentos RE-EDUCA Store.
+
+    CORRIGIDO: Agora usa SubscriptionService e OrderService para acesso a dados.
+    """
     def __init__(self):
-        self.supabase = supabase_client
-        
+        # ✅ CORRIGIDO: self.supabase removido (não é mais usado)
+        # Todos os acessos ao banco agora são via SubscriptionService e OrderService
+
+        # Logger próprio
+        self.logger = logging.getLogger(__name__)
+
         # Configuração Stripe
         stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
         self.stripe_public_key = os.environ.get('STRIPE_PUBLIC_KEY')
-        
+
         # Configuração PagSeguro
         self.pagseguro_email = os.environ.get('PAGSEGURO_EMAIL')
         self.pagseguro_token = os.environ.get('PAGSEGURO_TOKEN')
         self.pagseguro_sandbox = os.environ.get('PAGSEGURO_SANDBOX', 'true').lower() == 'true'
-        
+
         # URLs PagSeguro
         if self.pagseguro_sandbox:
             self.pagseguro_url = 'https://ws.sandbox.pagseguro.uol.com.br'
         else:
             self.pagseguro_url = 'https://ws.pagseguro.uol.com.br'
-    
+
     # ================================
     # STRIPE
     # ================================
-    
+
     def create_stripe_customer(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Cria cliente no Stripe.
-        
+
         Args:
             user_data (Dict[str, Any]): Dados do usuário com email, name e id.
-            
+
         Returns:
             Dict[str, Any]: Resultado com success e customer_id ou erro.
         """
@@ -61,28 +69,28 @@ class PaymentService:
                     'subscription_plan': user_data.get('subscription_plan', 'free')
                 }
             )
-            
+
             return {
                 'success': True,
                 'customer_id': customer.id,
                 'customer': customer
             }
-            
+
         except stripe.error.StripeError as e:
-            logger.error(f"Erro ao criar cliente Stripe: {str(e)}")
+            self.logger.error(f"Erro ao criar cliente Stripe: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
-    def create_stripe_payment_intent(self, amount: float, currency: str = 'brl', 
+
+    def create_stripe_payment_intent(self, amount: float, currency: str = 'brl',
                                    customer_id: str = None, metadata: Dict = None) -> Dict[str, Any]:
         """
         Cria Payment Intent no Stripe para processar pagamento.
-        
+
         Args:
             amount (float): Valor em reais.
             currency (str): Moeda (padrão: 'brl').
             customer_id (str, optional): ID do cliente Stripe.
             metadata (Dict, optional): Metadados adicionais.
-            
+
         Returns:
             Dict[str, Any]: Resultado com client_secret e payment_intent_id ou erro.
         """
@@ -95,23 +103,23 @@ class PaymentService:
                 },
                 'metadata': metadata or {}
             }
-            
+
             if customer_id:
                 intent_data['customer'] = customer_id
-            
+
             payment_intent = stripe.PaymentIntent.create(**intent_data)
-            
+
             return {
                 'success': True,
                 'client_secret': payment_intent.client_secret,
                 'payment_intent_id': payment_intent.id
             }
-            
+
         except stripe.error.StripeError as e:
-            logger.error(f"Erro ao criar Payment Intent: {str(e)}")
+            self.logger.error(f"Erro ao criar Payment Intent: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
-    def create_stripe_subscription(self, customer_id: str, price_id: str, 
+
+    def create_stripe_subscription(self, customer_id: str, price_id: str,
                                  trial_period_days: int = None) -> Dict[str, Any]:
         """Cria assinatura no Stripe"""
         try:
@@ -122,28 +130,28 @@ class PaymentService:
                 'payment_settings': {'save_default_payment_method': 'on_subscription'},
                 'expand': ['latest_invoice.payment_intent'],
             }
-            
+
             if trial_period_days:
                 subscription_data['trial_period_days'] = trial_period_days
-            
+
             subscription = stripe.Subscription.create(**subscription_data)
-            
+
             return {
                 'success': True,
                 'subscription_id': subscription.id,
                 'client_secret': subscription.latest_invoice.payment_intent.client_secret
             }
-            
+
         except stripe.error.StripeError as e:
-            logger.error(f"Erro ao criar assinatura Stripe: {str(e)}")
+            self.logger.error(f"Erro ao criar assinatura Stripe: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def handle_stripe_webhook(self, payload: str, signature: str) -> Dict[str, Any]:
         """Processa webhook do Stripe"""
         try:
             webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
             event = stripe.Webhook.construct_event(payload, signature, webhook_secret)
-            
+
             if event['type'] == 'payment_intent.succeeded':
                 return self._handle_payment_success(event['data']['object'])
             elif event['type'] == 'payment_intent.payment_failed':
@@ -154,20 +162,20 @@ class PaymentService:
                 return self._handle_subscription_updated(event['data']['object'])
             elif event['type'] == 'customer.subscription.deleted':
                 return self._handle_subscription_cancelled(event['data']['object'])
-            
+
             return {'success': True, 'message': 'Evento processado'}
-            
+
         except stripe.error.SignatureVerificationError:
-            logger.error("Webhook Stripe: Assinatura inválida")
+            self.logger.error("Webhook Stripe: Assinatura inválida")
             return {'success': False, 'error': 'Assinatura inválida'}
         except Exception as e:
-            logger.error(f"Erro ao processar webhook Stripe: {str(e)}")
+            self.logger.error(f"Erro ao processar webhook Stripe: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     # ================================
     # PAGSEGURO
     # ================================
-    
+
     def create_pagseguro_payment(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
         """Cria pagamento no PagSeguro"""
         try:
@@ -180,19 +188,19 @@ class PaymentService:
                 'notificationURL': f"{os.environ.get('BACKEND_URL')}/api/payments/pagseguro/notification",
                 'redirectURL': f"{os.environ.get('FRONTEND_URL')}/payment/success",
             }
-            
+
             # Adiciona itens
             for i, item in enumerate(order_data['items']):
                 payment_data[f'itemId{i+1}'] = item['id']
                 payment_data[f'itemDescription{i+1}'] = item['name']
                 payment_data[f'itemAmount{i+1}'] = f"{item['price']:.2f}"
                 payment_data[f'itemQuantity{i+1}'] = item['quantity']
-            
+
             # Dados do comprador
             payment_data['senderName'] = order_data['customer']['name']
             payment_data['senderEmail'] = order_data['customer']['email']
             payment_data['senderPhone'] = order_data['customer']['phone']
-            
+
             # Endereço
             if 'address' in order_data:
                 address = order_data['address']
@@ -204,19 +212,19 @@ class PaymentService:
                 payment_data['shippingAddressCity'] = address['city']
                 payment_data['shippingAddressState'] = address['state']
                 payment_data['shippingAddressCountry'] = 'BRA'
-            
+
             # Envia requisição
             response = requests.post(
                 f"{self.pagseguro_url}/v2/checkout",
                 data=payment_data,
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
-            
+
             if response.status_code == 200:
                 # Parse XML response
                 import xml.etree.ElementTree as ET
                 root = ET.fromstring(response.text)
-                
+
                 if root.tag == 'checkout':
                     code = root.find('code').text
                     return {
@@ -229,11 +237,11 @@ class PaymentService:
                     return {'success': False, 'error': error}
             else:
                 return {'success': False, 'error': f'Erro HTTP: {response.status_code}'}
-                
+
         except Exception as e:
-            logger.error(f"Erro ao criar pagamento PagSeguro: {str(e)}")
+            self.logger.error(f"Erro ao criar pagamento PagSeguro: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def handle_pagseguro_notification(self, notification_code: str, notification_type: str) -> Dict[str, Any]:
         """Processa notificação do PagSeguro"""
         try:
@@ -245,27 +253,27 @@ class PaymentService:
                     'token': self.pagseguro_token
                 }
             )
-            
+
             if response.status_code == 200:
                 import xml.etree.ElementTree as ET
                 root = ET.fromstring(response.text)
-                
+
                 transaction_id = root.find('code').text
                 status = root.find('status').text
                 reference = root.find('reference').text
-                
+
                 return self._update_payment_status(reference, status, 'pagseguro', transaction_id)
             else:
                 return {'success': False, 'error': f'Erro ao buscar transação: {response.status_code}'}
-                
+
         except Exception as e:
-            logger.error(f"Erro ao processar notificação PagSeguro: {str(e)}")
+            self.logger.error(f"Erro ao processar notificação PagSeguro: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     # ================================
     # MÉTODOS AUXILIARES
     # ================================
-    
+
     def _handle_payment_success(self, payment_intent: Dict) -> Dict[str, Any]:
         """Processa pagamento bem-sucedido"""
         try:
@@ -274,75 +282,197 @@ class PaymentService:
                 return self._update_payment_status(order_id, 'completed', 'stripe', payment_intent['id'])
             return {'success': True}
         except Exception as e:
-            logger.error(f"Erro ao processar pagamento bem-sucedido: {str(e)}")
+            self.logger.error(f"Erro ao processar pagamento bem-sucedido: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
-    def _handle_payment_failed(self, payment_intent: Dict) -> Dict[str, Any]:
-        """Processa pagamento falhado"""
-        try:
-            order_id = payment_intent.get('metadata', {}).get('order_id')
-            if order_id:
-                return self._update_payment_status(order_id, 'failed', 'stripe', payment_intent['id'])
-            return {'success': True}
-        except Exception as e:
-            logger.error(f"Erro ao processar pagamento falhado: {str(e)}")
-            return {'success': False, 'error': str(e)}
-    
+
     def _handle_subscription_payment(self, invoice: Dict) -> Dict[str, Any]:
-        """Processa pagamento de assinatura"""
+        """
+        Processa pagamento de assinatura.
+
+        CORRIGIDO: Agora usa SubscriptionService em vez de query direta.
+        """
         try:
             subscription_id = invoice['subscription']
             customer_id = invoice['customer']
-            
+
             # Busca dados da assinatura
             subscription = stripe.Subscription.retrieve(subscription_id)
-            
-            # Atualiza status da assinatura no banco
-            self.supabase.table('subscriptions').update({
+
+            # ✅ CORRIGIDO: Usa SubscriptionService em vez de query direta
+            from services.subscription_service import SubscriptionService
+            subscription_service = SubscriptionService()
+
+            update_data = {
                 'status': subscription['status'],
                 'current_period_end': datetime.fromtimestamp(subscription['current_period_end']).isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }).eq('stripe_subscription_id', subscription_id).execute()
-            
-            return {'success': True}
+                'updated_at': datetime.utcnow().isoformat()
+            }
+
+            result = subscription_service.update_subscription_by_stripe_id(subscription_id, update_data)
+
+            if result.get('success'):
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', 'Erro ao atualizar assinatura')}
         except Exception as e:
-            logger.error(f"Erro ao processar pagamento de assinatura: {str(e)}")
+            self.logger.error(f"Erro ao processar pagamento de assinatura: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def _handle_subscription_updated(self, subscription: Dict) -> Dict[str, Any]:
-        """Processa atualização de assinatura"""
+        """
+        Processa atualização de assinatura.
+
+        CORRIGIDO: Agora usa SubscriptionService em vez de query direta.
+        """
         try:
             subscription_id = subscription['id']
             status = subscription['status']
-            
-            # Atualiza status no banco
-            self.supabase.table('subscriptions').update({
-                'status': status,
-                'updated_at': datetime.now().isoformat()
-            }).eq('stripe_subscription_id', subscription_id).execute()
-            
-            return {'success': True}
+
+            # ✅ CORRIGIDO: Usa SubscriptionService em vez de query direta
+            from services.subscription_service import SubscriptionService
+            subscription_service = SubscriptionService()
+
+            result = subscription_service.update_subscription_status(subscription_id, status)
+
+            if result.get('success'):
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', 'Erro ao atualizar assinatura')}
         except Exception as e:
-            logger.error(f"Erro ao atualizar assinatura: {str(e)}")
+            self.logger.error(f"Erro ao atualizar assinatura: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def _handle_subscription_cancelled(self, subscription: Dict) -> Dict[str, Any]:
-        """Processa cancelamento de assinatura"""
+        """
+        Processa cancelamento de assinatura.
+
+        CORRIGIDO: Agora usa SubscriptionService em vez de query direta.
+        """
         try:
             subscription_id = subscription['id']
-            
-            # Atualiza status no banco
-            self.supabase.table('subscriptions').update({
-                'status': 'cancelled',
-                'cancelled_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }).eq('stripe_subscription_id', subscription_id).execute()
-            
+
+            # ✅ CORRIGIDO: Usa SubscriptionService em vez de query direta
+            from services.subscription_service import SubscriptionService
+            subscription_service = SubscriptionService()
+
+            additional_data = {
+                'cancelled_at': datetime.utcnow().isoformat()
+            }
+
+            result = subscription_service.update_subscription_status(
+                subscription_id,
+                'cancelled',
+                additional_data=additional_data
+            )
+
+            if result.get('success'):
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', 'Erro ao cancelar assinatura')}
+        except Exception as e:
+            self.logger.error(f"Erro ao cancelar assinatura: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def handle_stripe_webhook_event(self, event_type: str, event_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Processa eventos de webhook do Stripe.
+
+        Args:
+            event_type: Tipo do evento (payment_intent.succeeded, etc.)
+            event_data: Dados do evento
+
+        Returns:
+            Dict com success ou error
+        """
+        try:
+            if event_type == 'payment_intent.succeeded':
+                return self._handle_payment_succeeded(event_data)
+            elif event_type == 'payment_intent.payment_failed':
+                return self._handle_payment_failed(event_data)
+            elif event_type == 'charge.succeeded':
+                return self._handle_charge_succeeded(event_data)
+            elif event_type == 'charge.failed':
+                return self._handle_charge_failed(event_data)
+            elif event_type == 'subscription.updated':
+                return self._handle_subscription_updated(event_data)
+            elif event_type == 'subscription.deleted':
+                return self._handle_subscription_cancelled(event_data)
+            else:
+                self.logger.info(f"Evento Stripe não processado: {event_type}")
+                return {'success': True, 'message': 'Evento ignorado'}
+        except Exception as e:
+            self.logger.error(f"Erro ao processar webhook Stripe: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def _handle_payment_succeeded(self, payment_intent: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Processa pagamento bem-sucedido.
+
+        CORRIGIDO: Agora usa OrderService em vez de acessar banco diretamente.
+        """
+        try:
+            order_id = payment_intent.get('metadata', {}).get('order_id')
+            user_id = payment_intent.get('metadata', {}).get('user_id')
+
+            if order_id:
+                # ✅ Usa OrderService para atualizar status
+                from services.order_service import OrderService
+                order_service = OrderService()
+
+                result = order_service.update_order_status(
+                    order_id=order_id,
+                    status='paid',
+                    transaction_id=payment_intent.get('id')
+                )
+
+                if result.get('success'):
+                    self.logger.info(f"Pedido {order_id} pago com sucesso via Stripe")
+                else:
+                    self.logger.warning(f"Erro ao atualizar status do pedido {order_id}: {result.get('error')}")
+
             return {'success': True}
         except Exception as e:
-            logger.error(f"Erro ao cancelar assinatura: {str(e)}")
+            self.logger.error(f"Erro ao processar pagamento bem-sucedido: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
+    def _handle_payment_failed(self, payment_intent: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Processa falha de pagamento.
+
+        CORRIGIDO: Agora usa OrderService em vez de acessar banco diretamente.
+        """
+        try:
+            order_id = payment_intent.get('metadata', {}).get('order_id')
+
+            if order_id:
+                # ✅ Usa OrderService para atualizar status
+                from services.order_service import OrderService
+                order_service = OrderService()
+
+                result = order_service.update_order_status(
+                    order_id=order_id,
+                    status='failed'
+                )
+
+                if result.get('success'):
+                    self.logger.warning(f"Falha no pagamento do pedido {order_id}")
+                else:
+                    self.logger.warning(f"Erro ao atualizar status do pedido {order_id}: {result.get('error')}")
+
+            return {'success': True}
+        except Exception as e:
+            self.logger.error(f"Erro ao processar falha de pagamento: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def _handle_charge_succeeded(self, charge: Dict[str, Any]) -> Dict[str, Any]:
+        """Processa cobrança bem-sucedida"""
+        # Similar a payment_intent.succeeded, mas para charges diretos
+        return self._handle_payment_succeeded(charge)
+
+    def _handle_charge_failed(self, charge: Dict[str, Any]) -> Dict[str, Any]:
+        """Processa falha de cobrança"""
+        return self._handle_payment_failed(charge)
+
     def _update_payment_status(self, order_id: str, status: str, provider: str, transaction_id: str) -> Dict[str, Any]:
         """Atualiza status do pagamento no banco"""
         try:
@@ -357,29 +487,32 @@ class PaymentService:
                 '6': 'failed',  # PagSeguro: Devolvida
                 '7': 'failed',  # PagSeguro: Cancelada
             }
-            
+
             db_status = status_map.get(status, 'pending')
-            
-            # Atualiza pedido
-            self.supabase.table('orders').update({
-                'payment_status': db_status,
-                'payment_provider': provider,
-                'payment_transaction_id': transaction_id,
-                'updated_at': datetime.now().isoformat()
-            }).eq('id', order_id).execute()
-            
-            # Se pago, atualiza status do pedido
-            if db_status == 'paid':
-                self.supabase.table('orders').update({
-                    'status': 'processing',
-                    'paid_at': datetime.now().isoformat()
-                }).eq('id', order_id).execute()
-            
-            return {'success': True}
+
+            # ✅ CORRIGIDO: Usa OrderService em vez de query direta
+            from services.order_service import OrderService
+            order_service = OrderService()
+
+            # Se pago, atualiza status do pedido também
+            order_status = 'processing' if db_status == 'paid' else None
+
+            result = order_service.update_order_payment_status(
+                order_id=order_id,
+                payment_status=db_status,
+                provider=provider,
+                transaction_id=transaction_id,
+                order_status=order_status
+            )
+
+            if result.get('success'):
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', 'Erro ao atualizar status')}
         except Exception as e:
-            logger.error(f"Erro ao atualizar status do pagamento: {str(e)}")
+            self.logger.error(f"Erro ao atualizar status do pagamento: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def get_payment_methods(self) -> Dict[str, Any]:
         """Retorna métodos de pagamento disponíveis"""
         return {

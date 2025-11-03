@@ -259,13 +259,8 @@ export const HydrationCalculator = () => {
         "Auxilia na função renal",
       ];
 
-      // Recomendações personalizadas
-      const recommendations = generateRecommendations(
-        healthConditions,
-        pregnancy,
-        breastfeeding,
-        exerciseDuration ? parseFloat(exerciseDuration) : 0,
-      );
+      // Recomendações vêm do backend (lógica centralizada)
+      const recommendations = response.recommendations || [];
 
       setResults({
         totalIntake,
@@ -283,7 +278,7 @@ export const HydrationCalculator = () => {
           : 0,
         dehydrationSigns,
         benefits,
-        recommendations,
+        recommendations, // Vem do backend
         saved: response.saved,
       });
 
@@ -295,75 +290,7 @@ export const HydrationCalculator = () => {
     }
   };
 
-  const generateRecommendations = (
-    conditions,
-    pregnancy,
-    breastfeeding,
-    exerciseDuration,
-  ) => {
-    const recommendations = [];
-
-    if (conditions.includes("diabetes")) {
-      recommendations.push({
-        type: "warning",
-        title: "Diabetes",
-        message:
-          "Monitore a glicemia e beba água regularmente para evitar picos de açúcar no sangue",
-      });
-    }
-
-    if (conditions.includes("kidney_disease")) {
-      recommendations.push({
-        type: "error",
-        title: "Doença Renal",
-        message:
-          "Consulte seu médico para determinar a quantidade ideal de líquidos",
-      });
-    }
-
-    if (conditions.includes("heart_disease")) {
-      recommendations.push({
-        type: "warning",
-        title: "Doença Cardíaca",
-        message: "Evite excesso de líquidos e monitore a pressão arterial",
-      });
-    }
-
-    if (pregnancy) {
-      recommendations.push({
-        type: "info",
-        title: "Gravidez",
-        message:
-          "Aumente a ingestão de água para apoiar o desenvolvimento do bebê e prevenir infecções urinárias",
-      });
-    }
-
-    if (breastfeeding) {
-      recommendations.push({
-        type: "info",
-        title: "Amamentação",
-        message:
-          "Beba água antes, durante e após cada mamada para manter a produção de leite",
-      });
-    }
-
-    if (exerciseDuration > 60) {
-      recommendations.push({
-        type: "info",
-        title: "Exercício Prolongado",
-        message:
-          "Considere bebidas isotônicas para repor eletrólitos perdidos no suor",
-      });
-    }
-
-    recommendations.push({
-      type: "success",
-      title: "Dica Geral",
-      message: "Beba água ao longo do dia, não apenas quando sentir sede",
-    });
-
-    return recommendations;
-  };
+  // Função removida - recomendações agora vêm do backend
 
   const addIntake = (amount) => {
     setCurrentIntake((prev) => Math.min(prev + amount, dailyIntake));

@@ -8,57 +8,107 @@ Gerencia operações administrativas incluindo:
 - Relatórios e métricas
 """
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 from datetime import datetime, timedelta
 from config.database import supabase_client
+from repositories.user_repository import UserRepository
+from repositories.product_repository import ProductRepository
+from repositories.order_repository import OrderRepository
 
 logger = logging.getLogger(__name__)
+
 
 class AdminService:
     """
     Service para operações administrativas.
-    
+
     Centraliza lógica de negócio para painel administrativo.
     """
-    
+
     def __init__(self):
         """Inicializa o serviço administrativo."""
         self.supabase = supabase_client
-    
+        self.user_repo = UserRepository()
+        self.product_repo = ProductRepository()
+        self.order_repo = OrderRepository()
+
     def get_dashboard_stats(self) -> Dict[str, Any]:
         """
         Retorna estatísticas do dashboard admin.
-        
+
         Returns:
             Dict[str, Any]: Métricas de usuários, produtos, pedidos e receita.
         """
         try:
-            # Buscar totais
-            users_result = self.supabase.table('users').select('id, is_active, created_at').execute()
-            products_result = self.supabase.table('products').select('id, is_active').execute()
-            orders_result = self.supabase.table('orders').select('id, status, total, created_at').execute()
+            # ✅ CORRIGIDO: Usa repositórios
+            # Buscar todos os usuários (apenas campos necessários)
+            all_users = self.user_repo.find_all(
+                order_by='created_at',
+                desc=True
+            )
             
+            # Buscar todos os produtos
+            all_products = self.product_repo.find_all(
+                order_by='created_at',
+                desc=True
+            )
+            
+            # Buscar todos os pedidos
+            all_orders = self.order_repo.find_all(
+                order_by='created_at',
+                desc=True
+            )
+
             # Calcular métricas
-            total_users = len(users_result.data) if users_result.data else 0
-            active_users = len([u for u in users_result.data if u.get('is_active')]) if users_result.data else 0
-            new_users_today = len([u for u in users_result.data if u.get('created_at', '').startswith(datetime.now().strftime('%Y-%m-%d'))]) if users_result.data else 0
-            
-            total_products = len(products_result.data) if products_result.data else 0
-            active_products = len([p for p in products_result.data if p.get('is_active')]) if products_result.data else 0
-            
-            total_orders = len(orders_result.data) if orders_result.data else 0
-            pending_orders = len([o for o in orders_result.data if o.get('status') == 'pending']) if orders_result.data else 0
-            completed_orders = len([o for o in orders_result.data if o.get('status') in ['paid', 'completed']]) if orders_result.data else 0
-            
+            total_users = len(all_users) if all_users else 0
+            active_users = (
+                len([u for u in all_users if u.get('is_active')])
+                if all_users else 0
+            )
+            today_str = datetime.now().strftime('%Y-%m-%d')
+            new_users_today = (
+                len([
+                    u for u in all_users
+                    if u.get('created_at', '').startswith(today_str)
+                ]) if all_users else 0
+            )
+
+            total_products = len(all_products) if all_products else 0
+            active_products = (
+                len([p for p in all_products if p.get('is_active')]) if all_products else 0
+            )
+
+            total_orders = len(all_orders) if all_orders else 0
+            pending_orders = (
+                len([o for o in all_orders if o.get('status') == 'pending'])
+                if all_orders else 0
+            )
+            completed_orders = (
+                len([o for o in all_orders if o.get('status') in ['paid', 'completed']])
+                if all_orders else 0
+            )
+
             # Revenue
             today = datetime.now().strftime('%Y-%m-%d')
-            today_orders = [o for o in orders_result.data if o.get('created_at', '').startswith(today)] if orders_result.data else []
-            today_revenue = sum(o.get('total', 0) for o in today_orders if o.get('status') in ['paid', 'completed'])
-            
+            today_orders = (
+                [o for o in all_orders if o.get('created_at', '').startswith(today)]
+                if all_orders else []
+            )
+            today_revenue = sum(
+                o.get('total', 0) for o in today_orders
+                if o.get('status') in ['paid', 'completed']
+            )
+
             month_start = datetime.now().replace(day=1).strftime('%Y-%m-%d')
-            month_orders = [o for o in orders_result.data if o.get('created_at', '') >= month_start] if orders_result.data else []
-            month_revenue = sum(o.get('total', 0) for o in month_orders if o.get('status') in ['paid', 'completed'])
-            
+            month_orders = (
+                [o for o in all_orders if o.get('created_at', '') >= month_start]
+                if all_orders else []
+            )
+            month_revenue = sum(
+                o.get('total', 0) for o in month_orders
+                if o.get('status') in ['paid', 'completed']
+            )
+
             return {
                 'users': {
                     'total': total_users,
@@ -91,72 +141,75 @@ class AdminService:
                 'revenue': {'today': 0, 'month': 0, 'growth': 0},
                 'recent_activity': []
             }
-    
+
     def get_all_users(self, page: int = 1, per_page: int = 20, search: str = None) -> Dict[str, Any]:
         """Retorna todos os usuários"""
         try:
-            query = self.supabase.table('users').select('*')
-            
+            # ✅ CORRIGIDO: Usa UserRepository
             if search:
-                # Para busca, usar filtro ilike em name (pode ser estendido para email)
-                query = query.ilike('name', f"%{search}%")
-            
-            result = query.order('created_at', desc=True).execute()
-            
-            if result.data:
-                # Paginação manual
-                start = (page - 1) * per_page
-                end = start + per_page
-                paginated_data = result.data[start:end]
-                
+                search_result = self.user_repo.search(search, page=page, per_page=per_page)
                 return {
-                    'users': paginated_data,
-                    'pagination': {
-                        'page': page,
-                        'per_page': per_page,
-                        'total': len(result.data),
-                        'pages': (len(result.data) + per_page - 1) // per_page
-                    }
-                }
-            else:
-                return {
-                    'users': [],
-                    'pagination': {
+                    'users': search_result.get('users', []),
+                    'pagination': search_result.get('pagination', {
                         'page': page,
                         'per_page': per_page,
                         'total': 0,
                         'pages': 0
+                    })
+                }
+            else:
+                users = self.user_repo.find_all(
+                    limit=per_page,
+                    offset=(page - 1) * per_page,
+                    order_by='created_at',
+                    desc=True
+                )
+                total = self.user_repo.count()
+
+                return {
+                    'users': users or [],
+                    'pagination': {
+                        'page': page,
+                        'per_page': per_page,
+                        'total': total,
+                        'pages': (total + per_page - 1) // per_page if total > 0 else 0
                     }
                 }
-                
+
         except Exception as e:
             logger.error(f"Erro ao buscar usuários: {str(e)}")
             return {'error': 'Erro interno do servidor'}
-    
+
     def get_analytics(self, period_days: int = 30) -> Dict[str, Any]:
         """Retorna analytics gerais"""
         try:
             end_date = datetime.now()
             start_date = end_date - timedelta(days=period_days)
-            
+
+            # ✅ CORRIGIDO: Usa repositórios
             # Busca dados do período
-            users_result = self.supabase.table('users')\
-                .select('created_at')\
-                .gte('created_at', start_date.isoformat())\
-                .lte('created_at', end_date.isoformat())\
-                .execute()
+            # Para users: filtrar por data
+            all_users = self.user_repo.find_all()
+            period_users = [
+                u for u in all_users
+                if start_date.isoformat() <= u.get('created_at', '') <= end_date.isoformat()
+            ] if all_users else []
             
-            orders_result = self.supabase.table('orders')\
-                .select('total, status')\
-                .gte('created_at', start_date.isoformat())\
-                .lte('created_at', end_date.isoformat())\
-                .execute()
-            
+            # Para orders: usar OrderRepository
+            all_orders = self.order_repo.find_all()
+            period_orders = [
+                o for o in all_orders
+                if start_date.isoformat() <= o.get('created_at', '') <= end_date.isoformat()
+            ] if all_orders else []
+
             # Calcula métricas
-            total_users = len(users_result.data)
-            total_orders = len(orders_result.data)
-            total_revenue = sum(order.get('total', 0) for order in orders_result.data if order.get('status') == 'paid')
-            
+            total_users = len(period_users)
+            total_orders = len(period_orders)
+            total_revenue = sum(
+                order.get('total', 0) for order in period_orders
+                if order.get('status') == 'paid'
+            )
+
             return {
                 'period': {
                     'start_date': start_date.isoformat(),
@@ -170,47 +223,38 @@ class AdminService:
                     'average_order_value': total_revenue / total_orders if total_orders > 0 else 0
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar analytics: {str(e)}")
             return {'error': 'Erro interno do servidor'}
-    
+
     def get_all_orders(self, page: int = 1, per_page: int = 20, status: str = None) -> Dict[str, Any]:
         """Retorna todos os pedidos"""
         try:
-            query = self.supabase.table('orders').select('*, users(name, email)')
-            
+            # ✅ CORRIGIDO: Usa OrderRepository
+            filters = {}
             if status:
-                query = query.eq('status', status)
+                filters['status'] = status
+
+            # Usa método que inclui informações de usuário
+            orders = self.order_repo.get_orders_with_user_info(
+                filters=filters,
+                limit=per_page,
+                offset=(page - 1) * per_page
+            )
             
-            result = query.order('created_at', desc=True).execute()
-            
-            if result.data:
-                # Paginação manual
-                start = (page - 1) * per_page
-                end = start + per_page
-                paginated_data = result.data[start:end]
-                
-                return {
-                    'orders': paginated_data,
-                    'pagination': {
-                        'page': page,
-                        'per_page': per_page,
-                        'total': len(result.data),
-                        'pages': (len(result.data) + per_page - 1) // per_page
-                    }
+            total = self.order_repo.count(filters=filters)
+
+            return {
+                'orders': orders or [],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'pages': (total + per_page - 1) // per_page if total > 0 else 0
                 }
-            else:
-                return {
-                    'orders': [],
-                    'pagination': {
-                        'page': page,
-                        'per_page': per_page,
-                        'total': 0,
-                        'pages': 0
-                    }
-                }
-                
+            }
+
         except Exception as e:
             logger.error(f"Erro ao buscar pedidos: {str(e)}")
             return {'error': 'Erro interno do servidor'}

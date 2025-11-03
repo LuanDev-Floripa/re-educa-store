@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/Ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Ui/card";
 import { Badge } from "@/components/Ui/badge";
 import {
@@ -21,6 +20,33 @@ import ImageAnalysis from "@/components/ai/ImageAnalysis";
  */
 const AIPage = () => {
   const [activeTab, setActiveTab] = useState("recommendations");
+
+  const tabs = [
+    {
+      id: "recommendations",
+      label: "Recomendações",
+      icon: Brain,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      borderColor: "border-blue-500",
+    },
+    {
+      id: "chat",
+      label: "Chat",
+      icon: MessageSquare,
+      color: "text-green-600",
+      bgColor: "bg-green-50 dark:bg-green-900/20",
+      borderColor: "border-green-500",
+    },
+    {
+      id: "analysis",
+      label: "Análise",
+      icon: ImageIcon,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      borderColor: "border-purple-500",
+    },
+  ];
 
   const aiFeatures = [
     {
@@ -100,42 +126,83 @@ const AIPage = () => {
         })}
       </div>
 
-      {/* Main Content */}
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="space-y-6"
-      >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger
-            value="recommendations"
-            className="flex items-center gap-2"
-          >
-            <Brain className="w-4 h-4" />
-            Recomendações
-          </TabsTrigger>
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            Chat
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4" />
-            Análise
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Content - Tabs com Barra Superior */}
+      <Card className="overflow-hidden">
+        {/* Barra de Abas Superior */}
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center gap-1 px-4">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    relative flex items-center gap-2 px-6 py-4 font-medium text-sm transition-all duration-200
+                    ${
+                      isActive
+                        ? `text-gray-900 dark:text-white ${tab.color}`
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }
+                  `}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? tab.color : ""}`} />
+                  <span>{tab.label}</span>
+                  {isActive && (
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 h-0.5 ${tab.bgColor.replace(
+                        "50",
+                        "500"
+                      )} ${tab.borderColor.replace("border", "bg")}`}
+                      style={{
+                        backgroundColor:
+                          isActive && tab.id === "recommendations"
+                            ? "rgb(37 99 235)"
+                            : isActive && tab.id === "chat"
+                            ? "rgb(22 163 74)"
+                            : "rgb(147 51 234)",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        <TabsContent value="recommendations">
-          <RecommendationsPanel />
-        </TabsContent>
+        {/* Conteúdo das Abas - Janelas Internas */}
+        <CardContent className="p-0">
+          <div className="relative min-h-[600px]">
+            {/* Janela de Recomendações */}
+            {activeTab === "recommendations" && (
+              <div className="animate-in fade-in-50 duration-300">
+                <div className="p-6">
+                  <RecommendationsPanel />
+                </div>
+              </div>
+            )}
 
-        <TabsContent value="chat">
-          <AIChat />
-        </TabsContent>
+            {/* Janela de Chat */}
+            {activeTab === "chat" && (
+              <div className="animate-in fade-in-50 duration-300">
+                <div className="p-6">
+                  <AIChat />
+                </div>
+              </div>
+            )}
 
-        <TabsContent value="analysis">
-          <ImageAnalysis />
-        </TabsContent>
-      </Tabs>
+            {/* Janela de Análise */}
+            {activeTab === "analysis" && (
+              <div className="animate-in fade-in-50 duration-300">
+                <div className="p-6">
+                  <ImageAnalysis />
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* AI Stats */}
       <Card>

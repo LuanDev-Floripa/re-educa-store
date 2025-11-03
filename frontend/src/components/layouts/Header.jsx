@@ -21,15 +21,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/Ui/button";
 import { useAuth } from "../../hooks/useAuth.jsx";
 // import CartButton from "../cart/CartButton"; // Substituído por UnifiedAIAssistant
-import IMCCalculatorPopup from "../tools/IMCCalculatorPopup";
-import { Heart, User, Menu, X, Bell, Calculator } from "lucide-react";
+import { Heart, User, Menu, X, Bell } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export const Header = ({ onMenuClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   const navigation = [
     { name: "Início", href: "/" },
@@ -48,19 +46,8 @@ export const Header = ({ onMenuClick }) => {
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
-          {/* Left side - Calculator and Logo */}
+          {/* Left side - Logo */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Calculator Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCalculatorOpen(true)}
-              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-              title="Calculadora de IMC"
-            >
-              <Calculator className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-1 sm:space-x-2">
               <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
@@ -251,12 +238,6 @@ export const Header = ({ onMenuClick }) => {
           </div>
         )}
       </div>
-
-      {/* IMC Calculator Popup */}
-      <IMCCalculatorPopup
-        isOpen={isCalculatorOpen}
-        onClose={() => setIsCalculatorOpen(false)}
-      />
     </header>
   );
 };

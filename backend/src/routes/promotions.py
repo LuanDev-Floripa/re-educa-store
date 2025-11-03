@@ -9,7 +9,8 @@ Gerencia promoções e cupons de desconto incluindo:
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from services.promotion_service import PromotionService
-from utils.decorators import token_required, admin_required, rate_limit, validate_json
+from utils.decorators import token_required, admin_required, validate_json
+from utils.rate_limit_helper import rate_limit
 from middleware.logging import log_user_activity, log_security_event
 
 promotions_bp = Blueprint('promotions', __name__)
@@ -25,17 +26,17 @@ def get_coupons():
         is_active = request.args.get('is_active')
         if is_active is not None:
             is_active = is_active.lower() == 'true'
-        
+
         page = int(request.args.get('page', 1))
         limit = min(int(request.args.get('limit', 20)), 100)
-        
+
         result = promotion_service.get_coupons(is_active=is_active, page=page, limit=limit)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         log_security_event('coupons_list_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -49,9 +50,9 @@ def create_coupon():
     """Cria um novo cupom (admin only)"""
     try:
         data = request.get_json()
-        
+
         result = promotion_service.create_coupon(data)
-        
+
         if result.get('success'):
             log_user_activity(request.current_user['id'], 'coupon_created', {
                 'coupon_code': result['coupon']['code'],
@@ -60,7 +61,7 @@ def create_coupon():
             return jsonify(result), 201
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         log_security_event('coupon_creation_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -77,14 +78,14 @@ def validate_coupon():
         user_id = request.current_user['id']
         order_value = float(data['order_value'])
         product_ids = data.get('product_ids', [])
-        
+
         result = promotion_service.validate_coupon(code, user_id, order_value, product_ids)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except ValueError:
         return jsonify({'error': 'Valor do pedido deve ser um número'}), 400
     except Exception as e:
@@ -103,9 +104,9 @@ def apply_coupon():
         user_id = request.current_user['id']
         order_id = data['order_id']
         order_value = float(data['order_value'])
-        
+
         result = promotion_service.apply_coupon(code, user_id, order_id, order_value)
-        
+
         if result.get('success'):
             log_user_activity(user_id, 'coupon_applied', {
                 'coupon_code': code,
@@ -115,7 +116,7 @@ def apply_coupon():
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except ValueError:
         return jsonify({'error': 'Valor do pedido deve ser um número'}), 400
     except Exception as e:
@@ -130,12 +131,12 @@ def get_coupon_stats(coupon_id):
     """Retorna estatísticas de uso de um cupom (admin only)"""
     try:
         result = promotion_service.get_coupon_usage_stats(coupon_id)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         log_security_event('coupon_stats_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -150,17 +151,17 @@ def get_promotions():
         is_active = request.args.get('is_active')
         if is_active is not None:
             is_active = is_active.lower() == 'true'
-        
+
         page = int(request.args.get('page', 1))
         limit = min(int(request.args.get('limit', 20)), 100)
-        
+
         result = promotion_service.get_promotions(is_active=is_active, page=page, limit=limit)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         log_security_event('promotions_list_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -174,9 +175,9 @@ def create_promotion():
     """Cria uma nova promoção (admin only)"""
     try:
         data = request.get_json()
-        
+
         result = promotion_service.create_promotion(data)
-        
+
         if result.get('success'):
             log_user_activity(request.current_user['id'], 'promotion_created', {
                 'promotion_name': result['promotion']['name'],
@@ -185,7 +186,7 @@ def create_promotion():
             return jsonify(result), 201
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         log_security_event('promotion_creation_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -200,14 +201,14 @@ def get_applicable_promotions():
         data = request.get_json()
         order_value = float(data['order_value'])
         product_ids = data.get('product_ids', [])
-        
+
         result = promotion_service.get_applicable_promotions(order_value, product_ids)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except ValueError:
         return jsonify({'error': 'Valor do pedido deve ser um número'}), 400
     except Exception as e:
@@ -222,35 +223,32 @@ def update_coupon(coupon_id):
     """Atualiza um cupom (admin only)"""
     try:
         data = request.get_json()
-        
-        # Busca cupom existente
-        coupon_result = promotion_service.supabase.table('coupons').select('*').eq('id', coupon_id).execute()
-        
-        if not coupon_result.data:
+
+        # ✅ CORRIGIDO: Usa CouponRepository via service
+        coupon = promotion_service.coupon_repo.find_by_id(coupon_id)
+
+        if not coupon:
             return jsonify({'error': 'Cupom não encontrado'}), 404
-        
+
         # Atualiza dados
         update_data = {
             'updated_at': datetime.now().isoformat()
         }
-        
+
         allowed_fields = ['name', 'description', 'is_active', 'valid_until', 'usage_limit', 'usage_limit_per_user']
         for field in allowed_fields:
             if field in data:
                 update_data[field] = data[field]
-        
-        # Atualiza no banco
-        result = promotion_service.supabase.table('coupons').update(update_data).eq('id', coupon_id).execute()
-        
-        if result.data:
+
+        if updated_coupon:
             log_user_activity(request.current_user['id'], 'coupon_updated', {
                 'coupon_id': coupon_id,
                 'updated_fields': list(update_data.keys())
             })
-            return jsonify({'success': True, 'coupon': result.data[0]}), 200
+            return jsonify({'success': True, 'coupon': updated_coupon}), 200
         else:
             return jsonify({'error': 'Erro ao atualizar cupom'}), 500
-            
+
     except Exception as e:
         log_security_event('coupon_update_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -263,26 +261,27 @@ def update_promotion(promotion_id):
     """Atualiza uma promoção (admin only)"""
     try:
         data = request.get_json()
-        
-        # Busca promoção existente
+
+        # ✅ CORRIGIDO: Busca promoção (promoções ainda usam queries diretas, pode ser melhorado depois)
+        # Por enquanto mantém query direta para promotions (não há PromotionRepository ainda)
         promotion_result = promotion_service.supabase.table('promotions').select('*').eq('id', promotion_id).execute()
-        
+
         if not promotion_result.data:
             return jsonify({'error': 'Promoção não encontrada'}), 404
-        
+
         # Atualiza dados
         update_data = {
             'updated_at': datetime.now().isoformat()
         }
-        
+
         allowed_fields = ['name', 'description', 'is_active', 'valid_until', 'priority']
         for field in allowed_fields:
             if field in data:
                 update_data[field] = data[field]
-        
-        # Atualiza no banco
+
+        # Atualiza no banco (promoções ainda direto)
         result = promotion_service.supabase.table('promotions').update(update_data).eq('id', promotion_id).execute()
-        
+
         if result.data:
             log_user_activity(request.current_user['id'], 'promotion_updated', {
                 'promotion_id': promotion_id,
@@ -291,7 +290,7 @@ def update_promotion(promotion_id):
             return jsonify({'success': True, 'promotion': result.data[0]}), 200
         else:
             return jsonify({'error': 'Erro ao atualizar promoção'}), 500
-            
+
     except Exception as e:
         log_security_event('promotion_update_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -303,22 +302,25 @@ def update_promotion(promotion_id):
 def delete_coupon(coupon_id):
     """Deleta um cupom (admin only)"""
     try:
-        # Verifica se cupom existe
-        coupon_result = promotion_service.supabase.table('coupons').select('*').eq('id', coupon_id).execute()
-        
-        if not coupon_result.data:
+        # ✅ CORRIGIDO: Usa CouponRepository
+        coupon = promotion_service.coupon_repo.find_by_id(coupon_id)
+
+        if not coupon:
             return jsonify({'error': 'Cupom não encontrado'}), 404
-        
+
         # Deleta cupom
-        promotion_service.supabase.table('coupons').delete().eq('id', coupon_id).execute()
-        
+        success = promotion_service.coupon_repo.delete(coupon_id)
+
+        if not success:
+            return jsonify({'error': 'Erro ao deletar cupom'}), 500
+
         log_user_activity(request.current_user['id'], 'coupon_deleted', {
             'coupon_id': coupon_id,
-            'coupon_code': coupon_result.data[0]['code']
+            'coupon_code': coupon.get('code', '')
         })
-        
+
         return jsonify({'success': True, 'message': 'Cupom deletado com sucesso'}), 200
-        
+
     except Exception as e:
         log_security_event('coupon_deletion_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500
@@ -332,20 +334,20 @@ def delete_promotion(promotion_id):
     try:
         # Verifica se promoção existe
         promotion_result = promotion_service.supabase.table('promotions').select('*').eq('id', promotion_id).execute()
-        
+
         if not promotion_result.data:
             return jsonify({'error': 'Promoção não encontrada'}), 404
-        
+
         # Deleta promoção
         promotion_service.supabase.table('promotions').delete().eq('id', promotion_id).execute()
-        
+
         log_user_activity(request.current_user['id'], 'promotion_deleted', {
             'promotion_id': promotion_id,
             'promotion_name': promotion_result.data[0]['name']
         })
-        
+
         return jsonify({'success': True, 'message': 'Promoção deletada com sucesso'}), 200
-        
+
     except Exception as e:
         log_security_event('promotion_deletion_error', details={'error': str(e)})
         return jsonify({'error': 'Erro interno do servidor'}), 500

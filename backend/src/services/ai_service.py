@@ -8,25 +8,33 @@ Gerencia interações com IA incluindo:
 - Histórico de conversas
 - Fallback para indisponibilidade
 """
-import logging
-import re
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime
-from config.database import supabase_client
+from services.base_service import BaseService
+from services.user_service import UserService
+from services.health_service import HealthService
+from services.order_service import OrderService
+from services.exercise_service import ExerciseService
 
-logger = logging.getLogger(__name__)
 
-class AIService:
-    """Service para operações de IA e chat inteligente."""
-    
+class AIService(BaseService):
+    """
+    Service para operações de IA e chat inteligente.
+
+    CORRIGIDO: Agora usa outros services para buscar contexto.
+    """
+
     def __init__(self):
         """Inicializa o serviço de IA."""
-        self.logger = logger
-        self.supabase = supabase_client
-        
+        super().__init__()
+        self.user_service = UserService()
+        self.health_service = HealthService()
+        self.order_service = OrderService()
+        self.exercise_service = ExerciseService()
+
     def process_chat_message(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         message: str,
         agent_type: str = 'platform_concierge',
         user_context: Optional[Dict[str, Any]] = None,
@@ -34,14 +42,14 @@ class AIService:
     ) -> Dict[str, Any]:
         """
         Processa mensagem do chat com IA preditiva usando contexto do usuário.
-        
+
         Args:
             user_id (str): ID do usuário.
             message (str): Mensagem do usuário.
             agent_type (str): Tipo de agente (platform_concierge, dr_nutri, coach_fit, etc.)
             user_context (dict, opcional): Dados do usuário (perfil, saúde, atividades, etc.)
             context_summary (str, opcional): Resumo textual do contexto do usuário
-            
+
         Returns:
             Dict[str, Any]: Resposta da IA com success e data ou erro.
         """
@@ -49,59 +57,68 @@ class AIService:
             # Buscar contexto do usuário se não foi fornecido
             if user_context is None:
                 user_context = self._get_user_context(user_id)
-            
+
             # Analisa a intenção da mensagem
             intent = self._analyze_intent(message, user_context)
-            
+
             # Gera resposta baseada na intenção e contexto do usuário
             response = self._generate_response(
-                user_id=user_id, 
-                message=message, 
+                user_id=user_id,
+                message=message,
                 intent=intent,
                 agent_type=agent_type,
                 user_context=user_context,
                 context_summary=context_summary
             )
-            
+
             # Salva a conversa no histórico
             self._save_chat_message(
-                user_id, 
-                message, 
+                user_id,
+                message,
                 response['response'],
                 agent_type=agent_type,
                 intent=intent
             )
-            
+
             return {
                 'success': True,
                 'data': response
             }
-            
+
         except Exception as e:
             self.logger.error(f"Erro ao processar mensagem: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def _analyze_intent(self, message: str, user_context: Optional[Dict[str, Any]] = None) -> str:
         """
         Analisa a intenção da mensagem do usuário com base no contexto.
-        
+
         Args:
             message (str): Mensagem do usuário
             user_context (dict, opcional): Contexto do usuário para melhor análise
-            
+
         Returns:
             str: Tipo de intenção identificada
         """
         message_lower = message.lower()
-        
+
         # Padrões de intenção melhorados com contexto
         if any(word in message_lower for word in ['imc', 'peso', 'altura', 'massa corporal', 'calcular imc']):
             return 'imc_calculation'
-        elif any(word in message_lower for word in ['exercício', 'treino', 'musculação', 'cardio', 'treinar', 'academia']):
+        elif any(word in message_lower for word in [
+                'exercício', 'treino', 'musculação', 'cardio',
+                'treinar', 'academia'
+            ]):
             return 'exercise_recommendation'
-        elif any(word in message_lower for word in ['alimentação', 'comida', 'nutrição', 'dieta', 'calorias', 'refeição']):
+        elif any(word in message_lower for word in [
+                'alimentação', 'comida', 'nutrição', 'dieta',
+                'calorias', 'refeição'
+            ]):
             return 'nutrition_advice'
-        elif any(word in message_lower for word in ['produto', 'comprar', 'loja', 'suplemento', 'produtos recomendados']):
+        elif any(word in message_lower for word in [
+                'produto', 'comprar', 'loja', 'suplemento',
+                'produtos recomendados'
+            ]):
             return 'product_recommendation'
         elif any(word in message_lower for word in ['saúde', 'bem-estar', 'fitness', 'progresso', 'resultados']):
             return 'health_advice'
@@ -113,42 +130,53 @@ class AIService:
             return 'progress_inquiry'
         else:
             return 'general'
-    
+
     def _get_user_context(self, user_id: str) -> Dict[str, Any]:
         """
         Busca contexto completo do usuário para IA preditiva.
-        
+
+        CORRIGIDO: Agora usa outros services em vez de queries diretas.
+
         Args:
             user_id (str): ID do usuário
-            
+
         Returns:
             dict: Contexto do usuário (perfil, saúde, atividades, etc.)
         """
         try:
-            # Buscar dados do usuário
-            profile_result = self.supabase.table('users').select('*').eq('id', user_id).single().execute()
-            profile = profile_result.data if profile_result.data else {}
-            
-            # Buscar dados de saúde
-            health_result = self.supabase.table('user_health_data').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(1).execute()
-            health = health_result.data[0] if health_result.data else {}
-            
-            # Buscar atividades recentes
-            activities_result = self.supabase.table('user_activities').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(10).execute()
-            activities = activities_result.data if activities_result.data else []
-            
-            # Buscar compras recentes
-            purchases_result = self.supabase.table('orders').select('*, order_items(*, products(*))').eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
-            purchases = purchases_result.data if purchases_result.data else []
-            
-            # Buscar objetivos
-            goals_result = self.supabase.table('user_goals').select('*').eq('user_id', user_id).eq('is_active', True).execute()
-            goals = goals_result.data if goals_result.data else []
-            
-            # Buscar treinos recentes
-            workouts_result = self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
-            workouts = workouts_result.data if workouts_result.data else []
-            
+            # ✅ CORRIGIDO: Busca dados do usuário via UserService
+            profile = self.user_service.get_user_by_id(user_id) or {}
+
+            # ✅ CORRIGIDO: Buscar dados de saúde via HealthService
+            health_analytics = self.health_service.get_health_analytics(user_id, period_days=30)
+            health = health_analytics.get('health', {}) if health_analytics else {}
+
+            # ✅ CORRIGIDO: Buscar atividades recentes via UserService
+            activities_result = self.user_service.get_user_activities(user_id, page=1, per_page=10)
+            activities = activities_result.get('activities', []) if activities_result else []
+
+            # ✅ CORRIGIDO: Buscar compras via OrderService
+            orders_result = self.order_service.get_user_orders(user_id, page=1, per_page=5)
+            purchases = orders_result.get('orders', []) if orders_result else []
+
+            # ✅ CORRIGIDO: Buscar objetivos via GoalRepository
+            try:
+                from repositories.goal_repository import GoalRepository
+                goal_repo = GoalRepository()
+                goals = goal_repo.find_active_by_user(user_id)
+            except Exception as e:
+                self.logger.warning(f"Erro ao buscar goals: {e}")
+                goals = []
+
+            # ✅ CORRIGIDO: Buscar treinos via WorkoutRepository
+            try:
+                from repositories.workout_repository import WorkoutRepository
+                workout_repo = WorkoutRepository()
+                workouts = workout_repo.find_recent(user_id, limit=5)
+            except Exception as e:
+                self.logger.warning(f"Erro ao buscar workouts: {e}")
+                workouts = []
+
             return {
                 'profile': profile,
                 'health': health,
@@ -157,15 +185,15 @@ class AIService:
                 'goals': goals,
                 'workouts': workouts,
             }
-            
+
         except Exception as e:
             self.logger.error(f"Erro ao buscar contexto do usuário: {str(e)}")
             return {}
-    
+
     def _generate_response(
-        self, 
-        user_id: str, 
-        message: str, 
+        self,
+        user_id: str,
+        message: str,
         intent: str,
         agent_type: str = 'platform_concierge',
         user_context: Optional[Dict[str, Any]] = None,
@@ -173,7 +201,7 @@ class AIService:
     ) -> Dict[str, Any]:
         """
         Gera resposta baseada na intenção e contexto do usuário para IA preditiva.
-        
+
         Args:
             user_id (str): ID do usuário
             message (str): Mensagem do usuário
@@ -181,31 +209,48 @@ class AIService:
             agent_type (str): Tipo de agente
             user_context (dict, opcional): Contexto do usuário
             context_summary (str, opcional): Resumo textual do contexto
-            
+
         Returns:
             dict: Resposta da IA com sugestões e tópicos relacionados
         """
-        
+
         # Respostas preditivas baseadas em contexto do usuário
         if intent == 'imc_calculation':
             health = user_context.get('health', {}) if user_context else {}
             profile = user_context.get('profile', {}) if user_context else {}
-            
+
             bmi = health.get('bmi')
             height = health.get('height') or profile.get('height')
             weight = health.get('weight') or profile.get('weight')
-            
+
             if bmi:
                 bmi_category = health.get('bmi_category', '')
                 if bmi < 18.5:
-                    response_text = f"Vejo que seu IMC atual é {bmi:.1f} (abaixo do peso). Para ganhar peso de forma saudável, recomendo uma alimentação balanceada rica em proteínas e carboidratos complexos, combinada com exercícios de força."
+                    response_text = (
+                        f"Vejo que seu IMC atual é {bmi:.1f} (abaixo do peso). "
+                        f"Para ganhar peso de forma saudável, recomendo uma alimentação "
+                        f"balanceada rica em proteínas e carboidratos complexos, "
+                        f"combinada com exercícios de força."
+                    )
                 elif bmi >= 25:
-                    response_text = f"Seu IMC atual é {bmi:.1f} (acima do peso ideal). Vamos criar um plano personalizado para você! Baseado no seu perfil, posso recomendar exercícios e ajustes nutricionais específicos."
+                    response_text = (
+                        f"Seu IMC atual é {bmi:.1f} (acima do peso ideal). "
+                        f"Vamos criar um plano personalizado para você! "
+                        f"Baseado no seu perfil, posso recomendar exercícios e "
+                        f"ajustes nutricionais específicos."
+                    )
                 else:
-                    response_text = f"Ótimo! Seu IMC está em {bmi:.1f}, que está na faixa saudável. Para mantê-lo assim, continue com hábitos equilibrados."
+                    response_text = (
+                        f"Ótimo! Seu IMC está em {bmi:.1f}, que está na faixa saudável. "
+                        f"Para mantê-lo assim, continue com hábitos equilibrados."
+                    )
             else:
-                response_text = "Para calcular seu IMC preciso da sua altura e peso. Use nossa calculadora de IMC em Ferramentas de Saúde! Ela fornece classificação e recomendações personalizadas."
-            
+                response_text = (
+                    "Para calcular seu IMC preciso da sua altura e peso. "
+                    "Use nossa calculadora de IMC em Ferramentas de Saúde! "
+                    "Ela fornece classificação e recomendações personalizadas."
+                )
+
             return {
                 'response': response_text,
                 'suggestions': [
@@ -215,27 +260,42 @@ class AIService:
                 ],
                 'related_topics': ['IMC', 'peso', 'altura', 'saúde']
             }
-        
+
         elif intent == 'exercise_recommendation':
             workouts = user_context.get('workouts', []) if user_context else []
             goals = user_context.get('goals', []) if user_context else []
             health = user_context.get('health', {}) if user_context else {}
-            
+
             # Analisar treinos recentes
             recent_exercises = []
             if workouts:
-                recent_exercises = [w.get('name') or w.get('exercise_name') for w in workouts[:3] if w.get('name') or w.get('exercise_name')]
-            
+                recent_exercises = [
+                    w.get('name') or w.get('exercise_name')
+                    for w in workouts[:3]
+                    if w.get('name') or w.get('exercise_name')
+                ]
+
             # Analisar objetivos
             goal_text = ""
             if goals:
-                goal_text = f"Vejo que seus objetivos incluem: {', '.join([g.get('title', '') for g in goals[:2]])}. "
-            
+                goal_titles = [g.get('title', '') for g in goals[:2] if g.get('title')]
+                if goal_titles:
+                    goal_text = f"Vejo que seus objetivos incluem: {', '.join(goal_titles)}. "
+
             if recent_exercises:
-                response_text = f"{goal_text}Você tem treinado recentemente: {', '.join(recent_exercises)}. Que tal explorarmos exercícios similares ou criar um treino que complemente sua rotina atual?"
+                response_text = (
+                    f"{goal_text}Você tem treinado recentemente: "
+                    f"{', '.join(recent_exercises)}. Que tal explorarmos exercícios "
+                    f"similares ou criar um treino que complemente sua rotina atual?"
+                )
             else:
-                response_text = f"{goal_text}Nossa plataforma oferece uma biblioteca completa de exercícios categorizados por dificuldade, grupos musculares e equipamentos. Baseado no seu perfil, posso recomendar treinos personalizados."
-            
+                response_text = (
+                    f"{goal_text}Nossa plataforma oferece uma biblioteca completa de "
+                    f"exercícios categorizados por dificuldade, grupos musculares e "
+                    f"equipamentos. Baseado no seu perfil, posso recomendar treinos "
+                    f"personalizados."
+                )
+
             return {
                 'response': response_text,
                 'suggestions': [
@@ -246,10 +306,15 @@ class AIService:
                 ],
                 'related_topics': ['exercícios', 'fitness', 'treino', 'musculação']
             }
-        
+
         elif intent == 'nutrition_advice':
             return {
-                'response': "A alimentação é a base da saúde! Nossa plataforma oferece um diário alimentar completo, calculadora de calorias e recomendações nutricionais personalizadas. Você pode registrar suas refeições e acompanhar seus macronutrientes diariamente.",
+                'response': (
+                    "A alimentação é a base da saúde! Nossa plataforma oferece um "
+                    "diário alimentar completo, calculadora de calorias e recomendações "
+                    "nutricionais personalizadas. Você pode registrar suas refeições e "
+                    "acompanhar seus macronutrientes diariamente."
+                ),
                 'suggestions': [
                     'Como calcular minhas calorias diárias?',
                     'Quais alimentos são mais nutritivos?',
@@ -258,12 +323,12 @@ class AIService:
                 ],
                 'related_topics': ['nutrição', 'alimentação', 'calorias', 'dieta']
             }
-        
+
         elif intent == 'product_recommendation':
             purchases = user_context.get('purchases', []) if user_context else []
             goals = user_context.get('goals', []) if user_context else []
             health = user_context.get('health', {}) if user_context else {}
-            
+
             # Analisar compras recentes
             recent_products = []
             if purchases:
@@ -273,7 +338,7 @@ class AIService:
                         product = item.get('products') or item.get('product', {})
                         if product:
                             recent_products.append(product.get('name', ''))
-            
+
             # Analisar objetivos para recomendações
             goal_keywords = []
             if goals:
@@ -283,14 +348,26 @@ class AIService:
                         goal_keywords.append('perda de peso')
                     elif 'ganhar massa' in title or 'hipertrofia' in title:
                         goal_keywords.append('ganho de massa')
-            
+
             if recent_products:
-                response_text = f"Vejo que você já comprou: {', '.join(recent_products[:2])}. Baseado nisso e nos seus objetivos, posso recomendar produtos complementares que podem potencializar seus resultados!"
+                response_text = (
+                    f"Vejo que você já comprou: {', '.join(recent_products[:2])}. "
+                    f"Baseado nisso e nos seus objetivos, posso recomendar produtos "
+                    f"complementares que podem potencializar seus resultados!"
+                )
             elif goal_keywords:
-                response_text = f"Baseado nos seus objetivos ({', '.join(goal_keywords)}), posso recomendar produtos específicos que vão te ajudar a alcançar suas metas mais rapidamente."
+                response_text = (
+                    f"Baseado nos seus objetivos ({', '.join(goal_keywords)}), "
+                    f"posso recomendar produtos específicos que vão te ajudar a "
+                    f"alcançar suas metas mais rapidamente."
+                )
             else:
-                response_text = "Nossa loja oferece produtos cuidadosamente selecionados! Com base no seu perfil, posso recomendar suplementos, equipamentos e produtos de saúde personalizados."
-            
+                response_text = (
+                    "Nossa loja oferece produtos cuidadosamente selecionados! "
+                    "Com base no seu perfil, posso recomendar suplementos, "
+                    "equipamentos e produtos de saúde personalizados."
+                )
+
             return {
                 'response': response_text,
                 'suggestions': [
@@ -301,10 +378,15 @@ class AIService:
                 ],
                 'related_topics': ['produtos', 'suplementos', 'equipamentos', 'loja']
             }
-        
+
         elif intent == 'health_advice':
             return {
-                'response': "Saúde e bem-estar são nossa prioridade! Nossa plataforma combina tecnologia e conhecimento para oferecer orientações personalizadas. Use nossas ferramentas de saúde para acompanhar seu progresso e receber insights valiosos.",
+                'response': (
+                    "Saúde e bem-estar são nossa prioridade! Nossa plataforma combina "
+                    "tecnologia e conhecimento para oferecer orientações personalizadas. "
+                    "Use nossas ferramentas de saúde para acompanhar seu progresso e "
+                    "receber insights valiosos."
+                ),
                 'suggestions': [
                     'Como criar um plano de saúde?',
                     'Ferramentas de monitoramento',
@@ -313,10 +395,15 @@ class AIService:
                 ],
                 'related_topics': ['saúde', 'bem-estar', 'fitness', 'qualidade de vida']
             }
-        
+
         elif intent == 'gratitude':
             return {
-                'response': "De nada! Fico feliz em poder ajudar. Estou aqui sempre que precisar de orientações sobre saúde, exercícios, nutrição ou qualquer dúvida sobre nossa plataforma. Continue cuidando da sua saúde! 💪",
+                'response': (
+                    "De nada! Fico feliz em poder ajudar. Estou aqui sempre que "
+                    "precisar de orientações sobre saúde, exercícios, nutrição ou "
+                    "qualquer dúvida sobre nossa plataforma. Continue cuidando da "
+                    "sua saúde! 💪"
+                ),
                 'suggestions': [
                     'Como posso melhorar ainda mais?',
                     'Novas funcionalidades da plataforma',
@@ -324,16 +411,25 @@ class AIService:
                 ],
                 'related_topics': ['motivação', 'progresso', 'objetivos']
             }
-        
+
         else:  # general
             # Resposta geral personalizada baseada em contexto
             profile = user_context.get('profile', {}) if user_context else {}
             name = profile.get('name') or profile.get('first_name', '')
-            
-            greeting = f"Olá{f', {name.split()[0]}' if name else ''}!" if name else "Olá!"
-            
+
+            if name:
+                first_name = name.split()[0] if name.split() else ''
+                greeting = f"Olá, {first_name}!" if first_name else "Olá!"
+            else:
+                greeting = "Olá!"
+
             return {
-                'response': f"{greeting} Entendi que você disse: '{message}'. Sou seu assistente de IA personalizado e tenho acesso ao seu perfil completo. Posso ajudar com recomendações de saúde, exercícios, nutrição, produtos e muito mais! Como posso te ajudar hoje?",
+                'response': (
+                    f"{greeting} Entendi que você disse: '{message}'. Sou seu "
+                    f"assistente de IA personalizado e tenho acesso ao seu perfil "
+                    f"completo. Posso ajudar com recomendações de saúde, exercícios, "
+                    f"nutrição, produtos e muito mais! Como posso te ajudar hoje?"
+                ),
                 'suggestions': [
                     'Recomende exercícios para mim',
                     'Como melhorar minha alimentação?',
@@ -342,18 +438,18 @@ class AIService:
                 ],
                 'related_topics': ['saúde', 'exercícios', 'nutrição', 'produtos']
             }
-    
+
     def _save_chat_message(
-        self, 
-        user_id: str, 
-        user_message: str, 
+        self,
+        user_id: str,
+        user_message: str,
         ai_response: str,
         agent_type: str = 'platform_concierge',
         intent: str = 'general'
     ):
         """
         Salva mensagem no histórico de chat com metadados
-        
+
         Args:
             user_id (str): ID do usuário
             user_message (str): Mensagem do usuário
@@ -370,33 +466,34 @@ class AIService:
                 'intent': intent,
                 'created_at': datetime.now().isoformat()
             }
-            
-            result = self.supabase.table('ai_chat_history').insert(chat_data).execute()
-            return result
-            
+
+            # ✅ CORRIGIDO: Usa repositório
+            from repositories.ai_repository import AIRepository
+            repo = AIRepository()
+            created_message = repo.create_chat_message(chat_data)
+            return created_message
+
         except Exception as e:
             self.logger.error(f"Erro ao salvar chat: {str(e)}")
             # Não falha a operação se não conseguir salvar
-    
+
     def get_chat_history(self, user_id: str, limit: int = 50) -> Dict[str, Any]:
         """Obtém histórico de chat do usuário"""
         try:
-            result = self.supabase.table('ai_chat_history')\
-                .select('*')\
-                .eq('user_id', user_id)\
-                .order('created_at', desc=True)\
-                .limit(limit)\
-                .execute()
-            
+            # ✅ CORRIGIDO: Usa repositório
+            from repositories.ai_repository import AIRepository
+            repo = AIRepository()
+            messages = repo.find_by_user(user_id, limit=limit)
+
             return {
                 'success': True,
-                'data': result.data or []
+                'data': messages or []
             }
-            
+
         except Exception as e:
             self.logger.error(f"Erro ao obter histórico: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def analyze_image(self, user_id: str, image_file, analysis_type: str = 'general') -> Dict[str, Any]:
         """Analisa imagem com IA"""
         try:
@@ -406,7 +503,10 @@ class AIService:
                     'success': True,
                     'data': {
                         'food_name': 'Alimento Identificado',
-                        'description': 'Este parece ser um alimento saudável. Recomendo verificar as informações nutricionais.',
+                        'description': (
+                            'Este parece ser um alimento saudável. Recomendo verificar '
+                            'as informações nutricionais.'
+                        ),
                         'confidence': 85.0,
                         'category': 'Alimento',
                         'nutritional_info': {
@@ -443,7 +543,10 @@ class AIService:
                 return {
                     'success': True,
                     'data': {
-                        'description': 'Análise geral da imagem concluída. Identifiquei elementos relacionados à saúde e bem-estar.',
+                        'description': (
+                            'Análise geral da imagem concluída. Identifiquei elementos '
+                            'relacionados à saúde e bem-estar.'
+                        ),
                         'confidence': 75.0,
                         'objects': [
                             {'name': 'Objeto de saúde', 'confidence': 85},
@@ -452,7 +555,7 @@ class AIService:
                         'tags': ['saúde', 'bem-estar', 'fitness']
                     }
                 }
-            
+
         except Exception as e:
             self.logger.error(f"Erro na análise de imagem: {str(e)}")
             return {'success': False, 'error': str(e)}

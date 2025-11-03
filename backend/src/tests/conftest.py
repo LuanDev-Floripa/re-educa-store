@@ -56,7 +56,7 @@ def client(app):
 
 @pytest.fixture
 def mock_supabase():
-    """Mock do cliente Supabase"""
+    """Mock do cliente Supabase - Melhorado para testes de services"""
     mock_client = Mock()
     
     # Mock das tabelas
@@ -64,14 +64,51 @@ def mock_supabase():
     mock_user_profiles_table = Mock()
     mock_imc_history_table = Mock()
     mock_user_activities_table = Mock()
+    mock_products_table = Mock()
+    mock_orders_table = Mock()
+    mock_exercises_table = Mock()
     
-    # Configuração dos mocks
-    mock_client.table.return_value = mock_users_table
-    mock_users_table.select.return_value = mock_users_table
-    mock_users_table.eq.return_value = mock_users_table
-    mock_users_table.insert.return_value = mock_users_table
-    mock_users_table.update.return_value = mock_users_table
-    mock_users_table.execute.return_value = Mock(data=[])
+    # Configuração padrão para métodos encadeados
+    def setup_mock_table(table):
+        table.select.return_value = table
+        table.eq.return_value = table
+        table.insert.return_value = table
+        table.update.return_value = table
+        table.delete.return_value = table
+        table.order.return_value = table
+        table.limit.return_value = table
+        table.range.return_value = table
+        table.gte.return_value = table
+        table.lte.return_value = table
+        table.in_.return_value = table
+        table.execute.return_value = Mock(data=[], count=0)
+        return table
+    
+    mock_users_table = setup_mock_table(mock_users_table)
+    mock_user_profiles_table = setup_mock_table(mock_user_profiles_table)
+    mock_imc_history_table = setup_mock_table(mock_imc_history_table)
+    mock_user_activities_table = setup_mock_table(mock_user_activities_table)
+    mock_products_table = setup_mock_table(mock_products_table)
+    mock_orders_table = setup_mock_table(mock_orders_table)
+    mock_exercises_table = setup_mock_table(mock_exercises_table)
+    
+    # Configura retorno de tabela baseado no nome
+    def mock_table(table_name):
+        tables = {
+            'users': mock_users_table,
+            'user_profiles': mock_user_profiles_table,
+            'imc_calculations': mock_imc_history_table,
+            'user_activities': mock_user_activities_table,
+            'products': mock_products_table,
+            'orders': mock_orders_table,
+            'exercises': mock_exercises_table
+        }
+        return tables.get(table_name, setup_mock_table(Mock()))
+    
+    mock_client.table.side_effect = mock_table
+    mock_client.get_user_by_email = Mock(return_value=None)
+    mock_client.create_user = Mock(return_value={'id': 'new-user-123'})
+    mock_client.update_user = Mock(return_value={'id': 'user-123'})
     
     return mock_client
 

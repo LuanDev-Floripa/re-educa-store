@@ -6,11 +6,9 @@ Sistema de geração de conteúdo com IA usando Google Gemini e Perplexity AI
 import os
 import json
 import requests
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Optional
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import google.generativeai as genai
 from dataclasses import dataclass
 import logging
@@ -66,27 +64,28 @@ class ContentRequest:
 # SISTEMA DE IA PARA BLOG
 # ================================
 
+
 class IntelligentBlogSystem:
     def __init__(self):
         self.gemini_model = None  # Será inicializado dinamicamente
         self.perplexity_url = "https://api.perplexity.ai/chat/completions"
         self.instagram_posts_cache = []
         self.ai_config_service = ai_config_service
-        
+
     async def generate_blog_post(self, content_request: ContentRequest) -> BlogPost:
         """Gera um post de blog completo usando IA"""
         try:
             # 1. Pesquisar tendências com Perplexity AI
             trends_data = await self._research_trends(content_request.topic)
-            
+
             # 2. Buscar conteúdo do Instagram relacionado
             instagram_data = await self._fetch_instagram_content(content_request.topic)
-            
+
             # 3. Gerar conteúdo com Google Gemini
             blog_content = await self._generate_content_with_gemini(
                 content_request, trends_data, instagram_data
             )
-            
+
             # 4. Criar post estruturado
             post = BlogPost(
                 id=f"ai_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -106,10 +105,10 @@ class IntelligentBlogSystem:
                 instagram_source=instagram_data.get('source', 'Múltiplas fontes'),
                 image_url=blog_content.get('image_url', '/api/placeholder/600/300')
             )
-            
+
             logger.info(f"Post gerado com sucesso: {post.title}")
             return post
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar post: {str(e)}")
             raise
@@ -122,31 +121,34 @@ class IntelligentBlogSystem:
             if not perplexity_config['success']:
                 logger.warning("Configuração do Perplexity não encontrada, usando dados simulados")
                 return {'trends': 'Dados de tendências não disponíveis', 'timestamp': datetime.now().isoformat()}
-            
+
             api_key = perplexity_config['data']['api_key']
-            
+
             headers = {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
-            
+
             prompt = f"""
-            Pesquise as últimas tendências, estudos científicos e novidades sobre {topic} 
+            Pesquise as últimas tendências, estudos científicos e novidades sobre {topic}
             na área de saúde e bem-estar. Foque em:
             - Descobertas científicas recentes
             - Tendências populares nas redes sociais
             - Recomendações de especialistas
             - Dados estatísticos relevantes
-            
+
             Forneça informações atualizadas e confiáveis.
             """
-            
+
             payload = {
                 "model": "llama-3.1-sonar-small-128k-online",
                 "messages": [
                     {
                         "role": "system",
-                        "content": "Você é um pesquisador especializado em saúde e bem-estar. Forneça informações precisas e atualizadas."
+                        "content": (
+                            "Você é um pesquisador especializado em saúde e bem-estar. "
+                            "Forneça informações precisas e atualizadas."
+                        )
                     },
                     {
                         "role": "user",
@@ -156,9 +158,9 @@ class IntelligentBlogSystem:
                 "max_tokens": 1000,
                 "temperature": 0.3
             }
-            
+
             response = requests.post(self.perplexity_url, json=payload, headers=headers)
-            
+
             if response.status_code == 200:
                 result = response.json()
                 return {
@@ -168,7 +170,7 @@ class IntelligentBlogSystem:
             else:
                 logger.warning(f"Erro na API Perplexity: {response.status_code}")
                 return {'trends': 'Dados de tendências não disponíveis', 'timestamp': datetime.now().isoformat()}
-                
+
         except Exception as e:
             logger.error(f"Erro ao pesquisar tendências: {str(e)}")
             return {'trends': 'Erro ao buscar tendências', 'timestamp': datetime.now().isoformat()}
@@ -178,7 +180,7 @@ class IntelligentBlogSystem:
         try:
             # Simular busca no Instagram (em produção usaria a API real)
             # Por enquanto, retorna dados simulados baseados no tópico
-            
+
             instagram_insights = {
                 'nutrição': {
                     'hashtags': ['#alimentacaosaudavel', '#nutricao', '#superalimentos'],
@@ -196,14 +198,14 @@ class IntelligentBlogSystem:
                     'trending_content': 'Meditação e técnicas de respiração para ansiedade'
                 }
             }
-            
+
             # Determinar categoria baseada no tópico
             category_key = 'bem-estar'  # default
             if any(word in topic.lower() for word in ['nutrição', 'alimentação', 'dieta', 'comida']):
                 category_key = 'nutrição'
             elif any(word in topic.lower() for word in ['treino', 'exercício', 'fitness', 'musculação']):
                 category_key = 'fitness'
-            
+
             return {
                 'source': instagram_insights[category_key]['influencers'][0],
                 'hashtags': instagram_insights[category_key]['hashtags'],
@@ -214,7 +216,7 @@ class IntelligentBlogSystem:
                     'reach': 15000
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao buscar conteúdo Instagram: {str(e)}")
             return {'source': 'Instagram', 'hashtags': [], 'trending': ''}
@@ -227,13 +229,13 @@ class IntelligentBlogSystem:
             if not gemini_config['success']:
                 logger.warning("Configuração do Gemini não encontrada, usando conteúdo de fallback")
                 return self._create_fallback_content(request, "")
-            
+
             # Configurar Gemini com chave segura
             genai.configure(api_key=gemini_config['data']['api_key'])
             self.gemini_model = genai.GenerativeModel('gemini-pro')
             prompt = f"""
             Crie um artigo de blog completo sobre {request.topic} para o público {request.target_audience}.
-            
+
             CONTEXTO E DADOS:
             - Categoria: {request.category}
             - Tom: {request.tone}
@@ -241,7 +243,7 @@ class IntelligentBlogSystem:
             - Tendências atuais: {trends.get('trends', '')}
             - Insights do Instagram: {instagram.get('trending', '')}
             - Hashtags populares: {', '.join(instagram.get('hashtags', []))}
-            
+
             ESTRUTURA REQUERIDA:
             1. Título atrativo e otimizado para SEO
             2. Resumo/excerpt de 2-3 frases
@@ -253,7 +255,7 @@ class IntelligentBlogSystem:
                - Dicas práticas e acionáveis
                - Conclusão inspiradora
             4. 5-8 tags relevantes
-            
+
             DIRETRIZES:
             - Use linguagem clara e acessível
             - Inclua dados científicos quando relevante
@@ -261,7 +263,7 @@ class IntelligentBlogSystem:
             - Foque em valor prático para o leitor
             - Otimize para SEO sem comprometer a qualidade
             - Inclua call-to-actions sutis
-            
+
             FORMATO DE RESPOSTA (JSON):
             {{
                 "title": "Título do artigo",
@@ -272,12 +274,12 @@ class IntelligentBlogSystem:
                 "estimated_read_time": 8
             }}
             """
-            
+
             response = self.gemini_model.generate_content(prompt)
-            
+
             # Processar resposta
             content_text = response.text
-            
+
             # Tentar extrair JSON da resposta
             try:
                 # Remover markdown code blocks se existirem
@@ -285,9 +287,9 @@ class IntelligentBlogSystem:
                     content_text = content_text.split('```json')[1].split('```')[0]
                 elif '```' in content_text:
                     content_text = content_text.split('```')[1].split('```')[0]
-                
+
                 content_data = json.loads(content_text.strip())
-                
+
                 # Validar e completar dados
                 if 'title' not in content_data:
                     content_data['title'] = f"Guia Completo: {request.topic}"
@@ -295,14 +297,14 @@ class IntelligentBlogSystem:
                     content_data['excerpt'] = f"Descubra tudo sobre {request.topic} e transforme sua saúde."
                 if 'tags' not in content_data:
                     content_data['tags'] = [request.topic.lower(), request.category.lower(), 'saúde', 'bem-estar']
-                
+
                 return content_data
-                
+
             except json.JSONDecodeError:
                 # Fallback: criar estrutura manualmente
                 logger.warning("Erro ao parsear JSON do Gemini, usando fallback")
                 return self._create_fallback_content(request, content_text)
-                
+
         except Exception as e:
             logger.error(f"Erro ao gerar conteúdo com Gemini: {str(e)}")
             return self._create_fallback_content(request, "")
@@ -311,11 +313,14 @@ class IntelligentBlogSystem:
         """Cria conteúdo de fallback quando a IA falha"""
         return {
             'title': f"Guia Completo: {request.topic}",
-            'excerpt': f"Descubra as melhores práticas e dicas sobre {request.topic} para transformar sua saúde e bem-estar.",
+            'excerpt': (
+                f"Descubra as melhores práticas e dicas sobre {request.topic} "
+                f"para transformar sua saúde e bem-estar."
+            ),
             'content': f"""
                 <h2>Introdução</h2>
                 <p>Bem-vindo ao nosso guia completo sobre {request.topic}. Este artigo foi criado especialmente para {request.target_audience} que desejam melhorar sua qualidade de vida.</p>
-                
+
                 <h2>O que você vai aprender</h2>
                 <ul>
                     <li>Fundamentos essenciais sobre {request.topic}</li>
@@ -323,12 +328,17 @@ class IntelligentBlogSystem:
                     <li>Benefícios científicamente comprovados</li>
                     <li>Erros comuns a evitar</li>
                 </ul>
-                
+
                 <h2>Conteúdo Principal</h2>
-                <p>{raw_content if raw_content else f'Conteúdo detalhado sobre {request.topic} será desenvolvido com base nas suas necessidades específicas.'}</p>
-                
+                <p>{raw_content if raw_content else (
+                    f'Conteúdo detalhado sobre {request.topic} será desenvolvido '
+                    f'com base nas suas necessidades específicas.'
+                )}</p>
+
                 <h2>Conclusão</h2>
-                <p>Implementar essas práticas em sua rotina pode trazer benefícios significativos para sua saúde e bem-estar. Comece gradualmente e seja consistente.</p>
+                <p>Implementar essas práticas em sua rotina pode trazer benefícios
+                significativos para sua saúde e bem-estar. Comece gradualmente e
+                seja consistente.</p>
             """,
             'tags': [request.topic.lower(), request.category.lower(), 'saúde', 'bem-estar', 'dicas'],
             'seo_keywords': [request.topic, 'saúde', 'bem-estar'],
@@ -380,9 +390,9 @@ class IntelligentBlogSystem:
                     'hashtag': '#sono'
                 }
             ]
-            
+
             return trending
-            
+
         except Exception as e:
             logger.error(f"Erro ao buscar trending topics: {str(e)}")
             return []
@@ -408,10 +418,11 @@ class IntelligentBlogSystem:
                     'Transformações'
                 ]
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao analisar engajamento: {str(e)}")
             return {}
+
 
 # ================================
 # API ENDPOINTS
@@ -426,7 +437,7 @@ async def generate_blog_post():
     """Endpoint para gerar novo post de blog"""
     try:
         data = request.get_json()
-        
+
         content_request = ContentRequest(
             topic=data.get('topic', 'Saúde e Bem-estar'),
             category=data.get('category', 'Geral'),
@@ -435,9 +446,9 @@ async def generate_blog_post():
             length=data.get('length', 'médio'),
             include_instagram=data.get('include_instagram', True)
         )
-        
+
         post = await blog_system.generate_blog_post(content_request)
-        
+
         return jsonify({
             'success': True,
             'post': {
@@ -455,7 +466,7 @@ async def generate_blog_post():
                 'image_url': post.image_url
             }
         })
-        
+
     except Exception as e:
         logger.error(f"Erro no endpoint generate: {str(e)}")
         return jsonify({
@@ -472,7 +483,7 @@ async def get_trending_topics():
             'success': True,
             'trending_topics': topics
         })
-        
+
     except Exception as e:
         logger.error(f"Erro no endpoint trending: {str(e)}")
         return jsonify({
@@ -486,14 +497,14 @@ async def analyze_instagram():
     try:
         data = request.get_json()
         hashtag = data.get('hashtag', '#saude')
-        
+
         analysis = await blog_system.analyze_instagram_engagement(hashtag)
-        
+
         return jsonify({
             'success': True,
             'analysis': analysis
         })
-        
+
     except Exception as e:
         logger.error(f"Erro no endpoint analyze_instagram: {str(e)}")
         return jsonify({
@@ -507,7 +518,7 @@ def health_check():
     # Verificar configurações de IA
     gemini_config = ai_config_service.get_ai_config('gemini')
     perplexity_config = ai_config_service.get_ai_config('perplexity')
-    
+
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
@@ -524,6 +535,6 @@ def health_check():
         }
     })
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-

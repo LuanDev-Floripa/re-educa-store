@@ -10,7 +10,8 @@ Fornece calculadoras de saúde incluindo:
 """
 from flask import Blueprint, request, jsonify
 from services.health_calculator_service import HealthCalculatorService
-from utils.decorators import token_required, rate_limit, validate_json
+from utils.decorators import token_required, validate_json
+from utils.rate_limit_helper import rate_limit
 from middleware.logging import log_user_activity, log_security_event
 
 health_calculators_bp = Blueprint('health_calculators', __name__)
@@ -23,42 +24,42 @@ health_calculator_service = HealthCalculatorService()
 def calculate_bmi():
     """
     Calcula IMC (Índice de Massa Corporal).
-    
+
     Request Body:
         height_cm (float): Altura em centímetros.
         weight_kg (float): Peso em quilogramas.
-        
+
     Returns:
         JSON: IMC calculado com classificação e recomendações.
     """
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         height_cm = float(data['height_cm'])
         weight_kg = float(data['weight_kg'])
-        
+
         result = health_calculator_service.calculate_bmi(height_cm, weight_kg)
-        
+
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
-        
+
         # Salva o cálculo
         save_result = health_calculator_service.save_calculation(
             user_id, 'bmi', data, result
         )
-        
+
         log_user_activity(user_id, 'bmi_calculated', {
             'height_cm': height_cm,
             'weight_kg': weight_kg,
             'bmi': result['bmi']
         })
-        
+
         return jsonify({
             'calculation': result,
             'saved': save_result['success']
         }), 200
-        
+
     except ValueError as e:
         return jsonify({'error': 'Valores inválidos fornecidos'}), 400
     except Exception as e:
@@ -72,50 +73,50 @@ def calculate_bmi():
 def calculate_calories():
     """
     Calcula necessidade calórica diária.
-    
+
     Request Body:
         age (int): Idade em anos.
         gender (str): Gênero ('male' ou 'female').
         height_cm (float): Altura em centímetros.
         weight_kg (float): Peso em quilogramas.
         activity_level (str): Nível de atividade física.
-        
+
     Returns:
         JSON: Calorias diárias com metas de macronutrientes.
     """
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         age = int(data['age'])
         gender = data['gender']
         height_cm = float(data['height_cm'])
         weight_kg = float(data['weight_kg'])
         activity_level = data['activity_level']
-        
+
         result = health_calculator_service.calculate_calories(
             age, gender, height_cm, weight_kg, activity_level
         )
-        
+
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
-        
+
         # Salva o cálculo
         save_result = health_calculator_service.save_calculation(
             user_id, 'calories', data, result
         )
-        
+
         log_user_activity(user_id, 'calories_calculated', {
             'age': age,
             'gender': gender,
             'daily_calories': result['daily_calories']
         })
-        
+
         return jsonify({
             'calculation': result,
             'saved': save_result['success']
         }), 200
-        
+
     except ValueError as e:
         return jsonify({'error': 'Valores inválidos fornecidos'}), 400
     except Exception as e:
@@ -131,33 +132,33 @@ def calculate_hydration():
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         weight_kg = float(data['weight_kg'])
         activity_level = data['activity_level']
         climate = data.get('climate', 'temperate')
-        
+
         result = health_calculator_service.calculate_hydration(
             weight_kg, activity_level, climate
         )
-        
+
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
-        
+
         # Salva o cálculo
         save_result = health_calculator_service.save_calculation(
             user_id, 'hydration', data, result
         )
-        
+
         log_user_activity(user_id, 'hydration_calculated', {
             'weight_kg': weight_kg,
             'total_water_liters': result['total_water_liters']
         })
-        
+
         return jsonify({
             'calculation': result,
             'saved': save_result['success']
         }), 200
-        
+
     except ValueError as e:
         return jsonify({'error': 'Valores inválidos fornecidos'}), 400
     except Exception as e:
@@ -173,37 +174,37 @@ def calculate_body_fat():
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         age = int(data['age'])
         gender = data['gender']
         height_cm = float(data['height_cm'])
         weight_kg = float(data['weight_kg'])
         waist_cm = float(data['waist_cm'])
         neck_cm = float(data['neck_cm'])
-        
+
         result = health_calculator_service.calculate_body_fat(
             age, gender, height_cm, weight_kg, waist_cm, neck_cm
         )
-        
+
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
-        
+
         # Salva o cálculo
         save_result = health_calculator_service.save_calculation(
             user_id, 'body_fat', data, result
         )
-        
+
         log_user_activity(user_id, 'body_fat_calculated', {
             'age': age,
             'gender': gender,
             'body_fat_percentage': result['body_fat_percentage']
         })
-        
+
         return jsonify({
             'calculation': result,
             'saved': save_result['success']
         }), 200
-        
+
     except ValueError as e:
         return jsonify({'error': 'Valores inválidos fornecidos'}), 400
     except Exception as e:
@@ -243,9 +244,9 @@ def get_activity_levels():
                 'description': 'Exercício muito pesado, trabalho físico'
             }
         ]
-        
+
         return jsonify({'activity_levels': activity_levels}), 200
-        
+
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
@@ -277,8 +278,8 @@ def get_climate_types():
                 'description': 'Temperatura muito alta'
             }
         ]
-        
+
         return jsonify({'climate_types': climate_types}), 200
-        
+
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500

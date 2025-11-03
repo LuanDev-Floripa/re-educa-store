@@ -14,10 +14,14 @@ NOTA: Usa Supabase Client via API REST (não SQL direto).
 """
 from flask import Blueprint, request, jsonify
 from utils.decorators import handle_exceptions, token_required
+from services.social_service import SocialService
 from config.database import supabase_client
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Instanciar service
+social_service = SocialService()
 
 # Criar blueprint adicional ou adicionar ao social_bp existente
 social_additional_bp = Blueprint('social_additional', __name__, url_prefix='/api/social')
@@ -28,13 +32,13 @@ social_additional_bp = Blueprint('social_additional', __name__, url_prefix='/api
 def get_groups():
     """
     Lista grupos sociais disponíveis.
-    
+
     Returns:
         JSON: Lista de grupos com informações de membro e categoria.
     """
     try:
         user_id = request.current_user.get('id') if hasattr(request, 'current_user') else None
-        
+
         # Usar Supabase Client via API REST
         try:
             # PostgREST API - buscar grupos ordenados por member_count
@@ -42,11 +46,11 @@ def get_groups():
             result = supabase_client._make_request('GET', 'groups', params={
                 'limit': '50'
             })
-            
+
             # Se result é lista, ordenar por member_count manualmente
             if isinstance(result, list):
                 result = sorted(result, key=lambda x: x.get('member_count', 0) or 0, reverse=True)
-            
+
             # Se result é lista, processar diretamente
             if isinstance(result, list):
                 groups_list = []
@@ -56,15 +60,15 @@ def get_groups():
                     if user_id:
                         try:
                             members_result = supabase_client._make_request(
-                                'GET', 
-                                'group_members', 
+                                'GET',
+                                'group_members',
                                 params={'group_id': f'eq.{g.get("id")}', 'user_id': f'eq.{user_id}'}
                             )
                             is_joined = isinstance(members_result, list) and len(members_result) > 0
                         except Exception as e:
                             logger.debug(f"Erro ao verificar membro do grupo {g.get('id')}: {str(e)}")
                             is_joined = False
-                    
+
                     groups_list.append({
                         'id': g.get('id'),
                         'name': g.get('name'),
@@ -78,12 +82,12 @@ def get_groups():
                     })
             else:
                 groups_list = []
-            
+
             return jsonify({
                 'success': True,
                 'groups': groups_list
             }), 200
-            
+
         except Exception as api_error:
             logger.error(f"Erro na requisição Supabase: {str(api_error)}")
             # Retornar lista vazia em caso de erro ao invés de quebrar
@@ -91,7 +95,7 @@ def get_groups():
                 'success': True,
                 'groups': []
             }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar grupos: {str(e)}")
         return jsonify({
@@ -105,12 +109,12 @@ def get_groups():
 def get_analytics():
     """
     Retorna analytics sociais do usuário.
-    
+
     Coleta estatísticas de engajamento incluindo:
     - Posts criados pelo usuário
     - Metas ativas
     - Insights de audiência (estrutura preparada)
-    
+
     Returns:
         JSON: Analytics com posts, audiência, metas e insights.
     """
@@ -118,15 +122,15 @@ def get_analytics():
         user_id = request.current_user.get('id')
         if not user_id:
             return jsonify({'error': 'Usuário não identificado'}), 401
-        
+
         # Buscar posts do usuário via Supabase
         try:
             posts_result = supabase_client._make_request(
-                'GET', 
-                'posts', 
+                'GET',
+                'posts',
                 params={'user_id': f'eq.{user_id}', 'order': 'created_at.desc', 'limit': 20}
             )
-            
+
             if isinstance(posts_result, list):
                 posts_list = [{
                     'id': p.get('id'),
@@ -138,7 +142,7 @@ def get_analytics():
         except Exception as e:
             logger.warning(f"Erro ao buscar posts para analytics: {str(e)}")
             posts_list = []
-        
+
         # Buscar goals do usuário
         try:
             goals_result = supabase_client._make_request(
@@ -147,9 +151,9 @@ def get_analytics():
                 params={'user_id': f'eq.{user_id}', 'status': 'eq.active'}
             )
             goals_list = goals_result if isinstance(goals_result, list) else []
-        except:
+        except Exception:
             goals_list = []
-        
+
         # Analytics básicos - audience será implementado depois (Medium-1)
         # Por enquanto retornar estrutura vazia mas funcional
         return jsonify({
@@ -164,7 +168,7 @@ def get_analytics():
             'goals': goals_list,
             'insights': []
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar analytics: {str(e)}")
         return jsonify({
@@ -181,23 +185,23 @@ def get_analytics():
 def get_pending_verifications():
     """
     Lista verificações pendentes de contas (apenas admin).
-    
+
     Retorna todas as solicitações de verificação de conta que
     estão aguardando aprovação de administradores.
-    
+
     Returns:
         JSON: Lista de verificações pendentes com ID, usuário e status.
-        
+
     Raises:
         403: Se usuário não for administrador.
     """
     try:
         user_id = request.current_user.get('id')
         role = request.current_user.get('role', 'user')
-        
+
         if role != 'admin':
             return jsonify({'error': 'Acesso negado. Privilégios de administrador requeridos.'}), 403
-        
+
         # Buscar verificações pendentes via Supabase
         try:
             verifications_result = supabase_client._make_request(
@@ -205,7 +209,7 @@ def get_pending_verifications():
                 'account_verifications',
                 params={'status': 'eq.pending', 'order': 'submitted_at.desc'}
             )
-            
+
             if isinstance(verifications_result, list):
                 verifications_list = [{
                     'id': v.get('id'),
@@ -219,12 +223,12 @@ def get_pending_verifications():
         except Exception as e:
             logger.warning(f"Erro ao buscar verificações (tabela pode não existir): {str(e)}")
             verifications_list = []
-        
+
         return jsonify({
             'success': True,
             'verifications': verifications_list
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar verificações: {str(e)}")
         return jsonify({
@@ -238,10 +242,10 @@ def get_pending_verifications():
 def get_subscriptions():
     """
     Lista assinaturas de monetização do usuário.
-    
+
     Retorna tanto assinaturas onde o usuário é subscriber quanto
     onde é creator (conteudista).
-    
+
     Returns:
         JSON: Lista de assinaturas com planos, preços e status.
     """
@@ -249,7 +253,7 @@ def get_subscriptions():
         user_id = request.current_user.get('id')
         if not user_id:
             return jsonify({'error': 'Usuário não identificado'}), 401
-        
+
         # Buscar subscriptions via Supabase
         # Nota: tabela pode não existir ainda, retornar vazio se não existir
         try:
@@ -259,20 +263,20 @@ def get_subscriptions():
                 'subscriptions',
                 params={'subscriber_id': f'eq.{user_id}', 'order': 'created_at.desc'}
             )
-            
+
             # Buscar onde usuário é creator
             creator_result = supabase_client._make_request(
                 'GET',
                 'subscriptions',
                 params={'creator_id': f'eq.{user_id}', 'order': 'created_at.desc'}
             )
-            
+
             all_subscriptions = []
             if isinstance(subscriber_result, list):
                 all_subscriptions.extend(subscriber_result)
             if isinstance(creator_result, list):
                 all_subscriptions.extend(creator_result)
-            
+
             # Remover duplicatas se houver
             seen_ids = set()
             subscriptions_list = []
@@ -292,12 +296,12 @@ def get_subscriptions():
         except Exception as e:
             logger.warning(f"Erro ao buscar subscriptions (tabela pode não existir): {str(e)}")
             subscriptions_list = []
-        
+
         return jsonify({
             'success': True,
             'subscriptions': subscriptions_list
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar assinaturas: {str(e)}")
         return jsonify({
@@ -311,12 +315,12 @@ def get_subscriptions():
 def get_transactions():
     """
     Lista transações de monetização do usuário.
-    
+
     Retorna histórico de transações incluindo:
     - Pagamentos recebidos (creator)
     - Pagamentos realizados (subscriber)
     - Status e valores das transações
-    
+
     Returns:
         JSON: Lista de transações com tipo, valor, descrição e status.
     """
@@ -324,7 +328,7 @@ def get_transactions():
         user_id = request.current_user.get('id')
         if not user_id:
             return jsonify({'error': 'Usuário não identificado'}), 401
-        
+
         # Buscar transactions via Supabase
         try:
             transactions_result = supabase_client._make_request(
@@ -332,7 +336,7 @@ def get_transactions():
                 'transactions',
                 params={'user_id': f'eq.{user_id}', 'order': 'created_at.desc', 'limit': 50}
             )
-            
+
             if isinstance(transactions_result, list):
                 transactions_list = [{
                     'id': t.get('id'),
@@ -347,12 +351,12 @@ def get_transactions():
         except Exception as e:
             logger.warning(f"Erro ao buscar transactions (tabela pode não existir): {str(e)}")
             transactions_list = []
-        
+
         return jsonify({
             'success': True,
             'transactions': transactions_list
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar transações: {str(e)}")
         return jsonify({
@@ -366,13 +370,13 @@ def get_transactions():
 def get_social_stats():
     """
     Retorna estatísticas sociais do usuário.
-    
+
     Calcula métricas de engajamento incluindo:
     - Total de posts criados
     - Total de seguidores (followers)
     - Total de seguindo (following)
     - Total de likes recebidos em todos os posts
-    
+
     Returns:
         JSON: Estatísticas com contadores de posts, followers, following e likes.
     """
@@ -380,68 +384,43 @@ def get_social_stats():
         user_id = request.current_user.get('id')
         if not user_id:
             return jsonify({'error': 'Usuário não identificado'}), 401
-        
+
         stats = {
             'totalPosts': 0,
             'totalFollowers': 0,
             'totalFollowing': 0,
             'totalLikes': 0
         }
-        
-        # Contar posts via Supabase
+
+        # ✅ CORRIGIDO: Usa SocialService
         try:
-            posts_result = supabase_client.table('posts').select('id', count='exact').eq('user_id', user_id).execute()
-            stats['totalPosts'] = posts_result.count if hasattr(posts_result, 'count') and posts_result.count is not None else (len(posts_result.data) if posts_result.data else 0)
+            posts_result = social_service.get_posts(user_id=user_id, page=1, limit=1)
+            stats['totalPosts'] = (
+                posts_result.get('pagination', {}).get('total', 0) if posts_result.get('success') else 0
+            )
         except Exception as e:
             logger.warning(f"Erro ao contar posts: {str(e)}")
             stats['totalPosts'] = 0
-        
-        # Contar seguidores (follows WHERE following_id = user_id)
+
+        # ✅ CORRIGIDO: Usa SocialRepository
         try:
-            followers_result = supabase_client.table('follows').select('id', count='exact').eq('following_id', user_id).execute()
-            stats['totalFollowers'] = followers_result.count if hasattr(followers_result, 'count') and followers_result.count is not None else (len(followers_result.data) if followers_result.data else 0)
-        except Exception as e:
-            logger.warning(f"Erro ao contar seguidores: {str(e)}")
-            stats['totalFollowers'] = 0
-        
-        # Contar seguindo (follows WHERE follower_id = user_id)
-        try:
-            following_result = supabase_client.table('follows').select('id', count='exact').eq('follower_id', user_id).execute()
-            stats['totalFollowing'] = following_result.count if hasattr(following_result, 'count') and following_result.count is not None else (len(following_result.data) if following_result.data else 0)
-        except Exception as e:
-            logger.warning(f"Erro ao contar seguindo: {str(e)}")
-            stats['totalFollowing'] = 0
-        
-        # Contar likes recebidos - buscar posts do usuário primeiro, depois reactions
-        try:
-            posts_result = supabase_client.table('posts').select('id').eq('user_id', user_id).execute()
+            from repositories.social_repository import SocialRepository
+            social_repo = SocialRepository()
             
-            if posts_result.data and len(posts_result.data) > 0:
-                post_ids = [p.get('id') for p in posts_result.data if p.get('id')]
-                
-                # Contar likes para cada post (mesmo que não seja a forma mais eficiente, funciona garantido)
-                total_likes = 0
-                for post_id in post_ids:
-                    try:
-                        reactions_result = supabase_client.table('reactions').select('id', count='exact').eq('post_id', post_id).eq('reaction_type', 'like').execute()
-                        count = reactions_result.count if hasattr(reactions_result, 'count') and reactions_result.count is not None else (len(reactions_result.data) if reactions_result.data else 0)
-                        total_likes += count
-                    except Exception as e:
-                        logger.debug(f"Erro ao contar likes do post {post_id}: {str(e)}")
-                        continue
-                
-                stats['totalLikes'] = total_likes
-            else:
-                stats['totalLikes'] = 0
+            stats['totalFollowers'] = social_repo.count_followers(user_id)
+            stats['totalFollowing'] = social_repo.count_following(user_id)
+            stats['totalLikes'] = social_repo.count_total_likes_for_user(user_id)
         except Exception as e:
-            logger.warning(f"Erro ao contar likes: {str(e)}")
+            logger.warning(f"Erro ao contar estatísticas sociais: {str(e)}")
+            stats['totalFollowers'] = 0
+            stats['totalFollowing'] = 0
             stats['totalLikes'] = 0
-        
+
         return jsonify({
             'success': True,
             'stats': stats
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar stats: {str(e)}")
         return jsonify({
@@ -460,10 +439,10 @@ def get_social_stats():
 def get_my_groups():
     """
     Retorna grupos dos quais o usuário autenticado é membro.
-    
+
     Busca todos os grupos onde o usuário está cadastrado e retorna
     informações detalhadas de cada um.
-    
+
     Returns:
         JSON: Lista de grupos do usuário com detalhes completos.
     """
@@ -471,7 +450,7 @@ def get_my_groups():
         user_id = request.current_user.get('id')
         if not user_id:
             return jsonify({'error': 'Usuário não identificado'}), 401
-        
+
         # Buscar grupos onde usuário é membro
         try:
             members_result = supabase_client._make_request(
@@ -479,10 +458,10 @@ def get_my_groups():
                 'group_members',
                 params={'user_id': f'eq.{user_id}', 'select': 'group_id'}
             )
-            
+
             if isinstance(members_result, list) and len(members_result) > 0:
                 group_ids = [m.get('group_id') for m in members_result if m.get('group_id')]
-                
+
                 # Buscar detalhes dos grupos
                 groups_list = []
                 for group_id in group_ids:
@@ -506,19 +485,19 @@ def get_my_groups():
                                 'createdAt': g.get('created_at'),
                                 'isJoined': True
                             })
-                    except:
+                    except Exception:
                         continue
             else:
                 groups_list = []
         except Exception as e:
             logger.warning(f"Erro ao buscar meus grupos: {str(e)}")
             groups_list = []
-        
+
         return jsonify({
             'success': True,
             'groups': groups_list
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar meus grupos: {str(e)}")
         return jsonify({
@@ -532,10 +511,10 @@ def get_my_groups():
 def get_trending_groups():
     """
     Retorna grupos em tendência ordenados por número de membros.
-    
+
     Busca os 20 grupos com maior número de membros para exibição
     na página de descoberta de grupos.
-    
+
     Returns:
         JSON: Lista dos 20 grupos mais populares.
     """
@@ -544,14 +523,14 @@ def get_trending_groups():
         try:
             # Buscar grupos e ordenar manualmente
             result = supabase_client._make_request('GET', 'groups')
-            
+
             if isinstance(result, list):
                 result = sorted(
                     result,
                     key=lambda x: x.get('member_count', x.get('members_count', 0)) or 0,
                     reverse=True
                 )[:20]
-            
+
             if isinstance(result, list):
                 trending_list = [{
                     'id': g.get('id'),
@@ -569,12 +548,12 @@ def get_trending_groups():
         except Exception as e:
             logger.warning(f"Erro ao buscar grupos trending: {str(e)}")
             trending_list = []
-        
+
         return jsonify({
             'success': True,
             'groups': trending_list
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar grupos trending: {str(e)}")
         return jsonify({

@@ -10,8 +10,7 @@ Fornece endpoints para gerenciamento administrativo incluindo:
 from flask import Blueprint, request, jsonify
 from services.admin_service import AdminService
 from services.analytics_service import AnalyticsService
-from utils.decorators import admin_required, log_activity
-from middleware.logging import log_user_activity
+from utils.decorators import admin_required
 
 admin_bp = Blueprint('admin', __name__)
 admin_service = AdminService()
@@ -22,7 +21,7 @@ analytics_service = AnalyticsService()
 def get_dashboard_stats():
     """
     Retorna estatísticas do dashboard admin.
-    
+
     Returns:
         JSON: Estatísticas gerais do dashboard ou erro.
     """
@@ -39,12 +38,12 @@ def get_dashboard_stats():
 def get_all_users():
     """
     Retorna todos os usuários (admin).
-    
+
     Query Parameters:
         page (int): Página de resultados (padrão: 1).
         per_page (int): Itens por página (padrão: 20).
         search (str): Termo de busca opcional.
-        
+
     Returns:
         JSON: Lista de usuários paginada ou erro.
     """
@@ -52,10 +51,10 @@ def get_all_users():
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
         search = request.args.get('search')
-        
+
         users = admin_service.get_all_users(page, per_page, search)
         return jsonify(users), 200
-        
+
     except ValueError as e:
         return jsonify({'error': 'Parâmetros inválidos', 'details': str(e)}), 400
     except Exception as e:
@@ -71,8 +70,8 @@ def get_analytics():
         period = request.args.get('period', '30')  # dias
         analytics = admin_service.get_analytics(int(period))
         return jsonify(analytics), 200
-        
-    except Exception as e:
+
+    except Exception:
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @admin_bp.route('/analytics/sales', methods=['GET'])
@@ -116,9 +115,9 @@ def get_all_orders():
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
         status = request.args.get('status')
-        
+
         orders = admin_service.get_all_orders(page, per_page, status)
         return jsonify(orders), 200
-        
-    except Exception as e:
+
+    except Exception:
         return jsonify({'error': 'Erro interno do servidor'}), 500

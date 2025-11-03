@@ -11,15 +11,19 @@ import logging
 from flask import Blueprint, request, jsonify
 from services.auth_service import AuthService
 from services.user_dashboard_service import UserDashboardService
-from utils.decorators import token_required, log_activity, rate_limit
+from services.user_service import UserService
+from utils.decorators import token_required, log_activity
+from utils.rate_limit_helper import rate_limit
 from utils.validators import user_validator
 from middleware.logging import log_user_activity
+from exceptions.custom_exceptions import InternalServerError, BaseAPIException
 
 logger = logging.getLogger(__name__)
 
 users_bp = Blueprint('users', __name__)
 auth_service = AuthService()
 dashboard_service = UserDashboardService()
+user_service = UserService()  # Novo service (Sprint 8)
 
 @users_bp.route('/dashboard', methods=['GET'])
 @token_required
@@ -54,17 +58,17 @@ def update_profile():
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         # Valida dados
         if not user_validator.validate_profile_update(data):
             return jsonify({
                 'error': 'Dados inválidos',
                 'details': user_validator.get_errors()
             }), 400
-        
-        # Atualiza perfil
-        result = auth_service.update_user_profile(user_id, data)
-        
+
+        # Atualiza perfil usando user_service (Sprint 8)
+        result = user_service.update_user_profile(user_id, data)
+
         if result.get('success'):
             log_user_activity(user_id, 'profile_updated', data)
             return jsonify({
@@ -72,8 +76,9 @@ def update_profile():
                 'user': result['user']
             }), 200
         else:
-            return jsonify({'error': result['error']}), 400
-            
+            from exceptions.custom_exceptions import BadRequestError
+            raise BadRequestError(result.get('error', 'Erro ao atualizar perfil'))
+
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
@@ -86,10 +91,10 @@ def change_password():
     try:
         data = request.get_json()
         user_id = request.current_user['id']
-        
+
         if not data.get('current_password') or not data.get('new_password'):
             return jsonify({'error': 'Senha atual e nova senha são obrigatórias'}), 400
-        
+
         # Valida nova senha
         password_validation = user_validator.validate_password(data['new_password'])
         if not password_validation['valid']:
@@ -97,20 +102,20 @@ def change_password():
                 'error': 'Nova senha inválida',
                 'details': password_validation['errors']
             }), 400
-        
+
         # Altera senha
         result = auth_service.change_password(
-            user_id, 
-            data['current_password'], 
+            user_id,
+            data['current_password'],
             data['new_password']
         )
-        
+
         if result.get('success'):
             log_user_activity(user_id, 'password_changed')
             return jsonify({'message': 'Senha alterada com sucesso'}), 200
         else:
             return jsonify({'error': result['error']}), 400
-            
+
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
@@ -131,37 +136,77 @@ def get_subscription():
     except Exception as e:
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
+@users_bp.route('/analytics', methods=['GET'])
+@token_required
+@rate_limit("20 per minute")
+def get_user_analytics():
+    """
+    Retorna analytics consolidado do usuário.
+
+    Inclui:
+    - Estatísticas de saúde (IMC, calorias, exercícios)
+    - Progresso ao longo do tempo
+    - Tendências e métricas consolidadas
+    - Comparação com períodos anteriores
+    """
+    try:
+        user_id = request.current_user['id']
+        period = int(request.args.get('period', '30'))  # dias
+        analytics = user_service.get_user_analytics(user_id, period)
+
+        if 'error' in analytics:
+            raise InternalServerError(analytics['error'])
+
+        return jsonify(analytics), 200
+
+    except BaseAPIException as e:
+        return jsonify(e.to_dict()), e.status_code
+    except Exception as e:
+        logger.error(f"Erro ao buscar analytics: {str(e)}", exc_info=True)
+        raise InternalServerError("Erro interno do servidor")
+
+@users_bp.route('/achievements', methods=['GET'])
+@token_required
+@rate_limit("20 per minute")
+def get_user_achievements():
+    """
+    Retorna conquistas do usuário.
+
+    Inclui:
+    - Badges e conquistas desbloqueadas
+    - Progresso para próximas conquistas
+    - Estatísticas de conquistas
+    """
+    try:
+        user_id = request.current_user['id']
+        achievements = user_service.get_user_achievements(user_id)
+
+        return jsonify({'achievements': achievements}), 200
+
+    except BaseAPIException as e:
+        return jsonify(e.to_dict()), e.status_code
+    except Exception as e:
+        logger.error(f"Erro ao buscar conquistas: {str(e)}", exc_info=True)
+        raise InternalServerError("Erro interno do servidor")
+
 @users_bp.route('/activity', methods=['GET'])
 @token_required
 def get_user_activity():
     """Retorna atividades do usuário"""
     try:
-        from config.database import supabase_client
-        
+        # ✅ CORRIGIDO: Usa UserService em vez de query direta
+        from services.user_service import UserService
+        user_service = UserService()
+
         user_id = request.current_user['id']
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
         activity_type = request.args.get('type')  # Filtro opcional por tipo
-        
-        # Buscar atividades do usuário
-        query = supabase_client.table('user_activities').select('*')
-        query = query.eq('user_id', user_id)
-        
-        if activity_type:
-            query = query.eq('activity_type', activity_type)
-        
-        # Ordenar por data mais recente
-        query = query.order('created_at', desc=True)
-        
-        # Executar query
-        result = query.execute()
-        activities_raw = result.data if result.data else []
-        
-        # Paginação manual
-        start = (page - 1) * per_page
-        end = start + per_page
-        activities = activities_raw[start:end]
-        
+
+        # ✅ Busca via service (que usa repositório)
+        result = user_service.get_user_activities(user_id, page, per_page, activity_type)
+        activities = result.get('activities', [])
+
         # Formatar resposta
         formatted_activities = []
         for activity in activities:
@@ -172,19 +217,20 @@ def get_user_activity():
                 'description': activity.get('description'),
                 'created_at': activity.get('created_at')
             })
-        
+
         return jsonify({
             'activities': formatted_activities,
             'pagination': {
                 'page': page,
                 'per_page': per_page,
-                'total': len(activities_raw),
-                'pages': (len(activities_raw) + per_page - 1) // per_page if activities_raw else 0
+                'total': len(activities),
+                'pages': (len(activities) + per_page - 1) // per_page if activities else 0
             }
         }), 200
     except Exception as e:
         logger.error(f"Erro ao buscar atividades: {str(e)}")
         return jsonify({'error': 'Erro interno do servidor', 'details': str(e)}), 500
+
 
 def get_subscription_features(subscription_type):
     """Retorna features disponíveis para o tipo de assinatura"""
@@ -218,5 +264,5 @@ def get_subscription_features(subscription_type):
             'custom_integrations'
         ]
     }
-    
+
     return features.get(subscription_type, features['free'])

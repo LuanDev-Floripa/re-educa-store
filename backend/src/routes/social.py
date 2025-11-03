@@ -28,14 +28,14 @@ def create_post():
     """Criar um novo post"""
     data = request.get_json()
     user_id = request.current_user['id']
-    
+
     # Validar campos obrigatórios
     required_fields = ['content']
     if not validate_required_fields(data, required_fields):
         return jsonify({'error': 'Campos obrigatórios: content'}), 400
-    
+
     result = social_service.create_post(user_id, data)
-    
+
     if result.get('success'):
         return jsonify({
             'success': True,
@@ -56,9 +56,9 @@ def get_posts():
     limit = request.args.get('limit', 20, type=int)
     post_type = request.args.get('type')
     hashtag = request.args.get('hashtag')
-    
+
     result = social_service.get_posts(user_id, page, limit, post_type, hashtag)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -70,9 +70,9 @@ def get_posts():
 def get_post(post_id):
     """Buscar um post específico"""
     user_id = request.current_user['id']
-    
+
     result = social_service.get_post(post_id, user_id)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -86,9 +86,9 @@ def update_post(post_id):
     """Atualizar um post"""
     user_id = request.current_user['id']
     data = request.get_json()
-    
+
     result = social_service.update_post(post_id, user_id, data)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -101,9 +101,9 @@ def update_post(post_id):
 def delete_post(post_id):
     """Deletar um post"""
     user_id = request.current_user['id']
-    
+
     result = social_service.delete_post(post_id, user_id)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -121,12 +121,12 @@ def create_comment(post_id):
     """Criar um comentário"""
     user_id = request.current_user['id']
     data = request.get_json()
-    
+
     if not data.get('content'):
         return jsonify({'error': 'Conteúdo do comentário é obrigatório'}), 400
-    
+
     result = social_service.create_comment(post_id, user_id, data)
-    
+
     if result.get('success'):
         return jsonify({
             'success': True,
@@ -146,9 +146,9 @@ def get_comments(post_id):
     user_id = request.current_user['id']
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 20, type=int)
-    
+
     result = social_service.get_comments(post_id, user_id, page, limit)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -167,9 +167,9 @@ def create_reaction(post_id):
     user_id = request.current_user['id']
     data = request.get_json() or {}
     reaction_type = data.get('reaction_type', 'like')
-    
+
     result = social_service.create_reaction(post_id, user_id, reaction_type)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -182,9 +182,9 @@ def remove_reaction(post_id):
     """Remover reação de um post"""
     user_id = request.current_user['id']
     reaction_type = request.args.get('reaction_type', 'like')
-    
+
     result = social_service.remove_reaction(post_id, user_id, reaction_type)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -200,9 +200,9 @@ def remove_reaction(post_id):
 def follow_user(user_id):
     """Seguir um usuário"""
     follower_id = request.current_user['id']
-    
+
     result = social_service.follow_user(follower_id, user_id)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -215,9 +215,9 @@ def follow_user(user_id):
 def unfollow_user(user_id):
     """Deixar de seguir um usuário"""
     follower_id = request.current_user['id']
-    
+
     result = social_service.unfollow_user(follower_id, user_id)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -236,9 +236,9 @@ def get_notifications():
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 20, type=int)
     unread_only = request.args.get('unread_only', 'false').lower() == 'true'
-    
+
     result = social_service.get_notifications(user_id, page, limit, unread_only)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -250,9 +250,9 @@ def get_notifications():
 def mark_notification_read(notification_id):
     """Marcar notificação como lida"""
     user_id = request.current_user['id']
-    
+
     result = social_service.mark_notification_read(notification_id, user_id)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:
@@ -271,12 +271,12 @@ def search():
     search_type = request.args.get('type', 'all')
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 20, type=int)
-    
+
     if not query:
         return jsonify({'error': 'Query de busca é obrigatória'}), 400
-    
+
     result = social_service.search(query, search_type, page, limit)
-    
+
     if result.get('success'):
         return jsonify(result), 200
     else:

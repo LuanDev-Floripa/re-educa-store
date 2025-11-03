@@ -15,22 +15,25 @@ SEGURANÇA:
 - Rotação periódica recomendada (ai_key_rotation_service)
 """
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any
+from datetime import datetime
 from config.database import supabase_client
 from utils.encryption import encryption_service
 from utils.helpers import generate_uuid
+from repositories.ai_config_repository import AIConfigRepository
 
 logger = logging.getLogger(__name__)
 
+
 class AIConfigService:
     """Serviço para gerenciar configurações de IA de forma segura"""
-    
+
     def __init__(self):
         self.logger = logger
         self.supabase = supabase_client
         self.encryption = encryption_service
-    
+        self.repo = AIConfigRepository()
+
     def create_ai_config(self, config_data: Dict[str, Any], created_by: str) -> Dict[str, Any]:
         """Cria uma nova configuração de IA com chave criptografada"""
         try:
@@ -39,10 +42,10 @@ class AIConfigService:
             for field in required_fields:
                 if field not in config_data:
                     return {'success': False, 'error': f'Campo obrigatório: {field}'}
-            
+
             # Criptografar a chave de API
             encrypted_api_key = self.encryption.encrypt_api_key(config_data['api_key'])
-            
+
             # Preparar dados para inserção
             ai_config = {
                 'id': generate_uuid(),
@@ -60,51 +63,52 @@ class AIConfigService:
                 'created_by': created_by,
                 'created_at': datetime.now().isoformat()
             }
-            
-            # Inserir no banco de dados
-            result = self.supabase.table('ai_configurations').insert(ai_config).execute()
-            
-            if result.data:
-                self.logger.info(f"Configuração de IA criada: {config_data['provider']} - {config_data['service_name']}")
+
+            # ✅ CORRIGIDO: Inserir via repositório
+            result = self.repo.create(ai_config)
+
+            if result:
+                self.logger.info(
+                    f"Configuração de IA criada: {config_data['provider']} - "
+                    f"{config_data['service_name']}"
+                )
                 return {
                     'success': True,
                     'data': {
-                        'id': ai_config['id'],
-                        'provider': ai_config['provider'],
-                        'service_name': ai_config['service_name'],
-                        'is_active': ai_config['is_active'],
-                        'is_default': ai_config['is_default']
+                        'id': result['id'],
+                        'provider': result['provider'],
+                        'service_name': result['service_name'],
+                        'is_active': result['is_active'],
+                        'is_default': result['is_default']
                     }
                 }
             else:
                 return {'success': False, 'error': 'Erro ao inserir configuração no banco'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao criar configuração de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def get_ai_config(self, provider: str, service_name: str = None) -> Dict[str, Any]:
         """Obtém configuração de IA e descriptografa a chave"""
         try:
-            query = self.supabase.table('ai_configurations').select('*').eq('provider', provider).eq('is_active', True)
-            
-            if service_name:
-                query = query.eq('service_name', service_name)
-            else:
-                query = query.eq('is_default', True)
-            
-            result = query.execute()
-            
-            if result.data:
-                config = result.data[0]
-                
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            config = self.repo.find_by_provider(
+                provider=provider,
+                service_name=service_name,
+                is_active=True,
+                is_default=None if service_name else True
+            )
+
+            if config:
+
                 # Descriptografar a chave de API
                 try:
                     decrypted_api_key = self.encryption.decrypt_api_key(config['api_key_encrypted'])
-                    
-                    # Atualizar contador de uso
-                    self._update_usage_count(config['id'])
-                    
+
+                    # ✅ CORRIGIDO: Atualizar contador de uso via repositório
+                    self.repo.update_usage_count(config['id'])
+
                     return {
                         'success': True,
                         'data': {
@@ -125,24 +129,20 @@ class AIConfigService:
                     return {'success': False, 'error': 'Erro ao descriptografar chave de API'}
             else:
                 return {'success': False, 'error': 'Configuração de IA não encontrada'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao obter configuração de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def list_ai_configs(self, include_inactive: bool = False) -> Dict[str, Any]:
         """Lista todas as configurações de IA (sem chaves descriptografadas)"""
         try:
-            query = self.supabase.table('ai_configurations').select('*')
-            
-            if not include_inactive:
-                query = query.eq('is_active', True)
-            
-            result = query.order('created_at', desc=True).execute()
-            
-            if result.data:
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            configs_list = self.repo.find_active(include_inactive=include_inactive)
+
+            if configs_list:
                 configs = []
-                for config in result.data:
+                for config in configs_list:
                     configs.append({
                         'id': config['id'],
                         'provider': config['provider'],
@@ -155,15 +155,15 @@ class AIConfigService:
                         'last_used_at': config['last_used_at'],
                         'created_at': config['created_at']
                     })
-                
+
                 return {'success': True, 'data': configs}
             else:
                 return {'success': True, 'data': []}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao listar configurações de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def update_ai_config(self, config_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
         """Atualiza configuração de IA"""
         try:
@@ -171,51 +171,51 @@ class AIConfigService:
             if 'api_key' in update_data:
                 update_data['api_key_encrypted'] = self.encryption.encrypt_api_key(update_data['api_key'])
                 del update_data['api_key']
-            
+
             # Adicionar timestamp de atualização
             update_data['updated_at'] = datetime.now().isoformat()
-            
-            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
-            
-            if result.data:
+
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            result = self.repo.update(config_id, update_data)
+
+            if result:
                 self.logger.info(f"Configuração de IA atualizada: {config_id}")
-                return {'success': True, 'data': result.data[0]}
+                return {'success': True, 'data': result}
             else:
                 return {'success': False, 'error': 'Configuração não encontrada'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao atualizar configuração de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def delete_ai_config(self, config_id: str) -> Dict[str, Any]:
         """Remove configuração de IA"""
         try:
-            result = self.supabase.table('ai_configurations').delete().eq('id', config_id).execute()
-            
-            if result.data:
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            deleted = self.repo.delete(config_id)
+
+            if deleted:
                 self.logger.info(f"Configuração de IA removida: {config_id}")
                 return {'success': True, 'message': 'Configuração removida com sucesso'}
             else:
                 return {'success': False, 'error': 'Configuração não encontrada'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao remover configuração de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def test_ai_config(self, config_id: str) -> Dict[str, Any]:
         """Testa uma configuração de IA fazendo uma requisição simples"""
         try:
-            # Obter configuração
-            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
-            
-            if not config_result.data:
+            # ✅ CORRIGIDO: Obter configuração via repositório
+            config = self.repo.find_by_id(config_id)
+
+            if not config:
                 return {'success': False, 'error': 'Configuração não encontrada'}
-            
-            config = config_result.data[0]
-            
+
             # Descriptografar chave
             api_key = self.encryption.decrypt_api_key(config['api_key_encrypted'])
-            
+
             # Testar baseado no provider
             if config['provider'] == 'gemini':
                 return self._test_gemini_api(api_key, config)
@@ -223,21 +223,21 @@ class AIConfigService:
                 return self._test_perplexity_api(api_key, config)
             else:
                 return {'success': False, 'error': f'Provider não suportado: {config["provider"]}'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao testar configuração de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
-    
+
     def _test_gemini_api(self, api_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Testa API do Google Gemini"""
         try:
             import google.generativeai as genai
-            
+
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-pro')
-            
+
             response = model.generate_content("Teste de conectividade - responda apenas 'OK'")
-            
+
             return {
                 'success': True,
                 'data': {
@@ -247,23 +247,23 @@ class AIConfigService:
                     'tested_at': datetime.now().isoformat()
                 }
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
                 'error': f'Erro ao conectar com Gemini: {str(e)}'
             }
-    
+
     def _test_perplexity_api(self, api_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Testa API do Perplexity"""
         try:
             import requests
-            
+
             headers = {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
-            
+
             payload = {
                 "model": "llama-3.1-sonar-small-128k-online",
                 "messages": [
@@ -274,14 +274,14 @@ class AIConfigService:
                 ],
                 "max_tokens": 10
             }
-            
+
             response = requests.post(
                 "https://api.perplexity.ai/chat/completions",
                 json=payload,
                 headers=headers,
                 timeout=10
             )
-            
+
             if response.status_code == 200:
                 result = response.json()
                 return {
@@ -289,7 +289,10 @@ class AIConfigService:
                     'data': {
                         'provider': 'perplexity',
                         'status': 'connected',
-                        'response': result['choices'][0]['message']['content'][:100] if result.get('choices') else 'Sem resposta',
+                        'response': (
+                            result['choices'][0]['message']['content'][:100]
+                            if result.get('choices') else 'Sem resposta'
+                        ),
                         'tested_at': datetime.now().isoformat()
                     }
                 }
@@ -298,26 +301,26 @@ class AIConfigService:
                     'success': False,
                     'error': f'Erro HTTP {response.status_code}: {response.text}'
                 }
-                
+
         except Exception as e:
             return {
                 'success': False,
                 'error': f'Erro ao conectar com Perplexity: {str(e)}'
             }
-    
+
     def _update_usage_count(self, config_id: str):
         """Atualiza contador de uso da configuração"""
         try:
-            self.supabase.table('ai_configurations').update({
-                'usage_count': self.supabase.rpc('increment_usage_count', {'config_id': config_id}),
-                'last_used_at': datetime.now().isoformat()
-            }).eq('id', config_id).execute()
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            self.repo.update_usage_count(config_id)
         except Exception as e:
             self.logger.warning(f"Erro ao atualizar contador de uso: {str(e)}")
-    
-    def log_ai_usage(self, config_id: str, user_id: str, request_type: str, 
-                    tokens_used: int, success: bool, error_message: str = None,
-                    request_data: Dict = None, response_data: Dict = None) -> Dict[str, Any]:
+
+    def log_ai_usage(
+            self, config_id: str, user_id: str, request_type: str,
+            tokens_used: int, success: bool, error_message: str = None,
+            request_data: Dict = None, response_data: Dict = None
+    ) -> Dict[str, Any]:
         """Registra uso da API de IA"""
         try:
             usage_log = {
@@ -332,17 +335,19 @@ class AIConfigService:
                 'response_data': response_data or {},
                 'created_at': datetime.now().isoformat()
             }
-            
-            result = self.supabase.table('ai_usage_logs').insert(usage_log).execute()
-            
-            if result.data:
-                return {'success': True, 'data': result.data[0]}
+
+            # ✅ CORRIGIDO: Usa AIConfigRepository
+            result = self.repo.create_usage_log(usage_log)
+
+            if result:
+                return {'success': True, 'data': result}
             else:
                 return {'success': False, 'error': 'Erro ao registrar uso'}
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao registrar uso de IA: {str(e)}")
             return {'success': False, 'error': 'Erro interno do servidor'}
+
 
 # Instância global do serviço
 ai_config_service = AIConfigService()

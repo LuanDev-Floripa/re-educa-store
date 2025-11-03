@@ -1,0 +1,336 @@
+src/tests/test_exercise_service.py:46:        mock_table = mock_supabase_client.table.return_value
+src/tests/test_exercise_service.py:55:        mock_supabase_client.table.assert_called_with('exercises')
+src/tests/test_exercise_service.py:63:        mock_table = mock_supabase_client.table.return_value
+src/tests/test_exercise_service.py:87:        mock_table = mock_supabase_client.table.return_value
+src/tests/test_order_service.py:51:        mock_table = mock_supabase_client.table.return_value
+src/tests/test_order_service.py:73:        mock_table = mock_supabase_client.table.return_value
+src/utils/health_checks.py:117:            result = supabase_client.table('users').select('id').limit(1).execute()
+src/routes/social_additional.py:410:                supabase_client.table('follows')
+src/routes/social_additional.py:428:                supabase_client.table('follows')
+src/routes/social_additional.py:444:            posts_result = supabase_client.table('posts').select('id').eq('user_id', user_id).execute()
+src/routes/social_additional.py:454:                            supabase_client.table('reactions')
+src/services/exercise_service.py:192:            result = self.supabase.table('exercises').select('*').eq('id', exercise_id).execute()
+src/services/exercise_service.py:393:            result = self.supabase.table('workout_plans').insert(plan_record).execute()
+src/services/exercise_service.py:591:                result = self.supabase.table('workout_plans').update(update_data).eq('id', plan_id).execute()
+src/services/exercise_service.py:597:                        self.supabase.table('workout_plan_exercises').delete().eq('plan_id', plan_id).execute()
+src/services/exercise_service.py:625:            self.supabase.table('workout_plans').delete().eq('id', plan_id).execute()
+src/services/exercise_service.py:724:            query = self.supabase.table('weekly_workout_sessions').select('*').eq('user_id', user_id)
+src/services/exercise_service.py:762:                session = self.supabase.table('weekly_workout_sessions')\
+src/services/exercise_service.py:768:                    result = self.supabase.table('workout_plan_exercises')\
+src/services/exercise_service.py:792:            result = self.supabase.table('session_exercise_progress')\
+src/services/exercise_service.py:831:            result = self.supabase.table('weekly_workout_sessions')\
+src/services/exercise_service.py:882:            result = self.supabase.table('session_exercise_progress').insert(progress_record).execute()
+src/services/exercise_service.py:901:            result = self.supabase.table('session_exercise_progress')\
+src/services/exercise_service.py:908:            self.supabase.table('weekly_workout_sessions').update({
+src/services/inventory_service.py:69:            current_result = (self.supabase.table('products').select('stock_quantity, name').eq('id', product_id).execute())
+src/services/inventory_service.py:226:                self.supabase.table('products')
+src/services/inventory_service.py:271:                self.supabase.table('products')
+src/services/inventory_service.py:280:                self.supabase.table('products')
+src/services/inventory_service.py:293:                self.supabase.table('products')
+src/services/inventory_service.py:346:            expired_result = (self.supabase.table('stock_reservations').select('*').lt('expires_at', now).eq('status', 'reserved').execute())
+src/services/affiliate_service.py:168:            self.supabase.table('affiliate_sales').insert(sale_record).execute()
+src/services/affiliate_service.py:252:            self.supabase.table('affiliate_sales').insert(sale_record).execute()
+src/services/affiliate_service.py:490:            query = self.supabase.table('affiliate_sales').select('*')
+src/services/promotion_service.py:51:            existing = self.supabase.table('coupons').select('id').eq('code', coupon_data['code']).execute()
+src/services/promotion_service.py:76:            result = self.supabase.table('coupons').insert(coupon).execute()
+src/services/promotion_service.py:96:            coupon_result = (self.supabase.table('coupons').select('*').eq('code', code.upper()).eq('is_active', True).execute())
+src/services/promotion_service.py:123:                usage_count = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon['id']).execute())
+src/services/promotion_service.py:128:            user_usage_count = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon['id']).eq('user_id', user_id).execute())
+src/services/promotion_service.py:172:            self.supabase.table('coupon_usage').insert(usage_data).execute()
+src/services/promotion_service.py:189:            query = self.supabase.table('coupons').select('*')
+src/services/promotion_service.py:215:            total_usage = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:218:            usage_data = (self.supabase.table('coupon_usage').select('discount_amount').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:222:            user_usage = (self.supabase.table('coupon_usage').select('user_id', count='exact').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:266:            result = self.supabase.table('promotions').insert(promotion).execute()
+src/services/promotion_service.py:286:            query = (self.supabase.table('promotions').select('*').eq('is_active', True).gte('valid_from', now).lte('valid_until', now).gte('min_order_value', order_value))
+src/services/two_factor_service.py:106:            self.supabase.table('two_factor_auth').upsert({
+src/services/two_factor_service.py:130:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:156:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:172:                self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:196:            self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:205:            self.supabase.table('users')\
+src/services/two_factor_service.py:223:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:244:            self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:253:            self.supabase.table('users')\
+src/services/two_factor_service.py:270:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:287:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:320:            self.supabase.table('two_factor_auth')\
+src/services/admin_service.py:38:            users_result = self.supabase.table('users').select('id, is_active, created_at').execute()
+src/services/admin_service.py:39:            products_result = self.supabase.table('products').select('id, is_active').execute()
+src/services/admin_service.py:40:            orders_result = self.supabase.table('orders').select('id, status, total, created_at').execute()
+src/services/admin_service.py:128:            query = self.supabase.table('users').select('*')
+src/services/admin_service.py:173:            users_result = self.supabase.table('users')\
+src/services/admin_service.py:179:            orders_result = self.supabase.table('orders')\
+src/services/admin_service.py:211:            query = self.supabase.table('orders').select('*, users(name, email)')
+src/services/predictive_analysis_service.py:339:                self.supabase.table('imc_history')
+src/services/predictive_analysis_service.py:348:                self.supabase.table('workout_sessions')
+src/services/predictive_analysis_service.py:434:                exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).gte('completed_at', thirty_days_ago).execute())
+src/services/predictive_analysis_service.py:569:                response = (self.supabase.table('orders').select('*').eq('user_id', user_id).order('created_at').execute())
+src/services/predictive_analysis_service.py:571:                response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).order('completed_at').execute())
+src/services/predictive_analysis_service.py:573:                response = (self.supabase.table('food_diary_entries').select('*').eq('user_id', user_id).order('consumed_at').execute())
+src/services/predictive_analysis_service.py:665:            activities_response = (self.supabase.table('user_activities').select('*').eq('user_id', user_id).gte('timestamp', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:676:            user_response = self.supabase.table('users').select('last_login').eq('id', user_id).execute()
+src/services/predictive_analysis_service.py:727:            exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).gte('completed_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:730:            nutrition_response = (self.supabase.table('food_diary_entries').select('*').eq('user_id', user_id).gte('consumed_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:733:            hydration_response = (self.supabase.table('hydration_history').select('*').eq('user_id', user_id).gte('calculated_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:785:            imc_response = (self.supabase.table('imc_history').select('*').eq('user_id', user_id).order('calculated_at').execute())
+src/services/predictive_analysis_service.py:788:            exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).order('completed_at').execute())
+src/services/predictive_analysis_service.py:791:            activities_response = (self.supabase.table('user_activities').select('*').eq('user_id', user_id).order('created_at').execute())
+src/services/ai_config_service.py:66:            result = self.supabase.table('ai_configurations').insert(ai_config).execute()
+src/services/ai_config_service.py:93:            query = self.supabase.table('ai_configurations').select('*').eq('provider', provider).eq('is_active', True)
+src/services/ai_config_service.py:140:            query = self.supabase.table('ai_configurations').select('*')
+src/services/ai_config_service.py:182:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_config_service.py:197:            result = self.supabase.table('ai_configurations').delete().eq('id', config_id).execute()
+src/services/ai_config_service.py:213:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_config_service.py:318:            self.supabase.table('ai_configurations').update({
+src/services/ai_config_service.py:345:            result = self.supabase.table('ai_usage_logs').insert(usage_log).execute()
+src/services/ai_config_service_hybrid.py:67:            query = self.supabase.table('ai_configurations').select('*').eq('provider', provider).eq('is_active', True)
+src/services/ai_config_service_hybrid.py:171:            query = self.supabase.table('ai_configurations').select('*')
+src/services/ai_config_service_hybrid.py:244:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:378:            self.supabase.table('ai_configurations').update({
+src/services/ai_config_service_hybrid.py:424:            result = self.supabase.table('ai_configurations').insert(ai_config).execute()
+src/services/ai_config_service_hybrid.py:482:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:516:            result = self.supabase.table('ai_configurations').delete().eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:575:            result = self.supabase.table('ai_usage_logs').insert(usage_log).execute()
+src/services/ai_key_rotation_service.py:46:            result = self.supabase.table('ai_configurations').select('*').execute()
+src/services/ai_key_rotation_service.py:84:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_key_rotation_service.py:106:            self.supabase.table('ai_key_rotation_logs').insert(backup_data).execute()
+src/services/ai_key_rotation_service.py:115:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_key_rotation_service.py:210:            query = self.supabase.table('ai_key_rotation_logs').select('*')
+src/services/ai_key_rotation_service.py:235:            result = self.supabase.table('ai_security_settings').select('*').execute()
+src/services/ai_key_rotation_service.py:262:                result = self.supabase.table('ai_security_settings').update({
+src/services/ai_key_rotation_service.py:286:            result = self.supabase.table('ai_security_settings').select('*').execute()
+src/services/ai_key_rotation_service.py:304:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/health_calculator_service.py:316:                        self.supabase.table('imc_history').insert(imc_data).execute()
+src/services/health_calculator_service.py:335:                        self.supabase.table('calories_history').insert(calories_data).execute()
+src/services/health_calculator_service.py:352:                        self.supabase.table('hydration_history').insert(hydration_data).execute()
+src/services/health_calculator_service.py:372:                        self.supabase.table('body_fat_history').insert(body_fat_data).execute()
+src/services/monitoring_service.py:135:                    result = self.supabase.table(table).select('id', count='exact').limit(0).execute()
+src/services/video_upload_service.py:123:            result = self.supabase.table('video_uploads').insert(video_data).execute()
+src/services/video_upload_service.py:137:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:154:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:187:            self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:220:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:258:            views_result = self.supabase.table('video_views')\
+src/services/lgpd_service.py:186:                profile = self.db.table('users')\
+src/services/lgpd_service.py:206:                orders = self.db.table('orders')\
+src/services/lgpd_service.py:294:            self.db.table('user_deletions').insert(deletion_record).execute()
+src/services/lgpd_service.py:345:            self.db.table('users').delete().eq('id', user_id).execute()
+src/services/lgpd_service.py:394:            result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:401:            total_result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:442:            result = self.db.table(table_name)\
+src/repositories/base_repository.py:87:            result = self.db.table(self.table_name).select('*').eq('id', id).execute()
+src/repositories/base_repository.py:156:            query = self.db.table(self.table_name).select('*')
+src/repositories/base_repository.py:200:            result = self.db.table(self.table_name).insert(data).execute()
+src/repositories/base_repository.py:220:            result = self.db.table(self.table_name).update(data).eq('id', id).execute()
+src/repositories/base_repository.py:239:            result = self.db.table(self.table_name).delete().eq('id', id).execute()
+src/repositories/base_repository.py:256:            query = self.db.table(self.table_name).select('id', count='exact')
+src/repositories/health_repository.py:41:            result = self.db.table('biological_age_calculations').insert(data).execute()
+src/repositories/health_repository.py:61:            result = self.db.table('hydration_calculations').insert(data).execute()
+src/repositories/user_repository.py:144:            activities = self.db.table('user_activities').select('*').eq('user_id', user_id)
+src/repositories/user_repository.py:189:            result = self.db.table(self.table_name).select('*').or_(
+src/repositories/user_repository.py:199:            count_result = self.db.table(self.table_name).select('id', count='exact').or_(
+src/repositories/workout_repository.py:78:            query = self.db.table('weekly_workout_sessions').select('*')
+src/repositories/workout_repository.py:148:                result = self.db.table('weekly_workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:150:                result = self.db.table('workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:163:            result = self.db.table('weekly_workout_sessions').select('id').eq('id', session_id).execute()
+src/services/lgpd_service.py:186:                profile = self.db.table('users')\
+src/services/lgpd_service.py:206:                orders = self.db.table('orders')\
+src/services/lgpd_service.py:294:            self.db.table('user_deletions').insert(deletion_record).execute()
+src/services/lgpd_service.py:345:            self.db.table('users').delete().eq('id', user_id).execute()
+src/services/lgpd_service.py:394:            result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:401:            total_result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:442:            result = self.db.table(table_name)\
+src/repositories/base_repository.py:87:            result = self.db.table(self.table_name).select('*').eq('id', id).execute()
+src/repositories/base_repository.py:156:            query = self.db.table(self.table_name).select('*')
+src/repositories/base_repository.py:200:            result = self.db.table(self.table_name).insert(data).execute()
+src/repositories/base_repository.py:220:            result = self.db.table(self.table_name).update(data).eq('id', id).execute()
+src/repositories/base_repository.py:239:            result = self.db.table(self.table_name).delete().eq('id', id).execute()
+src/repositories/base_repository.py:256:            query = self.db.table(self.table_name).select('id', count='exact')
+src/repositories/health_repository.py:41:            result = self.db.table('biological_age_calculations').insert(data).execute()
+src/repositories/health_repository.py:61:            result = self.db.table('hydration_calculations').insert(data).execute()
+src/repositories/user_repository.py:144:            activities = self.db.table('user_activities').select('*').eq('user_id', user_id)
+src/repositories/user_repository.py:189:            result = self.db.table(self.table_name).select('*').or_(
+src/repositories/user_repository.py:199:            count_result = self.db.table(self.table_name).select('id', count='exact').or_(
+src/repositories/workout_repository.py:78:            query = self.db.table('weekly_workout_sessions').select('*')
+src/repositories/workout_repository.py:148:                result = self.db.table('weekly_workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:150:                result = self.db.table('workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:163:            result = self.db.table('weekly_workout_sessions').select('id').eq('id', session_id).execute()
+src/config/database.py:86:    def table(self, table_name: str):
+src/tests/test_nutrition.py:44:        def mock_table(table_name):
+src/tests/test_nutrition.py:102:        def mock_table(table_name):
+src/tests/test_nutrition.py:134:        def mock_table(table_name):
+src/tests/test_nutrition.py:167:        def mock_table(table_name):
+src/tests/test_nutrition.py:210:        def mock_table(table_name):
+src/tests/test_nutrition.py:257:        def mock_table(table_name):
+src/tests/test_nutrition.py:407:        def mock_table(table_name):
+src/tests/test_nutrition.py:454:        def mock_table(table_name):
+src/tests/test_nutrition.py:498:        def mock_table(table_name):
+src/tests/test_health_tools.py:69:        def mock_table(table_name):
+src/tests/test_health_tools.py:122:        def mock_table(table_name):
+src/tests/test_health_tools.py:156:        def mock_table(table_name):
+src/tests/test_health_tools.py:190:        def mock_table(table_name):
+src/tests/test_health_tools.py:232:        def mock_table(table_name):
+src/tests/test_health_tools.py:278:        def mock_table(table_name):
+src/tests/test_health_tools.py:324:        def mock_table(table_name):
+src/tests/test_health_tools.py:378:        def mock_table(table_name):
+src/tests/conftest.py:72:    def setup_mock_table(table):
+src/tests/conftest.py:87:    mock_users_table = setup_mock_table(mock_users_table)
+src/tests/conftest.py:88:    mock_user_profiles_table = setup_mock_table(mock_user_profiles_table)
+src/tests/conftest.py:89:    mock_imc_history_table = setup_mock_table(mock_imc_history_table)
+src/tests/conftest.py:90:    mock_user_activities_table = setup_mock_table(mock_user_activities_table)
+src/tests/conftest.py:91:    mock_products_table = setup_mock_table(mock_products_table)
+src/tests/conftest.py:92:    mock_orders_table = setup_mock_table(mock_orders_table)
+src/tests/conftest.py:93:    mock_exercises_table = setup_mock_table(mock_exercises_table)
+src/tests/conftest.py:96:    def mock_table(table_name):
+src/tests/conftest.py:106:        return tables.get(table_name, setup_mock_table(Mock()))
+src/tests/conftest.py:245:        def mock_table(table_name):
+src/tests/test_users.py:172:        def mock_table(table_name):
+src/tests/test_users.py:230:        def mock_table(table_name):
+src/tests/test_users.py:290:        def mock_table(table_name):
+src/tests/test_users.py:350:        def mock_table(table_name):
+src/tests/test_users.py:410:        def mock_table(table_name):
+src/tests/test_users.py:468:        def mock_table(table_name):
+src/tests/test_users.py:527:        def mock_table(table_name):
+src/tests/test_users.py:586:        def mock_table(table_name):
+src/tests/test_users.py:645:        def mock_table(table_name):
+src/tests/test_users.py:704:        def mock_table(table_name):
+src/utils/health_checks.py:117:            result = supabase_client.table('users').select('id').limit(1).execute()
+src/routes/promotions.py:228:        coupon_result = promotion_service.supabase.table('coupons').select('*').eq('id', coupon_id).execute()
+src/routes/promotions.py:244:        result = promotion_service.supabase.table('coupons').update(update_data).eq('id', coupon_id).execute()
+src/routes/promotions.py:269:        promotion_result = promotion_service.supabase.table('promotions').select('*').eq('id', promotion_id).execute()
+src/routes/promotions.py:285:        result = promotion_service.supabase.table('promotions').update(update_data).eq('id', promotion_id).execute()
+src/routes/promotions.py:308:        coupon_result = promotion_service.supabase.table('coupons').select('*').eq('id', coupon_id).execute()
+src/routes/promotions.py:314:        promotion_service.supabase.table('coupons').delete().eq('id', coupon_id).execute()
+src/routes/promotions.py:335:        promotion_result = promotion_service.supabase.table('promotions').select('*').eq('id', promotion_id).execute()
+src/routes/promotions.py:341:        promotion_service.supabase.table('promotions').delete().eq('id', promotion_id).execute()
+src/routes/admin_ai.py:283:        query = ai_config_service.supabase.table('ai_usage_logs').select('*')
+src/routes/social_additional.py:410:                supabase_client.table('follows')
+src/routes/social_additional.py:428:                supabase_client.table('follows')
+src/routes/social_additional.py:444:            posts_result = supabase_client.table('posts').select('id').eq('user_id', user_id).execute()
+src/routes/social_additional.py:454:                            supabase_client.table('reactions')
+src/services/exercise_service.py:192:            result = self.supabase.table('exercises').select('*').eq('id', exercise_id).execute()
+src/services/exercise_service.py:393:            result = self.supabase.table('workout_plans').insert(plan_record).execute()
+src/services/exercise_service.py:591:                result = self.supabase.table('workout_plans').update(update_data).eq('id', plan_id).execute()
+src/services/exercise_service.py:597:                        self.supabase.table('workout_plan_exercises').delete().eq('plan_id', plan_id).execute()
+src/services/exercise_service.py:625:            self.supabase.table('workout_plans').delete().eq('id', plan_id).execute()
+src/services/exercise_service.py:724:            query = self.supabase.table('weekly_workout_sessions').select('*').eq('user_id', user_id)
+src/services/exercise_service.py:762:                session = self.supabase.table('weekly_workout_sessions')\
+src/services/exercise_service.py:768:                    result = self.supabase.table('workout_plan_exercises')\
+src/services/exercise_service.py:792:            result = self.supabase.table('session_exercise_progress')\
+src/services/exercise_service.py:831:            result = self.supabase.table('weekly_workout_sessions')\
+src/services/exercise_service.py:882:            result = self.supabase.table('session_exercise_progress').insert(progress_record).execute()
+src/services/exercise_service.py:901:            result = self.supabase.table('session_exercise_progress')\
+src/services/exercise_service.py:908:            self.supabase.table('weekly_workout_sessions').update({
+src/services/inventory_service.py:69:            current_result = (self.supabase.table('products').select('stock_quantity, name').eq('id', product_id).execute())
+src/services/inventory_service.py:226:                self.supabase.table('products')
+src/services/inventory_service.py:271:                self.supabase.table('products')
+src/services/inventory_service.py:280:                self.supabase.table('products')
+src/services/inventory_service.py:293:                self.supabase.table('products')
+src/services/inventory_service.py:346:            expired_result = (self.supabase.table('stock_reservations').select('*').lt('expires_at', now).eq('status', 'reserved').execute())
+src/services/affiliate_service.py:168:            self.supabase.table('affiliate_sales').insert(sale_record).execute()
+src/services/affiliate_service.py:252:            self.supabase.table('affiliate_sales').insert(sale_record).execute()
+src/services/affiliate_service.py:490:            query = self.supabase.table('affiliate_sales').select('*')
+src/services/promotion_service.py:51:            existing = self.supabase.table('coupons').select('id').eq('code', coupon_data['code']).execute()
+src/services/promotion_service.py:76:            result = self.supabase.table('coupons').insert(coupon).execute()
+src/services/promotion_service.py:96:            coupon_result = (self.supabase.table('coupons').select('*').eq('code', code.upper()).eq('is_active', True).execute())
+src/services/promotion_service.py:123:                usage_count = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon['id']).execute())
+src/services/promotion_service.py:128:            user_usage_count = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon['id']).eq('user_id', user_id).execute())
+src/services/promotion_service.py:172:            self.supabase.table('coupon_usage').insert(usage_data).execute()
+src/services/promotion_service.py:189:            query = self.supabase.table('coupons').select('*')
+src/services/promotion_service.py:215:            total_usage = (self.supabase.table('coupon_usage').select('id', count='exact').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:218:            usage_data = (self.supabase.table('coupon_usage').select('discount_amount').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:222:            user_usage = (self.supabase.table('coupon_usage').select('user_id', count='exact').eq('coupon_id', coupon_id).execute())
+src/services/promotion_service.py:266:            result = self.supabase.table('promotions').insert(promotion).execute()
+src/services/promotion_service.py:286:            query = (self.supabase.table('promotions').select('*').eq('is_active', True).gte('valid_from', now).lte('valid_until', now).gte('min_order_value', order_value))
+src/services/two_factor_service.py:106:            self.supabase.table('two_factor_auth').upsert({
+src/services/two_factor_service.py:130:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:156:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:172:                self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:196:            self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:205:            self.supabase.table('users')\
+src/services/two_factor_service.py:223:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:244:            self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:253:            self.supabase.table('users')\
+src/services/two_factor_service.py:270:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:287:            result = self.supabase.table('two_factor_auth')\
+src/services/two_factor_service.py:320:            self.supabase.table('two_factor_auth')\
+src/services/admin_service.py:38:            users_result = self.supabase.table('users').select('id, is_active, created_at').execute()
+src/services/admin_service.py:39:            products_result = self.supabase.table('products').select('id, is_active').execute()
+src/services/admin_service.py:40:            orders_result = self.supabase.table('orders').select('id, status, total, created_at').execute()
+src/services/admin_service.py:128:            query = self.supabase.table('users').select('*')
+src/services/admin_service.py:173:            users_result = self.supabase.table('users')\
+src/services/admin_service.py:179:            orders_result = self.supabase.table('orders')\
+src/services/admin_service.py:211:            query = self.supabase.table('orders').select('*, users(name, email)')
+src/services/predictive_analysis_service.py:339:                self.supabase.table('imc_history')
+src/services/predictive_analysis_service.py:348:                self.supabase.table('workout_sessions')
+src/services/predictive_analysis_service.py:434:                exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).gte('completed_at', thirty_days_ago).execute())
+src/services/predictive_analysis_service.py:569:                response = (self.supabase.table('orders').select('*').eq('user_id', user_id).order('created_at').execute())
+src/services/predictive_analysis_service.py:571:                response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).order('completed_at').execute())
+src/services/predictive_analysis_service.py:573:                response = (self.supabase.table('food_diary_entries').select('*').eq('user_id', user_id).order('consumed_at').execute())
+src/services/predictive_analysis_service.py:665:            activities_response = (self.supabase.table('user_activities').select('*').eq('user_id', user_id).gte('timestamp', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:676:            user_response = self.supabase.table('users').select('last_login').eq('id', user_id).execute()
+src/services/predictive_analysis_service.py:727:            exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).gte('completed_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:730:            nutrition_response = (self.supabase.table('food_diary_entries').select('*').eq('user_id', user_id).gte('consumed_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:733:            hydration_response = (self.supabase.table('hydration_history').select('*').eq('user_id', user_id).gte('calculated_at', (datetime.now() - timedelta(days=30)).isoformat()).execute())
+src/services/predictive_analysis_service.py:785:            imc_response = (self.supabase.table('imc_history').select('*').eq('user_id', user_id).order('calculated_at').execute())
+src/services/predictive_analysis_service.py:788:            exercise_response = (self.supabase.table('workout_sessions').select('*').eq('user_id', user_id).order('completed_at').execute())
+src/services/predictive_analysis_service.py:791:            activities_response = (self.supabase.table('user_activities').select('*').eq('user_id', user_id).order('created_at').execute())
+src/services/ai_config_service.py:66:            result = self.supabase.table('ai_configurations').insert(ai_config).execute()
+src/services/ai_config_service.py:93:            query = self.supabase.table('ai_configurations').select('*').eq('provider', provider).eq('is_active', True)
+src/services/ai_config_service.py:140:            query = self.supabase.table('ai_configurations').select('*')
+src/services/ai_config_service.py:182:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_config_service.py:197:            result = self.supabase.table('ai_configurations').delete().eq('id', config_id).execute()
+src/services/ai_config_service.py:213:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_config_service.py:318:            self.supabase.table('ai_configurations').update({
+src/services/ai_config_service.py:345:            result = self.supabase.table('ai_usage_logs').insert(usage_log).execute()
+src/services/ai_config_service_hybrid.py:67:            query = self.supabase.table('ai_configurations').select('*').eq('provider', provider).eq('is_active', True)
+src/services/ai_config_service_hybrid.py:171:            query = self.supabase.table('ai_configurations').select('*')
+src/services/ai_config_service_hybrid.py:244:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:378:            self.supabase.table('ai_configurations').update({
+src/services/ai_config_service_hybrid.py:424:            result = self.supabase.table('ai_configurations').insert(ai_config).execute()
+src/services/ai_config_service_hybrid.py:482:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:516:            result = self.supabase.table('ai_configurations').delete().eq('id', config_id).execute()
+src/services/ai_config_service_hybrid.py:575:            result = self.supabase.table('ai_usage_logs').insert(usage_log).execute()
+src/services/ai_key_rotation_service.py:46:            result = self.supabase.table('ai_configurations').select('*').execute()
+src/services/ai_key_rotation_service.py:84:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/ai_key_rotation_service.py:106:            self.supabase.table('ai_key_rotation_logs').insert(backup_data).execute()
+src/services/ai_key_rotation_service.py:115:            result = self.supabase.table('ai_configurations').update(update_data).eq('id', config_id).execute()
+src/services/ai_key_rotation_service.py:210:            query = self.supabase.table('ai_key_rotation_logs').select('*')
+src/services/ai_key_rotation_service.py:235:            result = self.supabase.table('ai_security_settings').select('*').execute()
+src/services/ai_key_rotation_service.py:262:                result = self.supabase.table('ai_security_settings').update({
+src/services/ai_key_rotation_service.py:286:            result = self.supabase.table('ai_security_settings').select('*').execute()
+src/services/ai_key_rotation_service.py:304:            config_result = self.supabase.table('ai_configurations').select('*').eq('id', config_id).execute()
+src/services/lgpd_service.py:186:                profile = self.db.table('users')\
+src/services/lgpd_service.py:206:                orders = self.db.table('orders')\
+src/services/lgpd_service.py:294:            self.db.table('user_deletions').insert(deletion_record).execute()
+src/services/lgpd_service.py:345:            self.db.table('users').delete().eq('id', user_id).execute()
+src/services/lgpd_service.py:394:            result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:401:            total_result = self.db.table('data_access_logs')\
+src/services/lgpd_service.py:442:            result = self.db.table(table_name)\
+src/services/health_calculator_service.py:316:                        self.supabase.table('imc_history').insert(imc_data).execute()
+src/services/health_calculator_service.py:335:                        self.supabase.table('calories_history').insert(calories_data).execute()
+src/services/health_calculator_service.py:352:                        self.supabase.table('hydration_history').insert(hydration_data).execute()
+src/services/health_calculator_service.py:372:                        self.supabase.table('body_fat_history').insert(body_fat_data).execute()
+src/services/monitoring_service.py:135:                    result = self.supabase.table(table).select('id', count='exact').limit(0).execute()
+src/services/video_upload_service.py:123:            result = self.supabase.table('video_uploads').insert(video_data).execute()
+src/services/video_upload_service.py:137:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:154:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:187:            self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:220:            result = self.supabase.table('video_uploads')\
+src/services/video_upload_service.py:258:            views_result = self.supabase.table('video_views')\
+src/repositories/base_repository.py:87:            result = self.db.table(self.table_name).select('*').eq('id', id).execute()
+src/repositories/base_repository.py:156:            query = self.db.table(self.table_name).select('*')
+src/repositories/base_repository.py:200:            result = self.db.table(self.table_name).insert(data).execute()
+src/repositories/base_repository.py:220:            result = self.db.table(self.table_name).update(data).eq('id', id).execute()
+src/repositories/base_repository.py:239:            result = self.db.table(self.table_name).delete().eq('id', id).execute()
+src/repositories/base_repository.py:256:            query = self.db.table(self.table_name).select('id', count='exact')
+src/repositories/health_repository.py:41:            result = self.db.table('biological_age_calculations').insert(data).execute()
+src/repositories/health_repository.py:61:            result = self.db.table('hydration_calculations').insert(data).execute()
+src/repositories/user_repository.py:144:            activities = self.db.table('user_activities').select('*').eq('user_id', user_id)
+src/repositories/user_repository.py:189:            result = self.db.table(self.table_name).select('*').or_(
+src/repositories/user_repository.py:199:            count_result = self.db.table(self.table_name).select('id', count='exact').or_(
+src/repositories/workout_repository.py:78:            query = self.db.table('weekly_workout_sessions').select('*')
+src/repositories/workout_repository.py:148:                result = self.db.table('weekly_workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:150:                result = self.db.table('workout_sessions').update(update_data).eq('id', session_id).execute()
+src/repositories/workout_repository.py:163:            result = self.db.table('weekly_workout_sessions').select('id').eq('id', session_id).execute()

@@ -17,13 +17,94 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+        manualChunks: (id) => {
+          // OTIMIZADO: Code splitting melhorado para reduzir chunk principal
+          
+          // Vendor chunks principais
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // Radix UI (todos os componentes)
+            if (id.includes('@radix-ui')) {
+              return 'ui-vendor';
+            }
+            // Charts
+            if (id.includes('recharts')) {
+              return 'charts-vendor';
+            }
+            // Forms
+            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+              return 'forms-vendor';
+            }
+            // Animações
+            if (id.includes('framer-motion')) {
+              return 'animations-vendor';
+            }
+            // Lucide icons
+            if (id.includes('lucide-react')) {
+              return 'icons-vendor';
+            }
+            // Date utilities
+            if (id.includes('date-fns')) {
+              return 'date-vendor';
+            }
+            // Outros vendors
+            return 'vendor';
+          }
+          
+          // Code splitting por páginas (lazy loading)
+          if (id.includes('/pages/')) {
+            // Admin pages
+            if (id.includes('/pages/admin/')) {
+              return 'admin-pages';
+            }
+            // Auth pages
+            if (id.includes('/pages/auth/')) {
+              return 'auth-pages';
+            }
+            // Tools pages
+            if (id.includes('/pages/tools/')) {
+              return 'tools-pages';
+            }
+            // Store pages
+            if (id.includes('/pages/store/')) {
+              return 'store-pages';
+            }
+            // Social pages
+            if (id.includes('/pages/social/')) {
+              return 'social-pages';
+            }
+            // User pages
+            if (id.includes('/pages/user/')) {
+              return 'user-pages';
+            }
+          }
+          
+          // Code splitting por componentes grandes
+          if (id.includes('/components/')) {
+            // AI components
+            if (id.includes('/components/ai/')) {
+              return 'ai-components';
+            }
+            // Admin components
+            if (id.includes('/components/admin/')) {
+              return 'admin-components';
+            }
+            // Social components
+            if (id.includes('/components/social/')) {
+              return 'social-components';
+            }
+            // Calculators
+            if (id.includes('/components/calculators/')) {
+              return 'calculators-components';
+            }
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 800, // Reduzido para alertar mais cedo
   },
   server: {
     port: 9002,

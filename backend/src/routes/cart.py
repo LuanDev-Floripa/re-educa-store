@@ -9,7 +9,8 @@ Gerencia operações do carrinho de compras incluindo:
 """
 from flask import Blueprint, request, jsonify
 from services.cart_service import CartService
-from utils.decorators import token_required, rate_limit, log_activity
+from utils.decorators import token_required, log_activity
+from utils.rate_limit_helper import rate_limit
 
 cart_bp = Blueprint('cart', __name__)
 cart_service = CartService()
@@ -19,7 +20,7 @@ cart_service = CartService()
 def get_cart():
     """
     Retorna carrinho do usuário.
-    
+
     Returns:
         JSON: Carrinho com itens, quantidades e totais ou erro.
     """
@@ -37,29 +38,29 @@ def get_cart():
 def add_to_cart():
     """
     Adiciona produto ao carrinho.
-    
+
     Request Body:
         product_id (str): ID do produto.
         quantity (int): Quantidade (padrão: 1, mínimo: 1).
-        
+
     Returns:
         JSON: Carrinho atualizado ou erro.
     """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
-        
+
         product_id = data.get('product_id')
         quantity = data.get('quantity', 1)
-        
+
         if not product_id:
             return jsonify({'error': 'product_id é obrigatório'}), 400
-        
+
         if not isinstance(quantity, int) or quantity <= 0:
             return jsonify({'error': 'Quantidade inválida'}), 400
-        
+
         result = cart_service.add_to_cart(user_id, product_id, quantity)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
@@ -74,27 +75,27 @@ def add_to_cart():
 def update_cart_item(item_id):
     """
     Atualiza quantidade de item no carrinho.
-    
+
     Args:
         item_id (str): ID do item no carrinho.
-        
+
     Request Body:
         quantity (int): Nova quantidade (mínimo: 0).
-        
+
     Returns:
         JSON: Carrinho atualizado ou erro.
     """
     try:
         user_id = request.current_user['id']
         data = request.get_json()
-        
+
         quantity = data.get('quantity')
-        
+
         if quantity is None or not isinstance(quantity, int) or quantity < 0:
             return jsonify({'error': 'Quantidade inválida'}), 400
-        
+
         result = cart_service.update_cart_item(user_id, item_id, quantity)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
@@ -109,17 +110,17 @@ def update_cart_item(item_id):
 def remove_from_cart(item_id):
     """
     Remove item do carrinho.
-    
+
     Args:
         item_id (str): ID do item a ser removido.
-        
+
     Returns:
         JSON: Confirmação de remoção ou erro.
     """
     try:
         user_id = request.current_user['id']
         result = cart_service.remove_from_cart(user_id, item_id)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:
@@ -133,14 +134,14 @@ def remove_from_cart(item_id):
 def clear_cart():
     """
     Limpa todo o carrinho do usuário.
-    
+
     Returns:
         JSON: Confirmação de limpeza ou erro.
     """
     try:
         user_id = request.current_user['id']
         result = cart_service.clear_cart(user_id)
-        
+
         if result.get('success'):
             return jsonify(result), 200
         else:

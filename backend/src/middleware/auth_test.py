@@ -17,20 +17,21 @@ AVISO IMPORTANTE:
 """
 import os
 from functools import wraps
-from flask import request, jsonify
+from flask import request
+
 
 def create_test_auth_bypass():
     """
     Cria um bypass de autenticação para testes.
-    
+
     Returns:
         tuple: (test_token_required, test_admin_required) decorators.
     """
-    
+
     # Verifica se está em modo de teste
     is_testing = os.environ.get('TESTING', 'false').lower() == 'true'
     bypass_auth = os.environ.get('BYPASS_AUTH', 'false').lower() == 'true'
-    
+
     def test_token_required(f):
         """Decorator de teste que bypassa autenticação"""
         @wraps(f)
@@ -44,19 +45,19 @@ def create_test_auth_bypass():
                         self.email = 'test@example.com'
                         self.name = 'Test User'
                         self.role = 'admin'
-                    
+
                     def get(self, key, default=None):
                         return getattr(self, key, default)
-                
+
                 request.current_user = MockUser()
                 return f(*args, **kwargs)
-            
+
             # Caso contrário, usa autenticação normal
             from middleware.auth import token_required
             return token_required(f)(*args, **kwargs)
-        
+
         return decorated
-    
+
     def test_admin_required(f):
         """Decorator de teste que bypassa autenticação de admin"""
         @wraps(f)
@@ -68,19 +69,20 @@ def create_test_auth_bypass():
                         self.email = 'admin@test.com'
                         self.name = 'Test Admin'
                         self.role = 'admin'
-                    
+
                     def get(self, key, default=None):
                         return getattr(self, key, default)
-                
+
                 request.current_user = MockAdmin()
                 return f(*args, **kwargs)
-            
+
             from middleware.auth import admin_required
             return admin_required(f)(*args, **kwargs)
-        
+
         return decorated
-    
+
     return test_token_required, test_admin_required
+
 
 # Exporta os decorators de teste
 test_token_required, test_admin_required = create_test_auth_bypass()

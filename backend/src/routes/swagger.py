@@ -24,7 +24,7 @@ from services.exercise_service import ExerciseService
 from services.ai_service import AIService
 
 swagger_bp = Blueprint('swagger', __name__)
-api = Api(swagger_bp, 
+api = Api(swagger_bp,
           title='RE-EDUCA Store API',
           version='1.0',
           description='API completa para loja de suplementos e ferramentas de saúde',
@@ -36,6 +36,10 @@ ns_products = api.namespace('products', description='Operações de produtos')
 ns_health = api.namespace('health', description='Ferramentas de saúde')
 ns_exercises = api.namespace('exercises', description='Exercícios e treinos')
 ns_ai = api.namespace('ai', description='Inteligência Artificial')
+ns_lgpd = api.namespace('lgpd', description='Compliance LGPD')
+ns_orders = api.namespace('orders', description='Pedidos')
+ns_payments = api.namespace('payments', description='Pagamentos')
+ns_recommendations = api.namespace('recommendations', description='Recomendações personalizadas')
 
 # Modelos de dados
 product_model = api.model('Product', {
@@ -82,7 +86,11 @@ calories_request_model = api.model('CaloriesRequest', {
     'height': fields.Float(required=True, description='Altura em cm'),
     'age': fields.Integer(required=True, description='Idade em anos'),
     'gender': fields.String(required=True, enum=['male', 'female'], description='Gênero'),
-    'activity_level': fields.String(required=True, enum=['sedentary', 'light', 'moderate', 'active', 'very_active'], description='Nível de atividade')
+    'activity_level': fields.String(
+        required=True,
+        enum=['sedentary', 'light', 'moderate', 'active', 'very_active'],
+        description='Nível de atividade'
+    )
 })
 
 calories_response_model = api.model('CaloriesResponse', {
@@ -126,13 +134,13 @@ class ProductList(Resource):
     def get(self):
         """
         Lista todos os produtos com paginação.
-        
+
         Query Parameters:
             page (int): Número da página (padrão: 1).
             per_page (int): Itens por página (padrão: 20).
             category (str): Filtrar por categoria (opcional).
             search (str): Busca textual (opcional).
-        
+
         Returns:
             JSON: Lista de produtos com metadados de paginação.
         """
@@ -141,7 +149,7 @@ class ProductList(Resource):
         per_page = int(api.payload.get('per_page', 20)) if api.payload else 20
         category = api.payload.get('category') if api.payload else None
         search = api.payload.get('search') if api.payload else None
-        
+
         return service.get_products(page=page, per_page=per_page, category=category, search=search)
 
 @ns_products.route('/<string:product_id>')
@@ -159,7 +167,7 @@ class ProductCategories(Resource):
     def get(self):
         """
         Retorna lista de categorias de produtos.
-        
+
         Returns:
             JSON: Lista de categorias disponíveis com contagem de produtos.
         """
@@ -183,11 +191,11 @@ class IMCCalculate(Resource):
     def post(self):
         """
         Calcula IMC e retorna classificação completa.
-        
+
         Request Body:
             height (float): Altura em metros.
             weight (float): Peso em kg.
-        
+
         Returns:
             JSON: IMC calculado, classificação, recomendações e faixa de peso ideal.
         """
@@ -210,14 +218,14 @@ class CaloriesCalculate(Resource):
     def post(self):
         """
         Calcula necessidade calórica diária (TDEE) e macronutrientes.
-        
+
         Request Body:
             weight (float): Peso em kg.
             height (float): Altura em cm.
             age (int): Idade em anos.
             gender (str): 'male' ou 'female'.
             activity_level (str): Nível de atividade física.
-        
+
         Returns:
             JSON: BMR, TDEE, calorias e distribuição de macronutrientes.
         """
@@ -248,7 +256,7 @@ class ExerciseCategories(Resource):
     def get(self):
         """
         Retorna categorias de exercícios disponíveis.
-        
+
         Returns:
             JSON: Lista de categorias com contagem de exercícios.
         """
@@ -286,18 +294,32 @@ class APIStatus(Resource):
     def get(self):
         """
         Status da API e endpoints disponíveis.
-        
+
         Returns:
             JSON: Status online, versão, timestamp e lista de endpoints.
         """
+        from datetime import datetime
         return {
             'status': 'online',
-            'version': '1.0',
-            'timestamp': '2024-01-01T00:00:00Z',
+            'version': '2.0',
+            'timestamp': datetime.utcnow().isoformat(),
             'endpoints': {
                 'products': '/api/products/',
                 'health': '/api/health/',
                 'exercises': '/api/exercises/',
-                'ai': '/api/ai/'
+                'ai': '/api/ai/',
+                'lgpd': '/api/lgpd/',
+                'orders': '/api/orders/',
+                'payments': '/api/payments/',
+                'recommendations': '/api/recommendations/',
+                'users': '/api/users/',
+                'cart': '/api/cart/',
+                'search': '/api/search/'
+            },
+            'features': {
+                'lgpd_compliance': True,
+                'payment_webhooks': True,
+                'ai_recommendations': True,
+                'health_tracking': True
             }
         }

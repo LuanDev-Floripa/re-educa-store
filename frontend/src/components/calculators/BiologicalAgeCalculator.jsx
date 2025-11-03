@@ -218,9 +218,6 @@ export const BiologicalAgeCalculator = () => {
       height,
       bodyFat,
       muscleMass,
-      flexibility,
-      balance,
-      reactionTime,
       cardiovascularFitness,
       strength,
       endurance,
@@ -244,141 +241,39 @@ export const BiologicalAgeCalculator = () => {
     }
 
     try {
-      // Calcular ajuste de idade baseado nos fatores
-      const chronologicalAge = parseInt(age);
-      let ageAdjustment = 0;
-
-      // Fatores de fitness
-      const fitnessFactors = [
-        { value: cardiovascularFitness, weight: 3 },
-        { value: strength, weight: 2 },
-        { value: endurance, weight: 2 },
-        { value: flexibility, weight: 1 },
-        { value: balance, weight: 1 },
-        { value: reactionTime, weight: 1 },
-      ];
-
-      fitnessFactors.forEach((factor) => {
-        const level = fitnessLevels.find((f) => f.value === factor.value);
-        if (level) {
-          ageAdjustment += (level.factor - 1) * factor.weight * 2;
-        }
-      });
-
-      // Fatores de estilo de vida
-      const lifestyleFactorsData = [
-        { value: sleepQuality, weight: 2 },
-        { value: dietQuality, weight: 2 },
-        { value: hydration, weight: 1 },
-        { value: exerciseFrequency, weight: 3 },
-      ];
-
-      lifestyleFactorsData.forEach((factor) => {
-        const level = qualityLevels.find((q) => q.value === factor.value);
-        if (level) {
-          ageAdjustment += (level.factor - 1) * factor.weight * 2;
-        }
-      });
-
-      // Estresse
-      const stressData = stressLevels.find((s) => s.value === stressLevel);
-      if (stressData) {
-        ageAdjustment += (stressData.factor - 1) * 3;
-      }
-
-      // Tabagismo e álcool
-      if (smoking === "yes") {
-        ageAdjustment += 5;
-      } else if (smoking === "former") {
-        ageAdjustment += 2;
-      }
-
-      if (alcohol === "heavy") {
-        ageAdjustment += 3;
-      } else if (alcohol === "moderate") {
-        ageAdjustment += 1;
-      }
-
-      // Doenças crônicas
-      chronicDiseases.forEach((disease) => {
-        const diseaseData = chronicDiseases.find((d) => d.value === disease);
-        if (diseaseData) {
-          ageAdjustment += (diseaseData.factor - 1) * 5;
-        }
-      });
-
-      // Medicamentos
-      medications.forEach((medication) => {
-        const medicationData = medications.find((m) => m.value === medication);
-        if (medicationData) {
-          ageAdjustment += (medicationData.factor - 1) * 2;
-        }
-      });
-
-      // Histórico familiar
-      familyHistory.forEach((history) => {
-        const historyData = familyHistory.find((h) => h.value === history);
-        if (historyData) {
-          ageAdjustment += (historyData.factor - 1) * 1.5;
-        }
-      });
-
-      // Biomarcadores
-      if (bodyFat) {
-        const bodyFatValue = parseFloat(bodyFat);
-        if (bodyFatValue > 25) {
-          ageAdjustment += (bodyFatValue - 25) * 0.2;
-        } else if (bodyFatValue < 10) {
-          ageAdjustment -= (10 - bodyFatValue) * 0.1;
-        }
-      }
-
-      if (muscleMass) {
-        const muscleMassValue = parseFloat(muscleMass);
-        const expectedMuscleMass = gender === "male" ? 40 : 30;
-        if (muscleMassValue < expectedMuscleMass) {
-          ageAdjustment += (expectedMuscleMass - muscleMassValue) * 0.1;
-        } else if (muscleMassValue > expectedMuscleMass + 5) {
-          ageAdjustment -= (muscleMassValue - expectedMuscleMass - 5) * 0.05;
-        }
-      }
-
-      // Fatores de biomarcadores
-      const biomarkerAdjustment = calculateBiomarkerFactors(biomarkers);
-      ageAdjustment += biomarkerAdjustment;
-
-      // Enviar dados para o backend
+      // Enviar dados para o backend - TODA a lógica de cálculo está no backend
       const response = await request(() =>
         apiService.health.calculateBiologicalAge({
-          age: chronologicalAge,
-          age_adjustment: ageAdjustment,
+          age: parseInt(age),
+          gender,
+          weight: parseFloat(weight),
+          height: parseFloat(height),
           factors: {
             cardiovascularFitness,
             strength,
+            endurance,
             sleepQuality,
+            stressLevel,
             dietQuality,
+            hydration,
+            exerciseFrequency,
             smoking,
             alcohol,
-            chronicDiseases,
           },
-          recommendations: generateRecommendations(
-            ageAdjustment,
-            chronicDiseases,
-            lifestyleFactors,
-            cardiovascularFitness,
-            strength,
-            sleepQuality,
-            dietQuality,
-          ),
+          chronicDiseases,
+          medications,
+          familyHistory,
+          lifestyleFactors,
+          biomarkers: {
+            bodyFat,
+            muscleMass,
+            ...biomarkers,
+          },
         }),
       );
 
-      const biologicalAge = response.biological_age;
+      // Determinar cor e mensagem baseado na resposta do backend
       const ageDifference = response.age_difference;
-      const classification = response.classification;
-      const score = response.score;
-
-      // Classificação
       let color = "blue";
       let message = "Sua idade biológica está próxima da cronológica.";
 
@@ -399,7 +294,7 @@ export const BiologicalAgeCalculator = () => {
         message = "Sua idade biológica está um pouco acima da cronológica.";
       }
 
-      // Fatores que mais impactam
+      // Fatores que mais impactam (identificados localmente para display)
       const impactFactors = identifyImpactFactors(
         cardiovascularFitness,
         strength,
@@ -412,24 +307,16 @@ export const BiologicalAgeCalculator = () => {
       );
 
       setResults({
-        chronologicalAge,
-        biologicalAge,
-        ageDifference,
-        ageRatio: biologicalAge / chronologicalAge,
-        classification,
+        chronologicalAge: response.chronological_age,
+        biologicalAge: response.biological_age,
+        ageDifference: response.age_difference,
+        ageRatio: response.biological_age / response.chronological_age,
+        classification: response.classification,
         color,
         message,
-        recommendations: generateRecommendations(
-          ageDifference,
-          chronicDiseases,
-          lifestyleFactors,
-          cardiovascularFitness,
-          strength,
-          sleepQuality,
-          dietQuality,
-        ),
+        recommendations: response.recommendations || [],
         impactFactors,
-        score,
+        score: response.score,
         saved: response.saved,
       });
 
@@ -440,134 +327,8 @@ export const BiologicalAgeCalculator = () => {
     }
   };
 
-  const calculateBiomarkerFactors = (biomarkers) => {
-    let adjustment = 0;
-
-    // Pressão arterial
-    if (biomarkers.bloodPressure === "high") adjustment += 3;
-    else if (biomarkers.bloodPressure === "normal") adjustment -= 1;
-
-    // Colesterol
-    if (biomarkers.cholesterol === "high") adjustment += 2;
-    else if (biomarkers.cholesterol === "normal") adjustment -= 1;
-
-    // Açúcar no sangue
-    if (biomarkers.bloodSugar === "high") adjustment += 3;
-    else if (biomarkers.bloodSugar === "normal") adjustment -= 1;
-
-    // Inflamação
-    if (biomarkers.inflammation === "high") adjustment += 2;
-    else if (biomarkers.inflammation === "low") adjustment -= 1;
-
-    // Vitamina D
-    if (biomarkers.vitaminD === "low") adjustment += 1;
-    else if (biomarkers.vitaminD === "optimal") adjustment -= 1;
-
-    // Ômega 3
-    if (biomarkers.omega3 === "low") adjustment += 1;
-    else if (biomarkers.omega3 === "optimal") adjustment -= 1;
-
-    return adjustment;
-  };
-
-  const generateRecommendations = (
-    ageDifference,
-    diseases,
-    lifestyle,
-    cardio,
-    strength,
-    sleep,
-    diet,
-  ) => {
-    const recommendations = [];
-
-    if (ageDifference > 0) {
-      recommendations.push({
-        type: "warning",
-        title: "Envelhecimento Acelerado",
-        message:
-          "Sua idade biológica está acima da cronológica. Foque em melhorar hábitos de vida.",
-      });
-    } else if (ageDifference < -2) {
-      recommendations.push({
-        type: "success",
-        title: "Envelhecimento Lento",
-        message: "Excelente! Continue mantendo seus hábitos saudáveis.",
-      });
-    }
-
-    if (cardio === "poor" || cardio === "below_average") {
-      recommendations.push({
-        type: "error",
-        title: "Fitness Cardiovascular",
-        message:
-          "Melhore sua condição cardiovascular com exercícios aeróbicos regulares.",
-      });
-    }
-
-    if (strength === "poor" || strength === "below_average") {
-      recommendations.push({
-        type: "warning",
-        title: "Força Muscular",
-        message:
-          "Inclua treino de força para manter a massa muscular e densidade óssea.",
-      });
-    }
-
-    if (sleep === "poor" || sleep === "fair") {
-      recommendations.push({
-        type: "warning",
-        title: "Qualidade do Sono",
-        message:
-          "Melhore sua higiene do sono para otimizar a recuperação e regeneração celular.",
-      });
-    }
-
-    if (diet === "poor" || diet === "fair") {
-      recommendations.push({
-        type: "warning",
-        title: "Qualidade da Dieta",
-        message:
-          "Adote uma dieta rica em antioxidantes, ômega-3 e nutrientes anti-inflamatórios.",
-      });
-    }
-
-    if (diseases.length > 0) {
-      recommendations.push({
-        type: "error",
-        title: "Doenças Crônicas",
-        message:
-          "Trabalhe com profissionais de saúde para gerenciar suas condições médicas.",
-      });
-    }
-
-    if (lifestyle.includes("smoking")) {
-      recommendations.push({
-        type: "error",
-        title: "Tabagismo",
-        message:
-          "Parar de fumar é uma das melhores coisas que você pode fazer para sua saúde.",
-      });
-    }
-
-    if (lifestyle.includes("sedentary")) {
-      recommendations.push({
-        type: "warning",
-        title: "Vida Sedentária",
-        message:
-          "Aumente sua atividade física diária. Mesmo pequenas mudanças fazem diferença.",
-      });
-    }
-
-    recommendations.push({
-      type: "info",
-      title: "Dica Geral",
-      message:
-        "O envelhecimento saudável é um processo contínuo. Pequenas melhorias diárias têm grande impacto a longo prazo.",
-    });
-
-    return recommendations;
-  };
+  // Funções removidas - toda lógica de cálculo foi movida para o backend
+  // calculateBiomarkerFactors e generateRecommendations agora são calculadas no backend
 
   const identifyImpactFactors = (
     cardio,

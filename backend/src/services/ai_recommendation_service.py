@@ -9,33 +9,29 @@ Utiliza machine learning para recomendações incluindo:
 - Sistema de filtragem colaborativa
 """
 import logging
-import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
+from datetime import datetime
 from config.database import supabase_client
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import KMeans
-import pandas as pd
-import json
 
 logger = logging.getLogger(__name__)
 
+
 class AIRecommendationService:
     """Service para recomendações baseadas em ML."""
-    
+
     def __init__(self):
         """Inicializa o serviço de recomendações com vetorizador TF-IDF."""
         self.supabase = supabase_client
         self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
-        
+
     def get_user_profile_vector(self, user_id: str) -> Dict[str, Any]:
         """
         Cria vetor de perfil do usuário baseado em suas atividades.
-        
+
         Args:
             user_id (str): ID do usuário.
-            
+
         Returns:
             Dict[str, Any]: Vetor de características do usuário.
         """
@@ -45,7 +41,7 @@ class AIRecommendationService:
             health_data = self._get_user_health_data(user_id)
             activity_data = self._get_user_activity_data(user_id)
             purchase_data = self._get_user_purchase_data(user_id)
-            
+
             # Cria vetor de características
             profile_vector = {
                 'demographics': self._extract_demographics_features(user_data),
@@ -55,18 +51,18 @@ class AIRecommendationService:
                 'engagement_level': self._calculate_engagement_level(activity_data),
                 'health_goals': self._extract_health_goals(health_data)
             }
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'profile_vector': profile_vector,
                 'last_updated': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao criar perfil do usuário: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def recommend_products(self, user_id: str, limit: int = 10) -> Dict[str, Any]:
         """Recomenda produtos baseado no perfil do usuário"""
         try:
@@ -121,18 +117,18 @@ class AIRecommendationService:
                     'relevance_score': 73.9
                 }
             ]
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_products[:limit],
                 'total_products_analyzed': len(sample_products)
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar recomendações: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def recommend_exercises(self, user_id: str, limit: int = 10) -> Dict[str, Any]:
         """Recomenda exercícios baseado no perfil e histórico do usuário"""
         try:
@@ -187,18 +183,18 @@ class AIRecommendationService:
                     'relevance_score': 76.5
                 }
             ]
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_exercises[:limit],
                 'total_exercises_analyzed': len(sample_exercises)
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar recomendações de exercícios: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def recommend_nutrition_plans(self, user_id: str, limit: int = 10) -> Dict[str, Any]:
         """Recomenda planos nutricionais baseado no perfil do usuário"""
         try:
@@ -253,18 +249,18 @@ class AIRecommendationService:
                     'relevance_score': 72.4
                 }
             ]
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_plans[:limit],
                 'total_plans_analyzed': len(sample_plans)
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar recomendações nutricionais: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def predict_health_trends(self, user_id: str, days_ahead: int = 30) -> Dict[str, Any]:
         """Prediz tendências de saúde do usuário"""
         try:
@@ -291,17 +287,17 @@ class AIRecommendationService:
                     }
                 ]
             }
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_trends
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao predizer tendências: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def find_similar_users(self, user_id: str, limit: int = 5) -> Dict[str, Any]:
         """Encontra usuários similares baseado no perfil"""
         try:
@@ -323,23 +319,26 @@ class AIRecommendationService:
                     'similarity_reasons': ['perfil demográfico', 'interesses de saúde']
                 }
             ]
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_users[:limit]
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao encontrar usuários similares: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     def generate_ai_insights(self, user_id: str) -> Dict[str, Any]:
         """Gera insights personalizados de IA"""
         try:
             # Insights de exemplo
             sample_insights = {
-                'health_summary': 'Seu perfil mostra um excelente comprometimento com a saúde. Continue mantendo a consistência nos exercícios e alimentação.',
+                'health_summary': (
+                    'Seu perfil mostra um excelente comprometimento com a saúde. '
+                    'Continue mantendo a consistência nos exercícios e alimentação.'
+                ),
                 'improvement_opportunities': [
                     'Aumentar a frequência de exercícios cardiovasculares',
                     'Incluir mais vegetais na alimentação',
@@ -351,54 +350,54 @@ class AIRecommendationService:
                     'O horário das suas refeições está bem distribuído'
                 ]
             }
-            
+
             return {
                 'success': True,
                 'user_id': user_id,
                 'data': sample_insights
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao gerar insights: {str(e)}")
             return {'success': False, 'error': str(e)}
-    
+
     # Métodos auxiliares (implementação básica para desenvolvimento)
     def _get_user_data(self, user_id: str) -> Dict[str, Any]:
         """Obtém dados básicos do usuário"""
         return {'id': user_id, 'age': 30, 'gender': 'M'}
-    
+
     def _get_user_health_data(self, user_id: str) -> Dict[str, Any]:
         """Obtém dados de saúde do usuário"""
         return {'imc_history': [], 'food_diary': [], 'workout_sessions': []}
-    
+
     def _get_user_activity_data(self, user_id: str) -> List[Dict[str, Any]]:
         """Obtém dados de atividade do usuário"""
         return []
-    
+
     def _get_user_purchase_data(self, user_id: str) -> List[Dict[str, Any]]:
         """Obtém dados de compras do usuário"""
         return []
-    
+
     def _extract_demographics_features(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """Extrai características demográficas"""
         return {'age_group': 'adult', 'gender': user_data.get('gender', 'unknown')}
-    
+
     def _extract_health_interests(self, health_data: Dict[str, Any]) -> Dict[str, Any]:
         """Extrai interesses de saúde"""
         return {'nutrition_tracking': True, 'exercise_tracking': True}
-    
+
     def _extract_activity_patterns(self, activity_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Extrai padrões de atividade"""
         return {'frequency': 'moderate', 'preferred_time': 'evening'}
-    
+
     def _extract_purchase_preferences(self, purchase_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Extrai preferências de compra"""
         return {'categories': ['suplementos', 'saúde'], 'price_range': 'medium'}
-    
+
     def _calculate_engagement_level(self, activity_data: List[Dict[str, Any]]) -> str:
         """Calcula nível de engajamento"""
         return 'high'
-    
+
     def _extract_health_goals(self, health_data: Dict[str, Any]) -> List[str]:
         """Extrai objetivos de saúde"""
         return ['weight_loss', 'muscle_gain', 'general_health']

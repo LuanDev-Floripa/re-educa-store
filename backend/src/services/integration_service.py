@@ -20,13 +20,14 @@ from services.live_streaming_service import LiveStreamingService
 
 logger = logging.getLogger(__name__)
 
+
 class IntegrationService:
     """
     Serviço principal que integra todos os outros serviços.
-    
+
     Atua como orchestrator central do sistema.
     """
-    
+
     def __init__(self):
         """Inicializa o serviço de integração com todos os subsistemas."""
         self.cache = cache_service
@@ -35,25 +36,25 @@ class IntegrationService:
         self.live_streaming = LiveStreamingService()
         self.social_cache = social_cache
         self.websocket_service = None  # Será inicializado quando necessário
-        
+
     def initialize_websocket(self, socketio):
         """
         Inicializa o serviço de WebSocket.
-        
+
         Args:
             socketio: Instância do Flask-SocketIO.
-            
+
         Returns:
             WebSocketService: Serviço WebSocket inicializado.
         """
         self.websocket_service = WebSocketService(socketio)
         return self.websocket_service
-    
+
     @monitor_performance("integration_health_check")
     def health_check(self) -> Dict[str, Any]:
         """
         Verifica saúde de todos os serviços.
-        
+
         Returns:
             Dict[str, Any]: Status de cada serviço e status geral.
         """
@@ -62,7 +63,7 @@ class IntegrationService:
             'services': {},
             'timestamp': monitoring_service.start_time.isoformat()
         }
-        
+
         # Verificar Cache (Redis)
         try:
             cache_available = self.cache.is_available()
@@ -75,7 +76,7 @@ class IntegrationService:
                 'status': 'error',
                 'error': str(e)
             }
-        
+
         # Verificar Monitoring
         try:
             monitoring_health = self.monitoring.get_health_status()
@@ -88,7 +89,7 @@ class IntegrationService:
                 'status': 'error',
                 'error': str(e)
             }
-        
+
         # Verificar Video Upload (Supabase Storage)
         try:
             # Testar conexão com Supabase
@@ -102,7 +103,7 @@ class IntegrationService:
                 'status': 'error',
                 'error': str(e)
             }
-        
+
         # Verificar Live Streaming
         try:
             # Verificar se o serviço está inicializado
@@ -115,7 +116,7 @@ class IntegrationService:
                 'status': 'error',
                 'error': str(e)
             }
-        
+
         # Verificar WebSocket
         try:
             websocket_status = 'healthy' if self.websocket_service else 'not_initialized'
@@ -128,25 +129,25 @@ class IntegrationService:
                 'status': 'error',
                 'error': str(e)
             }
-        
+
         # Determinar status geral
         service_statuses = [service['status'] for service in health_status['services'].values()]
         if 'error' in service_statuses:
             health_status['overall'] = 'unhealthy'
         elif 'warning' in service_statuses:
             health_status['overall'] = 'warning'
-        
+
         return health_status
-    
+
     def get_system_stats(self) -> Dict[str, Any]:
         """Obtém estatísticas do sistema"""
         try:
             # Estatísticas do cache
             cache_stats = self.cache.get_stats() if self.cache.is_available() else {}
-            
+
             # Estatísticas do monitoring
             monitoring_stats = self.monitoring.get_system_metrics()
-            
+
             # Estatísticas do storage
             storage_stats = {}
             try:
@@ -154,7 +155,7 @@ class IntegrationService:
                 storage_stats = {'bucket': 'videos', 'status': 'active'}
             except Exception as e:
                 storage_stats = {'error': str(e)}
-            
+
             return {
                 'cache': cache_stats,
                 'monitoring': monitoring_stats,
@@ -164,21 +165,22 @@ class IntegrationService:
         except Exception as e:
             logger.error(f"Erro ao obter estatísticas do sistema: {e}")
             return {'error': str(e)}
-    
+
     def cleanup_resources(self):
         """Limpa recursos e conexões"""
         try:
             # Fechar conexões Redis
             if self.cache.is_available():
                 self.cache.redis_client.close()
-            
+
             # Limpar cache de dados sociais
             if self.social_cache:
                 self.social_cache.cache.flush_all()
-            
+
             logger.info("Recursos limpos com sucesso")
         except Exception as e:
             logger.error(f"Erro ao limpar recursos: {e}")
+
 
 # Instância global do serviço de integração
 integration_service = IntegrationService()

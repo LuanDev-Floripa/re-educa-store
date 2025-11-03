@@ -259,17 +259,7 @@ export const UserSidebar = ({
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
-        {(!isCollapsed || isMobile) && (
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Heart className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">
-              Re-Educa
-            </span>
-          </div>
-        )}
+      <div className="flex h-16 items-center justify-end px-4 border-b border-gray-200 dark:border-gray-700">
         {!isMobile && (
           <button
             onClick={handleCollapseToggle}
