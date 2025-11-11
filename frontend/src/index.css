@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 221 83% 53%; /* hsl(221, 83%, 53%) - Azul */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 50%; /* Ajustado para melhor contraste (mínimo 4.5:1) */
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 20%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 20%;
+    --radius: 0.5rem;
+    
+    /* Cores semânticas */
+    --success: 142 76% 36%; /* hsl(142, 76%, 36%) - Verde */
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 50%;
+    --success-dark: 142 76% 25%;
+    
+    --warning: 38 92% 50%; /* hsl(38, 92%, 50%) - Amarelo/Laranja */
+    --warning-foreground: 0 0% 20%;
+    --warning-light: 38 92% 65%;
+    --warning-dark: 38 92% 35%;
+    
+    --error: 0 84.2% 60.2%; /* Mesmo que destructive */
+    --error-foreground: 0 0% 100%;
+    --error-light: 0 84.2% 70%;
+    --error-dark: 0 84.2% 45%;
+    
+    --info: 221 83% 53%; /* Mesmo que primary */
+    --info-foreground: 0 0% 100%;
+    --info-light: 221 83% 65%;
+    --info-dark: 221 83% 40%;
+  }
+
+  .dark {
+    --background: 0 0% 9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 221 83% 60%; /* Azul mais claro no dark mode */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%; /* Ajustado para melhor contraste no dark mode */
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 98%;
+    
+    /* Cores semânticas - Dark Mode */
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 70% 55%;
+    --success-dark: 142 70% 30%;
+    
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 98%;
+    --warning-light: 38 85% 65%;
+    --warning-dark: 38 85% 40%;
+    
+    --error: 0 62.8% 30.6%;
+    --error-foreground: 0 0% 98%;
+    --error-light: 0 62.8% 40%;
+    --error-dark: 0 62.8% 20%;
+    
+    --info: 221 83% 60%;
+    --info-foreground: 0 0% 98%;
+    --info-light: 221 83% 70%;
+    --info-dark: 221 83% 45%;
+  }
+}
+
+/* Estilos básicos para RE-EDUCA Store */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  /* Fontes são aplicadas automaticamente pelo Tailwind via font-sans */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Estilos customizados para RE-EDUCA Store */
+.re-educa-gradient {
+  background: linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted) / 0.8) 100%);
+}
+
+.re-educa-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.3);
+  color: hsl(var(--card-foreground));
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 2px 0 rgba(0, 0, 0, 0.05),
+    0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.re-educa-button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.re-educa-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.re-educa-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  color: hsl(var(--foreground));
+  border-radius: 0.5rem;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.re-educa-input:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5);
+  outline-offset: 2px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Gradientes padronizados */
+.gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--info)) 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(var(--success-light)) 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(var(--warning-light)) 100%);
+}
+
+.gradient-error {
+  background: linear-gradient(135deg, hsl(var(--error)) 0%, hsl(var(--error-light)) 100%);
+}
+
+.gradient-info {
+  background: linear-gradient(135deg, hsl(var(--info)) 0%, hsl(var(--info-light)) 100%);
+}
+
+.gradient-primary-purple {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(270 83% 53%) 100%);
+}
+
+.gradient-error-orange {
+  background: linear-gradient(135deg, hsl(var(--error)) 0%, hsl(25 95% 53%) 100%);
+}
+
+.gradient-muted {
+  background: linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted) / 0.8) 100%);
+}
+
+/* Gradientes de texto */
+.text-gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--info)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-primary-purple {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(270 83% 53%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-error-orange {
+  background: linear-gradient(135deg, hsl(var(--error)) 0%, hsl(25 95% 53%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animações para componentes magic-ui */
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-100px) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+}

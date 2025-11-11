@@ -1,0 +1,409 @@
+groups:
+  - name: re-educa-alerts
+    rules:
+      # ========================================
+      # ALERTAS DE INFRAESTRUTURA
+      # ========================================
+      
+      # CPU e Memória
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Alto uso de CPU no servidor {{ $labels.instance }}"
+          description: "CPU está sendo usado em {{ $value }}% por mais de 5 minutos"
+          
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Alto uso de memória no servidor {{ $labels.instance }}"
+          description: "Memória está sendo usada em {{ $value }}% por mais de 5 minutos"
+          
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Alto uso de disco no servidor {{ $labels.instance }}"
+          description: "Disco está sendo usado em {{ $value }}% por mais de 5 minutos"
+          
+      # ========================================
+      # ALERTAS DO BACKEND FLASK
+      # ========================================
+      
+      - alert: FlaskHighErrorRate
+        expr: rate(flask_http_requests_total{status=~"5.."}[5m]) / rate(flask_http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Alta taxa de erros no backend Flask"
+          description: "{{ $value }}% das requisições estão retornando erro 5xx"
+          
+      - alert: FlaskHighResponseTime
+        expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "Alto tempo de resposta no backend Flask"
+          description: "95% das requisições estão levando mais de {{ $value }}s"
+          
+      - alert: FlaskDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Backend Flask está fora do ar"
+          description: "O serviço backend não está respondendo há mais de 1 minuto"
+          
+      # ========================================
+      # ALERTAS DO FRONTEND
+      # ========================================
+      
+      - alert: FrontendDown
+        expr: up{job="frontend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: frontend
+        annotations:
+          summary: "Frontend está fora do ar"
+          description: "O serviço frontend não está respondendo há mais de 1 minuto"
+          
+      - alert: FrontendHighResponseTime
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: frontend
+        annotations:
+          summary: "Alto tempo de resposta no frontend"
+          description: "95% das requisições estão levando mais de {{ $value }}s"
+          
+      # ========================================
+      # ALERTAS DO BANCO DE DADOS
+      # ========================================
+      
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL está fora do ar"
+          description: "O banco de dados não está respondendo há mais de 1 minuto"
+          
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Alto número de conexões no PostgreSQL"
+          description: "{{ $value }} conexões ativas no banco de dados"
+          
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 30
+        for: 2m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Consultas lentas no PostgreSQL"
+          description: "Consultas estão levando mais de {{ $value }}s em média"
+          
+      # ========================================
+      # ALERTAS DO REDIS
+      # ========================================
+      
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis está fora do ar"
+          description: "O cache Redis não está respondendo há mais de 1 minuto"
+          
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Alto uso de memória no Redis"
+          description: "Redis está usando {{ $value }}% da memória disponível"
+          
+      # ========================================
+      # ALERTAS DO NGINX
+      # ========================================
+      
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nginx
+        annotations:
+          summary: "Nginx está fora do ar"
+          description: "O proxy reverso não está respondendo há mais de 1 minuto"
+          
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: nginx
+        annotations:
+          summary: "Alta taxa de erros no Nginx"
+          description: "{{ $value }}% das requisições estão retornando erro 5xx"
+          
+      - alert: NginxHighResponseTime
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx
+        annotations:
+          summary: "Alto tempo de resposta no Nginx"
+          description: "95% das requisições estão levando mais de {{ $value }}s"
+          
+      # ========================================
+      # ALERTAS DE SSL
+      # ========================================
+      
+      - alert: SSLCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "Certificado SSL expirando em breve"
+          description: "O certificado SSL expira em {{ $value | humanizeDuration }}"
+          
+      - alert: SSLCertExpired
+        expr: probe_ssl_earliest_cert_expiry - time() < 0
+        for: 1h
+        labels:
+          severity: critical
+          service: ssl
+        annotations:
+          summary: "Certificado SSL expirado"
+          description: "O certificado SSL expirou há {{ $value | humanizeDuration }}"
+          
+      # ========================================
+      # ALERTAS DE APLICAÇÃO
+      # ========================================
+      
+      - alert: HighAPIErrorRate
+        expr: rate(api_requests_total{status=~"5.."}[5m]) / rate(api_requests_total[5m]) * 100 > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "Alta taxa de erros na API"
+          description: "{{ $value }}% das requisições da API estão retornando erro"
+          
+      - alert: PaymentSystemError
+        expr: rate(payment_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payment
+        annotations:
+          summary: "Erros no sistema de pagamentos"
+          description: "{{ $value }} erros por minuto no sistema de pagamentos"
+          
+      - alert: AIAssistantError
+        expr: rate(ai_assistant_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: ai
+        annotations:
+          summary: "Erros no assistente de IA"
+          description: "{{ $value }} erros por minuto no assistente de IA"
+          
+      # ========================================
+      # ALERTAS DE NEGÓCIO
+      # ========================================
+      
+      - alert: LowUserActivity
+        expr: rate(user_activity_total[1h]) < 10
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Baixa atividade de usuários"
+          description: "Apenas {{ $value }} atividades de usuário por hora"
+          
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failures_total[1h]) / rate(payment_attempts_total[1h]) * 100 > 20
+        for: 15m
+        labels:
+          severity: critical
+          service: business
+        annotations:
+          summary: "Alta taxa de falha em pagamentos"
+          description: "{{ $value }}% dos pagamentos estão falhando"
+          
+      # ========================================
+      # ALERTAS DE MONITORAMENTO
+      # ========================================
+      
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "Prometheus está fora do ar"
+          description: "O sistema de monitoramento não está funcionando"
+          
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "Grafana está fora do ar"
+          description: "O sistema de dashboards não está funcionando"
+          
+      # ========================================
+      # ALERTAS DE DOCKER
+      # ========================================
+      
+      - alert: DockerContainerDown
+        expr: count by(name) (container_last_seen) - count by(name) (container_up) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: docker
+        annotations:
+          summary: "Container Docker fora do ar"
+          description: "O container {{ $labels.name }} não está funcionando"
+          
+      - alert: DockerHighMemoryUsage
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: docker
+        annotations:
+          summary: "Alto uso de memória no container Docker"
+          description: "Container {{ $labels.name }} usando {{ $value }}% da memória"
+          
+      # ========================================
+      # ALERTAS DE BACKUP
+      # ========================================
+      
+      - alert: BackupFailed
+        expr: backup_last_success_timestamp < time() - 86400
+        for: 1h
+        labels:
+          severity: critical
+          service: backup
+        annotations:
+          summary: "Backup falhou"
+          description: "Último backup bem-sucedido foi há mais de 24 horas"
+          
+      - alert: BackupTooLarge
+        expr: backup_size_bytes > 10737418240
+        for: 1h
+        labels:
+          severity: warning
+          service: backup
+        annotations:
+          summary: "Backup muito grande"
+          description: "Backup tem {{ $value | humanize }}B (mais de 10GB)"
+          
+      # ========================================
+      # ALERTAS DE SEGURANÇA
+      # ========================================
+      
+      - alert: HighFailedLoginAttempts
+        expr: rate(failed_login_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Muitas tentativas de login falhadas"
+          description: "{{ $value }} tentativas de login falhadas por minuto"
+          
+      - alert: BruteForceAttack
+        expr: rate(failed_login_attempts_total[1m]) > 50
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Possível ataque de força bruta"
+          description: "{{ $value }} tentativas de login falhadas por minuto"
+          
+      - alert: HighRateLimitHits
+        expr: rate(rate_limit_hits_total[5m]) > 100
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Muitas requisições sendo limitadas"
+          description: "{{ $value }} requisições limitadas por minuto"
+          
+      # ========================================
+      # ALERTAS DE PERFORMANCE
+      # ========================================
+      
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: performance
+        annotations:
+          summary: "Consultas lentas no banco de dados"
+          description: "95% das consultas estão levando mais de {{ $value }}s"
+          
+      - alert: HighCacheMissRate
+        expr: rate(cache_misses_total[5m]) / rate(cache_requests_total[5m]) * 100 > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: performance
+        annotations:
+          summary: "Alta taxa de cache miss"
+          description: "{{ $value }}% das requisições não estão sendo atendidas pelo cache"
+          
+      - alert: SlowExternalAPICalls
+        expr: histogram_quantile(0.95, rate(external_api_duration_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: performance
+        annotations:
+          summary: "Chamadas lentas para APIs externas"
+          description: "95% das chamadas externas estão levando mais de {{ $value }}s"

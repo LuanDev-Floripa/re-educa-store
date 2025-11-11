@@ -1,0 +1,26 @@
+# Configuração de backups automáticos para Re-Educa
+# Este arquivo define quando os backups devem ser executados automaticamente
+
+# Backup completo diário às 02:00
+0 2 * * * /usr/local/bin/backup.sh full >> /logs/cron-backup.log 2>&1
+
+# Backup incremental a cada 6 horas (04:00, 10:00, 16:00, 22:00)
+0 4,10,16,22 * * * /usr/local/bin/backup.sh incremental >> /logs/cron-backup.log 2>&1
+
+# Backup do banco de dados a cada 2 horas
+0 */2 * * * /usr/local/bin/backup.sh db >> /logs/cron-backup.log 2>&1
+
+# Verificação de integridade diária às 06:00
+0 6 * * * /usr/local/bin/backup.sh verify >> /logs/cron-backup.log 2>&1
+
+# Limpeza semanal aos domingos às 03:00
+0 3 * * 0 /usr/local/bin/backup.sh cleanup >> /logs/cron-backup.log 2>&1
+
+# Backup de configurações semanal às segundas-feiras às 01:00
+0 1 * * 1 /usr/local/bin/backup.sh configs >> /logs/cron-backup.log 2>&1
+
+# Backup de logs diário às 23:00
+0 23 * * * /usr/local/bin/backup.sh logs >> /logs/cron-backup.log 2>&1
+
+# Backup de volumes semanal às quartas-feiras às 02:30
+30 2 * * 3 /usr/local/bin/backup.sh volumes >> /logs/cron-backup.log 2>&1

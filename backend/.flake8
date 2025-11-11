@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 180
+extend-ignore = E203, W503
+exclude =
+    backend/venv,
+    venv,
+    .git,
+    __pycache__,
+    htmlcov,
+    dist,
+    build,
+    backend/scripts
+per-file-ignores =
+    backend/src/tests/*: F401,F841,E501,E712
+    backend/tests/*: F401,F841,E402,W291,W293,E128,F541,W292
+    backend/scripts/*: F401,F841,E402,W291,W293,F541

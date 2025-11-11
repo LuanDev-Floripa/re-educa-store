@@ -1,0 +1,202 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 're-educa-monitor'
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Nginx
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:8080']
+    metrics_path: /nginx_status
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Backend Flask
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Frontend (if exposing metrics)
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['frontend:80']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Node Exporter (if running on host)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Docker Daemon
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Custom Application Metrics
+  - job_name: 're-educa-app'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Health Checks
+  - job_name: 'health-checks'
+    static_configs:
+      - targets: 
+        - 'backend:5000'
+        - 'frontend:80'
+        - 'postgres:5432'
+        - 'redis:6379'
+    metrics_path: /health
+    scrape_interval: 60s
+    honor_labels: true
+
+  # Blackbox Exporter (External Monitoring)
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://re-educa.com.br
+        - https://www.re-educa.com.br
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # SSL Certificate Monitoring
+  - job_name: 'ssl-certificates'
+    static_configs:
+      - targets: ['re-educa.com.br:443']
+    metrics_path: /probe
+    params:
+      module: [ssl_cert]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # Database Connection Pool
+  - job_name: 'db-connections'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/db/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Cache Performance
+  - job_name: 'cache-performance'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # API Performance
+  - job_name: 'api-performance'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/performance/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # User Activity
+  - job_name: 'user-activity'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/analytics/metrics
+    scrape_interval: 60s
+    honor_labels: true
+
+  # Payment Processing
+  - job_name: 'payment-processing'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/payments/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # AI Assistant Usage
+  - job_name: 'ai-assistant'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/ai/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Gamification Metrics
+  - job_name: 'gamification'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/gamification/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Error Tracking
+  - job_name: 'error-tracking'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/errors/metrics
+    scrape_interval: 30s
+    honor_labels: true
+
+  # Business Metrics
+  - job_name: 'business-metrics'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /api/business/metrics
+    scrape_interval: 300s
+    honor_labels: true
