@@ -1,0 +1,195 @@
+{
+  "common": {
+    "appName": "RE-EDUCA",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpar",
+    "apply": "Aplicar",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "navigation": {
+    "home": "Início",
+    "store": "Loja",
+    "tools": "Ferramentas",
+    "social": "Rede Social",
+    "dashboard": "Dashboard",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "logout": "Sair",
+    "login": "Entrar",
+    "register": "Cadastrar"
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "email": "E-mail",
+      "password": "Senha",
+      "forgotPassword": "Esqueceu a senha?",
+      "noAccount": "Não tem uma conta?",
+      "registerHere": "Cadastre-se aqui",
+      "rememberMe": "Lembrar-me",
+      "loginButton": "Entrar",
+      "loggingIn": "Entrando...",
+      "errors": {
+        "invalidCredentials": "E-mail ou senha inválidos",
+        "required": "Este campo é obrigatório",
+        "emailInvalid": "E-mail inválido"
+      }
+    },
+    "register": {
+      "title": "Criar Conta",
+      "name": "Nome completo",
+      "email": "E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "acceptTerms": "Aceito os termos de uso",
+      "alreadyHaveAccount": "Já tem uma conta?",
+      "loginHere": "Entre aqui",
+      "registerButton": "Cadastrar",
+      "registering": "Cadastrando...",
+      "errors": {
+        "nameRequired": "Nome é obrigatório",
+        "nameMin": "Nome deve ter pelo menos 2 caracteres",
+        "emailRequired": "E-mail é obrigatório",
+        "emailInvalid": "E-mail inválido",
+        "passwordRequired": "Senha é obrigatória",
+        "passwordMin": "Senha deve ter pelo menos 8 caracteres",
+        "passwordMatch": "Senhas não coincidem",
+        "termsRequired": "Você deve aceitar os termos de uso"
+      },
+      "success": "Conta criada com sucesso!"
+    }
+  },
+  "store": {
+    "title": "Loja",
+    "products": "Produtos",
+    "categories": "Categorias",
+    "price": "Preço",
+    "addToCart": "Adicionar ao carrinho",
+    "buyNow": "Comprar agora",
+    "outOfStock": "Fora de estoque",
+    "inStock": "Em estoque",
+    "quantity": "Quantidade",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Frete",
+    "discount": "Desconto"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Olá, {{name}}! 👋",
+    "welcomeMessage": "Bem-vindo ao seu painel de saúde e bem-estar",
+    "healthScore": "Seu Score de Saúde",
+    "healthScoreDescription": "Baseado nas suas atividades e metas",
+    "quickStats": "Estatísticas Rápidas",
+    "recentActivity": "Atividades Recentes",
+    "goals": "Metas",
+    "achievements": "Conquistas",
+    "weeklyGoals": "Metas Semanais",
+    "completed": "Concluído",
+    "target": "Meta",
+    "workouts": "Treinos",
+    "meals": "Refeições",
+    "water": "Água",
+    "sleep": "Sono"
+  },
+  "tools": {
+    "title": "Ferramentas de Saúde",
+    "description": "Acesse todas as ferramentas para cuidar da sua saúde",
+    "popular": "Ferramentas Populares",
+    "all": "Todas as Ferramentas",
+    "categories": {
+      "all": "Todas",
+      "health": "Saúde",
+      "fitness": "Fitness",
+      "nutrition": "Nutrição",
+      "wellness": "Bem-estar"
+    },
+    "imc": {
+      "title": "Calculadora IMC",
+      "description": "Calcule seu índice de massa corporal"
+    },
+    "calories": {
+      "title": "Calculadora de Calorias",
+      "description": "Calcule suas necessidades calóricas diárias"
+    },
+    "hydration": {
+      "title": "Calculadora de Hidratação",
+      "description": "Acompanhe sua ingestão de água"
+    }
+  },
+  "social": {
+    "title": "Rede Social",
+    "feed": "Feed",
+    "stories": "Stories",
+    "reels": "Reels",
+    "messages": "Mensagens",
+    "notifications": "Notificações",
+    "search": "Buscar",
+    "createPost": "Nova Postagem",
+    "findFriends": "Encontrar Amigos",
+    "achievements": "Conquistas",
+    "activity": "Atividade",
+    "stats": {
+      "posts": "Posts",
+      "followers": "Seguidores",
+      "following": "Seguindo",
+      "likes": "Curtidas"
+    }
+  },
+  "profile": {
+    "title": "Perfil",
+    "edit": "Editar Perfil",
+    "personalInfo": "Informações Pessoais",
+    "healthData": "Dados de Saúde",
+    "preferences": "Preferências",
+    "privacy": "Privacidade"
+  },
+  "cart": {
+    "title": "Carrinho",
+    "empty": "Seu carrinho está vazio",
+    "items": "Itens",
+    "item": "Item",
+    "remove": "Remover",
+    "checkout": "Finalizar Compra",
+    "continueShopping": "Continuar Comprando"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shipping": "Endereço de Entrega",
+    "payment": "Pagamento",
+    "review": "Revisão",
+    "complete": "Pedido Concluído",
+    "orderNumber": "Número do Pedido"
+  },
+  "errors": {
+    "404": {
+      "title": "Página não encontrada",
+      "message": "A página que você está procurando não existe."
+    },
+    "500": {
+      "title": "Erro do servidor",
+      "message": "Algo deu errado. Tente novamente mais tarde."
+    },
+    "generic": "Ocorreu um erro. Tente novamente."
+  },
+  "language": {
+    "select": "Selecionar idioma",
+    "portuguese": "Português",
+    "english": "English",
+    "current": "Idioma atual"
+  }
+}

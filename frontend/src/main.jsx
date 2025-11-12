@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
+// Inicializar i18n
+import "./i18n/config";
 
 // Logger seguro (não bloqueia inicialização)
 const logger = {
@@ -22,6 +24,25 @@ const logger = {
   }
 };
 
+// Registrar Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('[SW] Service Worker registered:', registration.scope);
+        
+        // Verificar atualizações periodicamente
+        setInterval(() => {
+          registration.update();
+        }, 60000); // A cada minuto
+      })
+      .catch((error) => {
+        console.error('[SW] Service Worker registration failed:', error);
+      });
+  });
+}
+
 // Remove loading screen quando o React carregar
 const removeLoadingScreen = () => {
   const loadingScreen = document.getElementById("loading-screen");
@@ -35,18 +56,54 @@ const removeLoadingScreen = () => {
   }
 };
 
-// Error handler global - apenas em desenvolvimento
+// Error handler global - funciona em desenvolvimento E produção
 const isDevelopment = import.meta.env.DEV;
 
-if (isDevelopment) {
-  window.addEventListener("error", (event) => {
+// Sempre adicionar error handlers, mas com logging diferente
+window.addEventListener("error", (event) => {
+  const errorMsg = event.error?.message || event.message || 'Erro desconhecido';
+  const errorStack = event.error?.stack || '';
+  
+  if (isDevelopment) {
     logger.error("Global error:", event.error);
-  });
+  } else {
+    // Em produção, logar no console mesmo assim para debug
+    console.error("Erro global:", errorMsg, errorStack);
+  }
+  
+  // Mostrar erro visual em produção se possível
+  if (!isDevelopment && event.error) {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'global-error-message';
+    errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #ef4444; color: white; padding: 12px; text-align: center; z-index: 99999; font-family: system-ui;';
+    const reloadButton = document.createElement('button');
+    reloadButton.textContent = 'Recarregar';
+    reloadButton.style.cssText = 'color: white; text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0; margin-left: 8px;';
+    reloadButton.onclick = () => window.location.reload();
+    errorDiv.appendChild(document.createTextNode(`⚠️ Erro: ${errorMsg.substring(0, 100)} | `));
+    errorDiv.appendChild(reloadButton);
+    document.body.appendChild(errorDiv);
+    
+    // Remover após 10 segundos
+    setTimeout(() => {
+      const el = document.getElementById('global-error-message');
+      if (el) el.remove();
+    }, 10000);
+  }
+});
 
-  window.addEventListener("unhandledrejection", (event) => {
+window.addEventListener("unhandledrejection", (event) => {
+  const errorMsg = event.reason?.message || String(event.reason) || 'Erro desconhecido';
+  
+  if (isDevelopment) {
     logger.error("Unhandled rejection:", event.reason);
-  });
-}
+  } else {
+    console.error("Unhandled rejection:", errorMsg);
+  }
+  
+  // Prevenir que o erro apareça no console como não tratado
+  event.preventDefault();
+});
 
 try {
   const rootElement = document.getElementById("root");
@@ -66,7 +123,14 @@ try {
   // Remove loading screen após renderização
   removeLoadingScreen();
 } catch (error) {
-  logger.error("Failed to initialize app:", error);
+  const errorMsg = error?.message || String(error) || 'Erro desconhecido';
+  const errorStack = error?.stack || '';
+  
+  if (isDevelopment) {
+    logger.error("Failed to initialize app:", error);
+  } else {
+    console.error("Falha ao inicializar app:", errorMsg, errorStack);
+  }
 
   // Mostra erro amigável
   // ⚠️ SEGURANÇA: Uso de innerHTML é aceitável aqui porque:

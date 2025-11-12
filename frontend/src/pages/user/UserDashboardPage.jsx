@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import logger from "@/utils/logger";
+import apiClient from "@/services/apiClient";
+import { HelmetWrapper } from "@/components/SEO/HelmetWrapper";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -40,6 +43,7 @@ import { toast } from "sonner";
  */
 const UserDashboardPage = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState("week");
 
   // Dados do usuário - buscar do backend
@@ -67,7 +71,6 @@ const UserDashboardPage = () => {
     const fetchUserData = async () => {
       try {
         // Usar apiClient para consistência
-        const apiClient = (await import("@/services/apiClient")).default;
         const responseData = await apiClient.getUserDashboard();
         const data = responseData.data || responseData;
           const safe = {
@@ -154,17 +157,28 @@ const UserDashboardPage = () => {
     );
   }
 
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://topsupplementslab.com';
+  const userName = user?.name || 'Usuário';
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+    <HelmetWrapper
+      title={`Dashboard - ${userName} | RE-EDUCA`}
+      description={`Painel personalizado de ${userName}. Acompanhe sua saúde, metas, atividades e progresso na plataforma RE-EDUCA.`}
+      keywords="dashboard, saúde, bem-estar, metas, atividades, progresso, RE-EDUCA"
+      ogUrl={`${baseUrl}/dashboard`}
+      canonical={`${baseUrl}/dashboard`}
+      noindex={true}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
           <H1 className="flex items-center gap-2.5 sm:gap-3 mb-3">
             <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-            Olá, {user?.name || "Usuário"}! 👋
+            {t('dashboard.welcome', { name: user?.name || t('common.appName') })}
           </H1>
           <p className="text-muted-foreground/90 leading-relaxed">
-            Bem-vindo ao seu painel de saúde e bem-estar
+            {t('dashboard.welcomeMessage')}
           </p>
         </div>
 
@@ -194,10 +208,10 @@ const UserDashboardPage = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <H2 className="mb-2">
-                Seu Score de Saúde
+                {t('dashboard.healthScore')}
               </H2>
               <p className="text-sm sm:text-base text-muted-foreground/90 leading-relaxed">
-                Baseado nas suas atividades e metas
+                {t('dashboard.healthScoreDescription')}
               </p>
             </div>
             <div className="text-center w-full sm:w-auto">
@@ -489,7 +503,8 @@ const UserDashboardPage = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </HelmetWrapper>
   );
 };
 

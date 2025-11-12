@@ -20,17 +20,21 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/Ui/button";
 import { useAuth } from "../../hooks/useAuth.jsx";
+import ThemeToggle from "../ThemeToggle";
 // import CartButton from "../cart/CartButton"; // Substituído por UnifiedAIAssistant
 import { Heart, User, Menu, X, Bell } from "lucide-react";
 import { cn } from "../../lib/utils";
+import LanguageSelector from "../LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 export const Header = ({ onMenuClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const navigation = [
-    { name: "Loja", href: "/store" },
+    { name: t('navigation.store'), href: "/store" },
   ];
 
   const handleLogout = () => {
@@ -73,8 +77,19 @@ export const Header = ({ onMenuClick }) => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
+            {/* Language Selector */}
+            <LanguageSelector />
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-9 w-9"
+              aria-label="Notificações"
+            >
               <Bell className="h-4 w-4 lg:h-5 lg:w-5" />
             </Button>
 
@@ -88,6 +103,9 @@ export const Header = ({ onMenuClick }) => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  aria-label={`Menu do usuário ${user?.name || ''}`}
+                  aria-expanded={isMenuOpen}
+                  aria-haspopup="true"
                 >
                   <User className="h-5 w-5" />
                 </Button>
@@ -123,6 +141,7 @@ export const Header = ({ onMenuClick }) => {
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
+                      aria-label="Fazer logout"
                     >
                       Sair
                     </button>
@@ -132,10 +151,10 @@ export const Header = ({ onMenuClick }) => {
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost">Entrar</Button>
+                  <Button variant="ghost">{t('navigation.login')}</Button>
                 </Link>
                 <Link to="/register">
-                  <Button>Cadastrar</Button>
+                  <Button>{t('navigation.register')}</Button>
                 </Link>
               </div>
             )}
@@ -148,6 +167,9 @@ export const Header = ({ onMenuClick }) => {
               size="icon"
               onClick={onMenuClick || (() => setIsMenuOpen(!isMenuOpen))}
               className="h-8 w-8"
+              aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-navigation"
             >
               {isMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -160,8 +182,14 @@ export const Header = ({ onMenuClick }) => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden">
+          <div id="mobile-navigation" className="md:hidden" role="menu" aria-label="Menu de navegação mobile">
             <div className="px-3 pt-2 pb-3 space-y-1 border-t border-border">
+              {/* Theme Toggle Mobile */}
+              <div className="px-3 py-2 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Tema</span>
+                <ThemeToggle />
+              </div>
+
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -194,7 +222,7 @@ export const Header = ({ onMenuClick }) => {
                     className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Perfil
+                    {t('navigation.profile')}
                   </Link>
 
                   <Link
@@ -202,14 +230,15 @@ export const Header = ({ onMenuClick }) => {
                     className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Configurações
+                    {t('navigation.settings')}
                   </Link>
 
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 rounded-lg"
+                    aria-label={t('navigation.logout')}
                   >
-                    Sair
+                    {t('navigation.logout')}
                   </button>
                 </div>
               ) : (
@@ -219,14 +248,14 @@ export const Header = ({ onMenuClick }) => {
                     className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Entrar
+                    {t('navigation.login')}
                   </Link>
                   <Link
                     to="/register"
                     className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Cadastrar
+                    {t('navigation.register')}
                   </Link>
                 </div>
               )}

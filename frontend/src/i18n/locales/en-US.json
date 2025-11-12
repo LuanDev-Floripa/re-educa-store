@@ -1,0 +1,195 @@
+{
+  "common": {
+    "appName": "RE-EDUCA",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "apply": "Apply",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "home": "Home",
+    "store": "Store",
+    "tools": "Tools",
+    "social": "Social",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "registerHere": "Register here",
+      "rememberMe": "Remember me",
+      "loginButton": "Login",
+      "loggingIn": "Logging in...",
+      "errors": {
+        "invalidCredentials": "Invalid email or password",
+        "required": "This field is required",
+        "emailInvalid": "Invalid email"
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "name": "Full name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "acceptTerms": "I accept the terms of use",
+      "alreadyHaveAccount": "Already have an account?",
+      "loginHere": "Login here",
+      "registerButton": "Register",
+      "registering": "Registering...",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMin": "Name must be at least 2 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordMatch": "Passwords do not match",
+        "termsRequired": "You must accept the terms of use"
+      },
+      "success": "Account created successfully!"
+    }
+  },
+  "store": {
+    "title": "Store",
+    "products": "Products",
+    "categories": "Categories",
+    "price": "Price",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "outOfStock": "Out of stock",
+    "inStock": "In stock",
+    "quantity": "Quantity",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "discount": "Discount"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Hello, {{name}}! 👋",
+    "welcomeMessage": "Welcome to your health and wellness dashboard",
+    "healthScore": "Your Health Score",
+    "healthScoreDescription": "Based on your activities and goals",
+    "quickStats": "Quick Stats",
+    "recentActivity": "Recent Activity",
+    "goals": "Goals",
+    "achievements": "Achievements",
+    "weeklyGoals": "Weekly Goals",
+    "completed": "Completed",
+    "target": "Target",
+    "workouts": "Workouts",
+    "meals": "Meals",
+    "water": "Water",
+    "sleep": "Sleep"
+  },
+  "tools": {
+    "title": "Health Tools",
+    "description": "Access all tools to take care of your health",
+    "popular": "Popular Tools",
+    "all": "All Tools",
+    "categories": {
+      "all": "All",
+      "health": "Health",
+      "fitness": "Fitness",
+      "nutrition": "Nutrition",
+      "wellness": "Wellness"
+    },
+    "imc": {
+      "title": "BMI Calculator",
+      "description": "Calculate your body mass index"
+    },
+    "calories": {
+      "title": "Calorie Calculator",
+      "description": "Calculate your daily calorie needs"
+    },
+    "hydration": {
+      "title": "Hydration Calculator",
+      "description": "Track your water intake"
+    }
+  },
+  "social": {
+    "title": "Social Network",
+    "feed": "Feed",
+    "stories": "Stories",
+    "reels": "Reels",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "search": "Search",
+    "createPost": "New Post",
+    "findFriends": "Find Friends",
+    "achievements": "Achievements",
+    "activity": "Activity",
+    "stats": {
+      "posts": "Posts",
+      "followers": "Followers",
+      "following": "Following",
+      "likes": "Likes"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "edit": "Edit Profile",
+    "personalInfo": "Personal Information",
+    "healthData": "Health Data",
+    "preferences": "Preferences",
+    "privacy": "Privacy"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty",
+    "items": "Items",
+    "item": "Item",
+    "remove": "Remove",
+    "checkout": "Checkout",
+    "continueShopping": "Continue Shopping"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shipping": "Shipping Address",
+    "payment": "Payment",
+    "review": "Review",
+    "complete": "Order Complete",
+    "orderNumber": "Order Number"
+  },
+  "errors": {
+    "404": {
+      "title": "Page not found",
+      "message": "The page you are looking for does not exist."
+    },
+    "500": {
+      "title": "Server error",
+      "message": "Something went wrong. Please try again later."
+    },
+    "generic": "An error occurred. Please try again."
+  },
+  "language": {
+    "select": "Select language",
+    "portuguese": "Português",
+    "english": "English",
+    "current": "Current language"
+  }
+}
